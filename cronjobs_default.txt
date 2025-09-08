@@ -1,0 +1,19 @@
+# This file allows users to configure the sensor tasks to be run
+# automatically on pre-determined time-shedules.
+#
+# SENSOR CONFIGURED TASKS: 
+#
+# Check available communication technologies and interfaces
+@reboot sleep 15 && /usr/bin/python3 /home/kali/Desktop/sensorCommunicationAvailable.py
+# Periodic check of communications technologies and interfaces
+*/5 * * * * /usr/bin/python3 /home/kali/Desktop/sensorCommunicationCheck.py
+# Wi-Fi detection of devices
+# *********************** (Not configured) ***************************
+# Periodic upload of crowding data to the Cloud Server
+# *********************** (Not configured) ***************************
+# Periodic delete of outdated data from local database
+# *********************** (Not configured) ***************************
+# Periodic upload of OUI list
+# *********************** (Not configured) ***************************
+# Reboot
+# *********************** (Not configured) ***************************

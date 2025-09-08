@@ -1,0 +1,63 @@
+import serial
+import time
+import logging
+from ASR6501 import asr6501
+from sensorFunctions import downlink_cb
+
+# === CONFIGURAÇÃO ===
+SERIAL_PORT       = "/dev/ttyUSB0"
+BAUD_RATE         = 115200
+UPLOAD_PERIOD_MIN = 5
+DETECTED_DEVICES  = 5
+INFLUXDB_BUCKET   = "teste"
+SENSOR_NAME       = "sensorXYZ"
+
+# === LOGGER ===
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+logger = logging.getLogger("lora_uplink")
+
+# Abre serial e instancia
+ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=2)
+lora = asr6501(ser, logging.DEBUG)
+
+# Regista callback de downlink
+lora.setDownlinkCallback(downlink_cb)
+
+# Usa Classe C para ficar sempre a escuta
+lora.setClass(2)
+
+# Restaura MAC config e faz join se necessário
+lora.restoreMacConfiguration()
+time.sleep(1)
+if not lora.joined:
+    logger.info("Não estou ligado. A fazer join...")
+    if not lora.join():
+        logger.error("Falha no join – abortando.")
+        ser.close()
+        exit(1)
+    lora.saveMacConfiguration()
+else:
+    logger.info("Já estou joined ao TTN.")
+
+# Prepara e envia o uplink
+payload = f"{DETECTED_DEVICES},{INFLUXDB_BUCKET},{SENSOR_NAME}"
+lora.setApplicationPort(2)
+logger.info(f"Enviando uplink: {payload}")
+if not lora.sendPayload(payload, confirm=0, nbtrials=8):
+    logger.error("Uplink falhou tentarei um re-join e sairei.")
+    #lora.join()
+    #ser.close()
+    #exit(1)
+
+logger.info("Uplink OK. A escuta começará até ao próximo ciclo.")
+
+# Loop de escuta até 10s antes do próximo envio
+deadline = time.time() + UPLOAD_PERIOD_MIN * 60 - 10
+try:
+    while time.time() < deadline:
+        lora.checkForDownlink()
+        time.sleep(0.1)
+except KeyboardInterrupt:
+    logger.info("Interrompido pelo utilizador.")
+
+ser.close()
