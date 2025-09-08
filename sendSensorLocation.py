@@ -64,3 +64,47 @@ if uploadTechnology.lower() == "wifi":
 
     print(f"Location '({latitude},{longitude})' was sent to the cloud server for sensor '{sensor_name}'.")
 
+elif uploadTechnology.lower() == "lora":
+
+    serialPort = serial.Serial("/dev/ttyUSB0", 115200, timeout=2)
+    LoRaWAN = asr6501(serialPort, logging.DEBUG)
+
+    try:
+        # 2) Restaurar config e garantir join
+        LoRaWAN.restoreMacConfiguration()
+        
+        print(str(LoRaWAN.getStatus())+"este e o estado da rede")
+        if LoRaWAN.getStatus() == 5:  # Not joined
+            print("A ligar à TTN via OTAA…")
+            if not LoRaWAN.join():
+                print("Falha no join TTN.")
+                serialPort.close()
+                exit(1)
+            LoRaWAN.saveMacConfiguration()
+            print("Join concluído.")
+
+        # 3) Preparar payload curta em texto
+        #    fPort 3 para mensagens de localização
+        LoRaWAN.setApplicationPort(3)
+        time.sleep(0.5)
+        # Formato CSV curto: "L,<lat>,<lon>,<uuid>"
+        # Mantém compacto: 5 casas decimais ~1.1 m
+        payload = f"L,{float(latitude):.5f},{float(longitude):.5f},{sensor_UUID}"
+        # Se quiseres incluir nome: cuidado com comprimento (opcional)
+        # payload = f"L,{latitude:.5f},{longitude:.5f},{sensor_UUID},{sensor_name[:12]}"
+
+        print(f"A enviar via LoRa: {payload}")
+        sent = LoRaWAN.sendPayload(payload, confirm=0, nbtrials=8)
+        if not sent:
+            print("Falha a enviar via LoRa; vou tentar re-join e terminar.")
+            LoRaWAN.join()
+        else:
+            print("Localização enviada via LoRa.")
+        
+    except Exception as e:
+        print(f"Erro durante envio via LoRa: {e}")
+    finally:
+        try:
+            serialPort.close()
+        except:
+            pass

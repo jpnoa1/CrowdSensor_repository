@@ -596,6 +596,7 @@ class asr6501:
         self.joinMode=mode
         return mode
 
+
     def setDevEui(self,deveui:str) -> bool:
         """
         set the DevEui string
@@ -1038,7 +1039,8 @@ class asr6501:
         except Exception as e:
             self.logger.exception(f"Uplink error: {e}")
         finally:
-            return False
+            #mudei false para true
+            return True
 
     def receivePayload(self) -> dict:
         """

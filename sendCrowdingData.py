@@ -93,7 +93,7 @@ elif uploadTechnology.lower() == "lora":
 
     # sends the payload (0=unconfirmed, 1=confirmed)
     sent = LoRaWAN.sendPayload(message, confirm=0, nbtrials=8)
-    print(sent)
+    print("envieii isto"+str(sent))
     #If message was not sent
     if not sent:
         print(" Failed to send via LoRa. Trying to re-join…")

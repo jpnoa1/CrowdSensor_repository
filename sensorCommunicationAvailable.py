@@ -18,13 +18,14 @@ from sensorFunctions import *
 #
 
 #Check if Wi-Fi and LoRa upload are available
-wifiAvailable = check_wifi_available()
+wifiAvailable = False
 loraAvailable = check_lora_available()                           #LoRaWAN manually set to 'unavailable' as the LoRaWAN communication is already 
                                              #not fully implemented on this sensor version for the Raspberry Pi 5.
 
 #Check Wi-Fi and LoRa upload connections
 if wifiAvailable:
-    wifiConnected = check_wifi_connection()
+    #wifiConnected = check_wifi_connection()
+    wifiConnected = False
 else:
     wifiConnected = False
 
@@ -45,10 +46,11 @@ else:
 #Get upload and detection interfaces
 upload_interface, detection_interface = check_upload_detection_interfaces(True)
 
-
+print(wifiConnected)
 if wifiConnected:
     ip_address = ni.ifaddresses(upload_interface)[ni.AF_INET][0]['addr']
-
+else:#mudei
+    ip_address = "nd"
 #Check previous communication technologies available on the local database
 try:
 
