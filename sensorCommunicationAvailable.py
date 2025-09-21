@@ -18,14 +18,16 @@ from sensorFunctions import *
 #
 
 #Check if Wi-Fi and LoRa upload are available
+#wifiAvailable = check_wifi_available()
+#para teste
 wifiAvailable = False
 loraAvailable = check_lora_available()                           #LoRaWAN manually set to 'unavailable' as the LoRaWAN communication is already 
                                              #not fully implemented on this sensor version for the Raspberry Pi 5.
 
 #Check Wi-Fi and LoRa upload connections
 if wifiAvailable:
-    #wifiConnected = check_wifi_connection()
-    wifiConnected = False
+    wifiConnected = check_wifi_connection()
+    #wifiConnected = False
 else:
     wifiConnected = False
 

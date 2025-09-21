@@ -757,7 +757,7 @@ def check_lora_available() -> bool:
         ser = serial.Serial("/dev/ttyUSB0", 115200, timeout=2)
         lora = asr6501(ser, logging.DEBUG)
 
-        manuf = lora.getManufId()  # deve devolver "ASR"
+        manuf = lora.getManufId()  # should return "ASR"
         ok = bool(manuf)
 
         if ok and manuf.strip().upper() == "ASR":
@@ -776,7 +776,7 @@ def check_lora_available() -> bool:
         return False
 
     finally:
-        # fecha SEMPRE a porta, mesmo se a asr6501 levantar exceção
+        # closes the serial port if it was opened
         try:
             if ser and ser.is_open:
                 ser.close()
@@ -787,8 +787,9 @@ def check_lora_available() -> bool:
 def check_lora_connection():
     serialPort = serial.Serial("/dev/ttyUSB0", 115200, timeout=2)
     lora = asr6501(serialPort, logging.DEBUG)
+    
     status=lora.getStatus()
-    fail_codes = {6}
+    fail_codes = {5,6}
     print("este foi o status: "+ str(status ))
     if status not in fail_codes:
         return True     

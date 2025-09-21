@@ -86,19 +86,22 @@ elif uploadTechnology.lower() == "lora":
 
     LoRaWAN.setDownlinkCallback((downlink_cb))
     # building the message to TTN
-    message = f"{detected_devices},{influxdb_bucket},{sensorName}"
+    message = f"{detected_devices},{influxdb_bucket},{sensorName},{sensorUUID}"
     #ensure_join()
     #define the LoRaWAN application port
     LoRaWAN.setApplicationPort(2)
-
+    #LoRaWAN.join()
     # sends the payload (0=unconfirmed, 1=confirmed)
     sent = LoRaWAN.sendPayload(message, confirm=0, nbtrials=8)
     print("envieii isto"+str(sent))
     #If message was not sent
     if not sent:
         print(" Failed to send via LoRa. Trying to re-join…")
-        LoRaWAN.join()
-        
+        try:
+            LoRaWAN.join()
+        except Exception as e:
+            print(f"Unexpected Error joining {e}")
+
     else:
         print(f" Message sent: {message}, waiting for downlinks")
         t_end = time.time() + (upload_periodicity * 60)-10

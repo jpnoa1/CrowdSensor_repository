@@ -83,16 +83,13 @@ elif uploadTechnology.lower() == "lora":
             LoRaWAN.saveMacConfiguration()
             print("Join concluído.")
 
-        # 3) Preparar payload curta em texto
-        #    fPort 3 para mensagens de localização
+        #    fPort 3 for location messages
         LoRaWAN.setApplicationPort(3)
         time.sleep(0.5)
-        # Formato CSV curto: "L,<lat>,<lon>,<uuid>"
-        # Mantém compacto: 5 casas decimais ~1.1 m
-        payload = f"L,{float(latitude):.5f},{float(longitude):.5f},{sensor_UUID}"
-        # Se quiseres incluir nome: cuidado com comprimento (opcional)
-        # payload = f"L,{latitude:.5f},{longitude:.5f},{sensor_UUID},{sensor_name[:12]}"
-
+        # CSV Format  "L,<lat>,<lon>,<uuid>"
+        
+        payload = f"L,{float(latitude):.5f},{float(longitude):.5f},{sensor_UUID},{influx_bucket}"
+    
         print(f"A enviar via LoRa: {payload}")
         sent = LoRaWAN.sendPayload(payload, confirm=0, nbtrials=8)
         if not sent:
