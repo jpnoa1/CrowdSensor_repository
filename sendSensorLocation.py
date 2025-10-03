@@ -88,7 +88,7 @@ elif uploadTechnology.lower() == "lora":
         time.sleep(0.5)
         # CSV Format  "L,<lat>,<lon>,<uuid>"
         
-        payload = f"L,{float(latitude):.5f},{float(longitude):.5f},{sensor_UUID},{influx_bucket}"
+        payload = f"L,{float(latitude):.5f},{float(longitude):.5f}"
     
         print(f"A enviar via LoRa: {payload}")
         sent = LoRaWAN.sendPayload(payload, confirm=0, nbtrials=8)

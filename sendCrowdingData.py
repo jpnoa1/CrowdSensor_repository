@@ -1,5 +1,6 @@
 import sqlite3
 import datetime as dt
+from time import sleep
 import matplotlib.pyplot as plt; plt.rcdefaults()
 import subprocess
 import os
@@ -83,14 +84,23 @@ elif uploadTechnology.lower() == "lora":
     serialPort = serial.Serial("/dev/ttyUSB0", 115200, timeout=2)
 
     LoRaWAN = asr6501(serialPort, logging.DEBUG)
-
+    #LoRaWAN.reboot()
+    #sleep(1)
+    #LoRaWAN.restoreMacConfiguration()
+    LoRaWAN.join()
+    #sleep(1)
     LoRaWAN.setDownlinkCallback((downlink_cb))
     # building the message to TTN
-    message = f"{detected_devices},{influxdb_bucket},{sensorName},{sensorUUID}"
+    message = f"C,{detected_devices}"
     #ensure_join()
     #define the LoRaWAN application port
     LoRaWAN.setApplicationPort(2)
-    #LoRaWAN.join()
+    
+    if LoRaWAN.getStatus() in {0,2,5,6}:
+        LoRaWAN.join()
+        sleep(1)
+
+
     # sends the payload (0=unconfirmed, 1=confirmed)
     sent = LoRaWAN.sendPayload(message, confirm=0, nbtrials=8)
     print("envieii isto"+str(sent))
