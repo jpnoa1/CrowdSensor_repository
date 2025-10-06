@@ -86,9 +86,9 @@ elif uploadTechnology.lower() == "lora":
     LoRaWAN = asr6501(serialPort, logging.DEBUG)
     #LoRaWAN.reboot()
     #sleep(1)
-    #LoRaWAN.restoreMacConfiguration()
+    LoRaWAN.restoreMacConfiguration()
     LoRaWAN.join()
-    #sleep(1)
+    sleep(1)
     LoRaWAN.setDownlinkCallback((downlink_cb))
     # building the message to TTN
     message = f"C,{detected_devices}"
