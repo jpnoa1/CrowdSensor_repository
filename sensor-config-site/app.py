@@ -145,29 +145,29 @@ def save():
 @app.route("/success")
 def success():
     cfg = load_config()
-    ssid = cfg.get("WiFi SSID")
-    password = cfg.get("WiFi Password")
+    ssid = (cfg.get("WiFi SSID") or "").strip()
+    password = (cfg.get("WiFi Password") or "").strip()
 
-    if ssid and password:
-        print("entrein aqui")
-        subprocess.run(
-            ["sudo", "nmcli", "device", "wifi", "connect", ssid, "password", password, "ifname", "wlan0"]
-        )
-
-    
-    
-    
     @after_this_request
-    def restart_service(response):
+    def connect_and_restart(response):
+        sleep(5)
+        if ssid != "" and password != "":
+            # tries to connect to WiFi
+            subprocess.run([
+                "sudo", "nmcli", "device", "wifi", "connect",
+                ssid, "password", password, "ifname", "wlan0"
+            ])
         
         sleep(10)
+        #no reboot 
+        #subprocess.run(["sudo", "systemctl", "restart", "sensor-setup.service"])
         
-        subprocess.run(["sudo","systemctl", "restart", "sensor-setup.service"])
-        
+        # solution with reboot
+        subprocess.run(["sudo", "reboot"])
         return response
-    
-    return render_template("success.html", cfg=load_config(), path=CONFIG_PATH)
 
+    #show success page while the above happens
+    return render_template("success.html", cfg=cfg, path=CONFIG_PATH)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
