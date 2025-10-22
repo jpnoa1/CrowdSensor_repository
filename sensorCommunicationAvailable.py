@@ -1,7 +1,7 @@
 import sqlite3
 import subprocess
 import netifaces as ni
-
+import time 
 from sensorFunctions import *
 
 #                          sensorCheckCommunicationAvailable.py
@@ -39,6 +39,7 @@ else:
 #If LoRa available, get dev_eui from LoRa board
 if loraAvailable:
     dev_eui = get_dev_eui()
+    #loraConnected= True
     loraConnected = check_lora_connection() 
 else:
     loraConnected = False

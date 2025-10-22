@@ -1,0 +1,9 @@
+Metadata-Version: 2.4
+Name: swARM_at
+Version: 0.0.5
+Summary: Fork editada de swARM_at (RAK3172/RAK4270).
+Requires-Python: >=3.8
+Requires-Dist: pyserial>=3.0
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary

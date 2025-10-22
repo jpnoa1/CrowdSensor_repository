@@ -8,7 +8,8 @@ from paho.mqtt import client as mqtt_client
 import random
 import logging
 import serial
-from ASR6501 import asr6501,STATUS
+from swARM_at.RAK3172 import RAK3172
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("sensor")
@@ -751,51 +752,59 @@ def check_wifi_connection():
         set_wifi_connected(False)
         return False
      
+def get_dev_eui():
+    rak = RAK3172("/dev/ttyUSB0", 115200)
+    rak.connect()
+    ok=rak.get_dev_eui()
+    rak.disconnect()
+    return ok
+
 def check_lora_available() -> bool: 
-    ser = None
-    try:
-        ser = serial.Serial("/dev/ttyUSB0", 115200, timeout=2)
-        lora = asr6501(ser, logging.DEBUG)
-
-        manuf = lora.getManufId()  # should return "ASR"
-        ok = bool(manuf)
-
-        if ok and manuf.strip().upper() == "ASR":
-            logger.info(f"LoRa available (manufacturer={manuf})")
-            set_lora_available(True) 
-            
-            return True
-        else:
-            logger.warning(f"LoRa responded but the manufacturer is not the expected '{manuf}'")
-            set_lora_available(False)
-            return False
-
-    except Exception as e:
-        logger.error(f"Error verifying LoRa: {e}")
-        set_lora_available(False)
-        return False
-
-    finally:
-        # closes the serial port if it was opened
-        try:
-            if ser and ser.is_open:
-                ser.close()
-        except Exception:
-            pass
     
+    rak = RAK3172("/dev/ttyUSB0", 115200)
+    rak.connect()
+    expected=str(rak.get_dev_eui())
+    print(f"LoRa Device EUI: {expected}"    )
+    if expected is not None:
+        rak.disconnect()
+        return True
+    rak.disconnect()
+    return False
+
 
 def check_lora_connection():
-    serialPort = serial.Serial("/dev/ttyUSB0", 115200, timeout=2)
-    lora = asr6501(serialPort, logging.DEBUG)
+    """Check LoRa join status by reading the last saved state file."""
+    STATUS_FILE = "/tmp/rak_njs"
     
-    status=lora.getStatus()
-    fail_codes = {5,6}
-    print("este foi o status: "+ str(status ))
-    if status not in fail_codes:
-        return True     
-    else:
-        return False   
-    
+    try:
+        rak = RAK3172("/dev/ttyUSB0", 115200)
+        rak.connect()
+        with open(STATUS_FILE, "r") as f:
+            val = f.read().strip()
+        print(f"Read LoRa status from {STATUS_FILE}: {val}")
+
+        if val == "1":
+            print("Device is joined to the network.")
+            return True
+        elif val == "0":
+            print("Device not joined to the network.Trying to rejoin...")
+
+            ok=rak.join_network(1,0,8,8)
+            time.sleep(1)
+            return ok
+        else:
+            print("Invalid content in status file.")
+            return False
+
+    except FileNotFoundError:
+        print("Status file not found — assuming not joined.")
+        ok=rak.join_network(1,0,8,8)
+        time.sleep(1)
+        return ok
+
+    except Exception as e:
+        print(f"Error reading LoRa status: {e}")
+        return False
 
 def reestablish_wifi_connection():
     #Get upload interface
@@ -974,13 +983,7 @@ def decide_upload_technology():
     except sqlite3.Error as error:
         print("Failed to update database.", error)
 
-def get_dev_eui() -> str:  #Get dev_eui from LoRa board
-    
-    serialPort = serial.Serial("/dev/ttyUSB0", 115200, timeout=2)
-    lora = asr6501(serialPort, logging.DEBUG)
-    dev_eui = lora.getDevEui()
 
-    return dev_eui
 
 def downlink_cb(mType, port, length, msgHex):
     logger.info(f"[DOWNLINK RAW] type={mType} port={port} len={length} hex={msgHex}")

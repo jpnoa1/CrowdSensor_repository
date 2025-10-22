@@ -1,3 +1,5 @@
+
+
 import sqlite3
 import datetime as dt
 from time import sleep
@@ -7,8 +9,8 @@ import os
 import pytz
 import uuid
 import netifaces as ni
-from ASR6501 import asr6501,STATUS
 
+from swARM_at.RAK3172 import RAK3172
 import serial
 import sys
 from sensorFunctions import *
@@ -70,7 +72,23 @@ except sqlite3.Error as error:
     print("Failed to read number of devices detected from local database.")
 
 
+def downlink_cb(port, payload):
+    print(f"[CALLBACK] Downlink received on port {port}: {payload}")
+    try:
+        text = bytes.fromhex(payload).decode("utf-8")
+    except Exception:
+        text = ""
+    print(f"[CALLBACK] Decoded text: '{text}'")
 
+    if text == "r":
+        print("[CALLBACK] Command: rebooting system...")
+        os.system("sudo reboot")
+    elif text == "a":
+        print("[CALLBACK] Command: activate detection")
+    elif text == "dis":
+        print("[CALLBACK] Command: disable detection")
+    else:
+        print("[CALLBACK] Unknown command received.")
 
 
 # Upload via Wi-Fi
@@ -81,46 +99,70 @@ if uploadTechnology.lower() == "wifi":
 
 elif uploadTechnology.lower() == "lora":
 
-    serialPort = serial.Serial("/dev/ttyUSB0", 115200, timeout=2)
-
-    LoRaWAN = asr6501(serialPort, logging.DEBUG)
-    #LoRaWAN.reboot()
-    #sleep(1)
-    LoRaWAN.restoreMacConfiguration()
-    LoRaWAN.join()
-    sleep(1)
-    LoRaWAN.setDownlinkCallback((downlink_cb))
-    # building the message to TTN
+    # Initialize RAK3172
+    rak = RAK3172("/dev/ttyUSB0", 115200)
+    rak.connect()
+    # Build payload (same logic as before)
     message = f"C,{detected_devices}"
-    #ensure_join()
-    #define the LoRaWAN application port
-    LoRaWAN.setApplicationPort(2)
-    
-    if LoRaWAN.getStatus() in {0,2,5,6}:
-        LoRaWAN.join()
-        sleep(1)
+    print(f"Payload to send: {message}")
 
+    # Convert to hexadecimal (LoRaWAN expects hex payloads)
+    payload_hex = message.encode().hex()
 
-    # sends the payload (0=unconfirmed, 1=confirmed)
-    sent = LoRaWAN.sendPayload(message, confirm=0, nbtrials=8)
-    print("envieii isto"+str(sent))
-    #If message was not sent
+    # Try sending payload on port 2
+    sent = rak.send_lorawan_data(2, payload_hex)
+
     if not sent:
-        print(" Failed to send via LoRa. Trying to re-join…")
+        print("Failed to send via LoRa. Trying to re-join…")
         try:
-            LoRaWAN.join()
+            rak.join_network(join=1, auto_join=0, reattempt_interval=8, join_attempts=8)
+            time.sleep(1)
+            sent = rak.send_lorawan_data(2, payload_hex)
         except Exception as e:
-            print(f"Unexpected Error joining {e}")
-
+            print(f"Unexpected error during join: {e}")
     else:
-        print(f" Message sent: {message}, waiting for downlinks")
-        t_end = time.time() + (upload_periodicity * 60)-10
+        print(f"Message sent successfully: {message}")
+
+    # Listen for downlinks during the upload window
+    if sent:
+        print("Waiting for downlinks...")
+        t_end = time.time() + (upload_periodicity * 60) - 25
+        #t_end = 20
         try:
             while time.time() < t_end:
-                LoRaWAN.checkForDownlink()
-                time.sleep(0.1)
+
+                port, payload = rak.receive_data()
+                if port and payload:
+                    try:
+                        text = bytes.fromhex(payload).decode("utf-8")
+                    except Exception:
+                        text = ""
+                    print(f"Downlink received on port {port}: '{text}'")
+
+                    if text == "r":
+                        print("Command: rebooting system...")
+                        os.system("sudo reboot")
+                    elif text == "a":
+                        print("Command: activate detection")
+                    elif text == "dis":
+                        print("Command: disable detection")
+                    else:
+                        print("Unknown command received.")
+                time.sleep(1)
+            
+            STATUS_FILE = "/tmp/rak_njs"
+
+            joined = rak.check_join_status()
+            print("este foio joined"+str(joined))   # returns True/False
+            with open(STATUS_FILE, "w") as f:  # write plain text: '1' or '0'
+                f.write("1" if joined else "0")
+            print(f"Join status saved to {STATUS_FILE}: {'1' if joined else '0'}")
+                
         except KeyboardInterrupt:
             print("Interrupted by user, exiting…")
+    
+    rak.disconnect()
+
 
 
 # If no communication technology is available
