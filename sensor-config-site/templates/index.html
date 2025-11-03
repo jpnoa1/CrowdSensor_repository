@@ -4,58 +4,71 @@
   <meta charset="utf-8">
   <title>Sensor Configuration</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Minimal, self-contained styles -->
   <style>
+    /* Layout & typography */
     body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;max-width:980px;margin:24px auto;padding:0 12px}
+    h1{margin-bottom:16px}
     fieldset{border:1px solid #ddd;border-radius:10px;padding:12px;margin-bottom:12px}
+    legend{font-weight:600}
     label{display:block;margin:8px 0}
     input,select,button{padding:8px;font-size:15px;border:1px solid #ccc;border-radius:8px;width:100%;box-sizing:border-box}
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .actions{margin-top:8px}
     .errors{background:#fde8e8;border:1px solid #f5a6a6;border-radius:10px;padding:10px;margin:12px 0}
     .errors li{margin-left:18px}
+
+    /* Connectivity blocks */
+    .network-box{border:1px solid #ddd;padding:10px;margin-top:10px;border-radius:10px}
+    .network-box h4{margin:0 0 8px 0}
+    .remove-network{background:#f5f5f5;border:1px solid #ccc;padding:4px 8px;border-radius:6px;margin-top:6px;width:auto}
+
+    /* Modal (no external deps) */
+    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);justify-content:center;align-items:center;z-index:10}
+    .modal-content{background:#fff;border-radius:12px;padding:20px;width:300px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+    .btn-row{display:flex;flex-direction:column;gap:10px;margin:15px 0}
+    .btn-row button{border:none;padding:10px;border-radius:8px;color:#fff;font-size:15px;cursor:pointer;transition:filter .15s}
+    .btn-row button:hover{filter:brightness(.95)}
+    .wifi-btn{background:#0078d7}
+    .ttn-btn{background:#28a745}
+    .helium-btn{background:#f4b400;color:#222}
+    .cancel-btn{background:#ccc;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;width:auto}
   </style>
 </head>
+
 <body>
   <h1>Sensor Configuration</h1>
 
+  <!-- Server-side validation feedback -->
   {% if errors and errors|length %}
     <div class="errors">
       <strong>Please fix the following errors:</strong>
       <ul>
-        {% for e in errors %}
-          <li>{{ e }}</li>
-        {% endfor %}
+        {% for e in errors %}<li>{{ e }}</li>{% endfor %}
       </ul>
     </div>
   {% endif %}
 
+  <!-- Main form -->
   <form method="post" action="{{ url_for('save') }}">
-     <fieldset>
-      <legend>Wi-Fi (optional)</legend>
-      <div class="grid">
-        <label>WiFi SSID
-          <input name="WiFi SSID" value="{{ cfg['WiFi SSID'] }}">
-        </label>
-        <label>WiFi Password
-          <input name="WiFi Password" type="password" value="{{ cfg['WiFi Password'] }}">
-        </label>
-      </div>
+
+    <!-- Connectivity (multi-RAN) -->
+    <fieldset id="connectivity-section">
+      <legend>Connectivity</legend>
+      <div id="network-list"></div>
+      <button type="button" id="add-network">+ Add Network</button>
     </fieldset>
-    
+
+    <!-- Device -->
     <fieldset>
       <legend>Device</legend>
-      <label>TTN Device ID
-        <input name="TTN Device ID" value="{{ cfg['TTN Device ID'] }}"
-               required pattern="^[a-z0-9-]{2,64}$" maxlength="64">
-      </label>
       <div class="grid">
         <label>Latitude
-          <input name="Latitude" type="number" step="any" min="-90" max="90"
-                 value="{{ cfg['Latitude'] }}" required>
+          <input name="Latitude" type="number" step="any" min="-90" max="90" value="{{ cfg['Latitude'] }}" required>
         </label>
         <label>Longitude
-          <input name="Longitude" type="number" step="any" min="-180" max="180"
-                 value="{{ cfg['Longitude'] }}" required>
+          <input name="Longitude" type="number" step="any" min="-180" max="180" value="{{ cfg['Longitude'] }}" required>
         </label>
       </div>
       <label>Status
@@ -66,14 +79,15 @@
       </label>
     </fieldset>
 
+    <!-- Processing -->
     <fieldset>
       <legend>Processing</legend>
       <label>Power Filtration (dB)
-        <input name="Power Filtration" type="number" step="any"
-               value="{{ cfg['Power Filtration'] }}" required>
+        <input name="Power Filtration" type="number" step="any" value="{{ cfg['Power Filtration'] }}" required>
       </label>
     </fieldset>
 
+    <!-- Server / InfluxDB -->
     <fieldset>
       <legend>Server / InfluxDB</legend>
       <label>Cloud IP Address
@@ -88,25 +102,24 @@
         </label>
       </div>
       <label>InfluxDB Auth Token
-        <input type="password" name="InfluxDB Auth Token"
-               value="{{ cfg['InfluxDB Auth Token'] }}" required>
+        <input type="password" name="InfluxDB Auth Token" value="{{ cfg['InfluxDB Auth Token'] }}" required>
       </label>
     </fieldset>
 
+    <!-- Upload & Windows -->
     <fieldset>
       <legend>Upload & Windows</legend>
       <div class="grid">
         <label>Upload Periodicity (minutes)
-          <input type="number" min="1" step="1" name="Upload Periodicity"
-                 value="{{ cfg['Upload Periodicity'] }}" required>
+          <input type="number" min="1" step="1" name="Upload Periodicity" value="{{ cfg['Upload Periodicity'] }}" required>
         </label>
         <label>Sliding Window (minutes)
-          <input type="number" min="1" step="1" name="Sliding Window"
-                 value="{{ cfg['Sliding Window'] }}" required>
+          <input type="number" min="1" step="1" name="Sliding Window" value="{{ cfg['Sliding Window'] }}" required>
         </label>
       </div>
     </fieldset>
 
+    <!-- Reboot -->
     <fieldset>
       <legend>Reboot</legend>
       <div class="grid">
@@ -121,8 +134,7 @@
           </select>
         </label>
         <label>Reboot Time (HH:MM)
-          <input type="time" name="Reboot Time" id="reboot_time"
-                 value="{{ cfg['Reboot Time'] }}">
+          <input type="time" name="Reboot Time" id="reboot_time" value="{{ cfg['Reboot Time'] }}">
         </label>
       </div>
       <small>If “No Reboot (5)” is selected, time is ignored.</small>
@@ -133,17 +145,116 @@
     </div>
   </form>
 
+  <!-- Selection modal (opened by + Add Network) -->
+  <div id="networkModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <h3>Select network type</h3>
+      <div class="btn-row">
+        <button type="button" class="wifi-btn"   id="btn-add-wifi">Wi-Fi</button>
+        <button type="button" class="ttn-btn"    id="btn-add-ttn">LoRa TTN</button>
+        <button type="button" class="helium-btn" id="btn-add-helium">LoRa Helium</button>
+      </div>
+      <button type="button" class="cancel-btn" id="btn-cancel-modal">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Minimal, unobtrusive JS -->
   <script>
-    // Reboot time required only when periodicity != 5
+    // --- Connectivity templates (rendered on demand) ---
+    const TPL = {
+      wifi: `
+        <div class="network-box" data-type="wifi">
+          <h4>Wi-Fi</h4>
+          <div class="grid">
+            <label>SSID
+              <input name="WiFi SSID" placeholder="Network name">
+            </label>
+            <label>Password
+              <input name="WiFi Password" type="password" placeholder="Password">
+            </label>
+          </div>
+          <button type="button" class="remove-network">Remove</button>
+          <hr>
+        </div>`,
+      ttn: `
+        <div class="network-box" data-type="lorattn">
+          <h4>LoRa TTN</h4>
+          <div class="grid">
+            <label>App EUI
+              <input name="TTN App EUI" placeholder="70B3D57ED000XXXX">
+            </label>
+            <label>App Key
+              <input name="TTN App Key" placeholder="Hex key">
+            </label>
+            <label>Dev EUI
+              <input name="TTN Dev EUI" placeholder="Device EUI">
+            </label>
+          </div>
+          <button type="button" class="remove-network">Remove</button>
+          <hr>
+        </div>`,
+      helium: `
+        <div class="network-box" data-type="lorahelium">
+          <h4>LoRa Helium</h4>
+          <div class="grid">
+            <label>Helium Org
+              <input name="Helium Org" placeholder="Organization name">
+            </label>
+            <label>Helium API Key
+              <input name="Helium API Key" placeholder="API key">
+            </label>
+          </div>
+          <button type="button" class="remove-network">Remove</button>
+          <hr>
+        </div>`
+    };
+
+    // DOM refs
+    const list    = document.getElementById('network-list');
+    const modal   = document.getElementById('networkModal');
+    const addBtn  = document.getElementById('add-network');
+
+    // Modal helpers
+    function openModal(){ modal.style.display = 'flex'; modal.setAttribute('aria-hidden','false'); }
+    function closeModal(){ modal.style.display = 'none';  modal.setAttribute('aria-hidden','true'); }
+
+    // Add box helpers
+    function appendBox(html){
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = html.trim();
+      const box = wrapper.firstElementChild;
+      box.querySelector('.remove-network').onclick = () => box.remove();
+      list.appendChild(box);
+    }
+
+    // Wire modal buttons
+    document.getElementById('btn-add-wifi').onclick   = () => { appendBox(TPL.wifi);   closeModal(); };
+    document.getElementById('btn-add-ttn').onclick    = () => { appendBox(TPL.ttn);    closeModal(); };
+    document.getElementById('btn-add-helium').onclick = () => { appendBox(TPL.helium); closeModal(); };
+    document.getElementById('btn-cancel-modal').onclick = closeModal;
+
+    // Open modal from "+ Add Network"
+    addBtn.onclick = openModal;
+
+    // Reboot time is required only when periodicity != 5
     const rp = document.getElementById('reboot_periodicity');
     const rt = document.getElementById('reboot_time');
-    function syncTime() {
-      const noReboot = rp.value === "5";
-      rt.disabled  = noReboot;
-      rt.required  = !noReboot;
+    function syncTime(){
+      const noReboot = rp.value === '5';
+      rt.disabled = noReboot;
+      rt.required = !noReboot;
     }
     rp.addEventListener('change', syncTime);
     syncTime();
+
+    // Client-side guard: at least one connectivity block is required
+    document.querySelector('form').addEventListener('submit', (e) => {
+      const hasNetworks = list.querySelectorAll('.network-box').length > 0;
+      if (!hasNetworks){
+        e.preventDefault();
+        alert('Please add at least one connectivity option (Wi-Fi, LoRa TTN, or LoRa Helium).');
+      }
+    });
   </script>
 </body>
 </html>

@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Configuration saved</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;max-width:800px;margin:24px auto;padding:0 12px}</style>
+</head>
+<body>
+  <h1>Configuration saved</h1>
+  <p>File path: <code>{{ path }}</code></p>
+  <pre>{{ cfg | tojson(indent=2) }}</pre>
+  <p><a href="{{ url_for('index') }}">Back</a></p>
+</body>
+</html>
