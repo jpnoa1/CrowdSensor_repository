@@ -95,7 +95,7 @@ class RAK3172:
 
     def read_response(self):
         response = self.serial_connection.readline().decode().strip().replace("\r\n", "").replace("OK", "")
-        #print("response is "+response)
+        print("response is "+str(response))
         return response
 
     def set_app_key(self, app_key):
@@ -138,8 +138,9 @@ class RAK3172:
 
     def get_dev_eui(self):
         command = "AT+DEVEUI=?\r\n"
-        if self.send_command(command):
-            return self.read_response()
+        ok=self.send_command(command)
+        if ok:
+            return ok
         print("Failed to get DevEUI")
         return None
 

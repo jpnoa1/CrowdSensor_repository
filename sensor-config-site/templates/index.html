@@ -73,8 +73,8 @@
       </div>
       <label>Status
         <select name="Status" required>
-          <option value="enabled"  {{ "selected" if cfg['Status']=="enabled" else "" }}>Enabled</option>
-          <option value="disabled" {{ "selected" if cfg['Status']=="disabled" else "" }}>Disabled</option>
+          <option value="Active"  {{ "selected" if cfg['Status']=="Active" else "" }}>Active</option>
+          <option value="Disabled" {{ "selected" if cfg['Status']=="Disabled" else "" }}>Disabled</option>
         </select>
       </label>
     </fieldset>
@@ -180,6 +180,9 @@
         <div class="network-box" data-type="lorattn">
           <h4>LoRa TTN</h4>
           <div class="grid">
+            <label>TTN Device ID
+              <input name="TTN Device ID" placeholder="my-app-device-001">
+            </label>
             <label>App EUI
               <input name="TTN App EUI" placeholder="70B3D57ED000XXXX">
             </label>

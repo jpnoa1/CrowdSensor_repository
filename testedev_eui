@@ -1,0 +1,18 @@
+from swARM_at_custom.swARM_at.RAK3172 import RAK3172
+
+PORT = "/dev/ttyUSB0"   
+BAUD = 115200
+
+rak = RAK3172(port=PORT, baud_rate=BAUD)
+rak.connect()
+message = f"C,12"
+# Convert to hexadecimal (LoRaWAN expects hex payloads)
+payload_hex = message.encode().hex()
+#rak.send_lorawan_data(2, payload_hex)
+print(rak.check_join_status())
+
+
+a= rak.send_command("AT+DEVEUI=?\r\n")
+
+print("ola"+str(a))
+rak.disconnect()

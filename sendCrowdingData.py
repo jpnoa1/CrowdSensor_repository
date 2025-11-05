@@ -153,7 +153,7 @@ elif uploadTechnology.lower() == "lora":
             STATUS_FILE = "/tmp/rak_njs"
 
             joined = rak.check_join_status()
-            print("este foio joined"+str(joined))   # returns True/False
+            print("este foi o joined"+str(joined))   # returns True/False
             with open(STATUS_FILE, "w") as f:  # write plain text: '1' or '0'
                 f.write("1" if joined else "0")
             print(f"Join status saved to {STATUS_FILE}: {'1' if joined else '0'}")
