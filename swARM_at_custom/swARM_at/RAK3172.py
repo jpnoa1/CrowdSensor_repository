@@ -11,6 +11,7 @@ VALID_COM_PORT = (
     [f'COM{i}' for i in range(100)] +
     [f'/dev/tty{i}' for i in range(256)] +
     [f'/dev/ttyS{i}' for i in range(256)] +
+    [f'/dev/ttyAMA{i}' for i in range(256)] +
     [f'/dev/ttyACM{i}' for i in range(256)] +
     [f'/dev/ttyUSB{i}' for i in range(256)] 
 ) 
@@ -278,7 +279,8 @@ class RAK3172:
                     return True
                 if "AT_NO_NETWORK_JOINED" in line:
                     print("Not joined — performing join and retrying...")
-                    self.join_network(join=1, auto_join=0, reattempt_interval=8, join_attempts=8)
+                    time.sleep(5)
+                    #self.join_network(join=1, auto_join=0, reattempt_interval=8, join_attempts=8)
                     time.sleep(2)
                     # Retry once automatically
                     return self.send_lorawan_data(port, payload)
@@ -336,7 +338,7 @@ class RAK3172:
         if response:
             print(response)
 
-        # 1) Prefer async event (Class C): +EVT:RX_C:...:PORT:HEX
+        #Prefer async event (Class C): +EVT:RX_C:...:PORT:HEX
         if "+EVT:RX_C" in response:
             try:
                 parts = response.split(":")
@@ -348,23 +350,6 @@ class RAK3172:
                 print("Error parsing RX_C:", e)
                 return None, None
 
-        # 2) Fallback: AT+RECV=PORT:HEX (may also return AT+RECV=0:)
-        recv_lines = [ln for ln in response_lines if ln.startswith("AT+RECV=")]
-        if recv_lines:
-            try:
-                body = recv_lines[-1][len("AT+RECV="):]  # strip prefix
-                if ":" in body:
-                    port, payload = body.split(":", 1)
-                    port = port.strip()
-                    payload = payload.strip()
-                    print(f"Data received on port {port} with payload {payload}")
-                    # AT+RECV=0: (empty) means "no new data"
-                    if port == "0" or payload == "":
-                        return None, None
-                    return port, payload
-            except Exception as e:
-                print("Error parsing RECV:", e)
-                return None, None
 
         print("No data received or unknown format.")
         return None, None

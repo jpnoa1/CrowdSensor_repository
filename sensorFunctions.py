@@ -38,8 +38,11 @@ SENSOR_SEND_CROWDING_DATA_FILEPATH = "/home/kali/Desktop/sendCrowdingData.py"
 # Filepath for python script for sending sensor location to InfluxDB
 SENSOR_SEND_LOCATION_FILEPATH = "/home/kali/Desktop/sendSensorLocation.py"
 
-# Filepath of python script for changing upload technology 
+# Filepath of python script for Checking upload technology 
 SENSOR_COMMUNICATION_CHECK_FILEPATH = "/home/kali/Desktop/sensorCommunicationCheck.py"
+
+# Filepath of python script for Checking and changing upload technology 
+SENSOR_COMMUNICATION_AVAILABLE_FILEPATH = "/home/kali/Desktop/sensorCommunicationAvailable.py"
 
 #Filepath to cronjobs output text file
 DEFAULT_CRONJOBS_FILEPATH = "/home/kali/Desktop/cronjobs_default.txt"
@@ -753,7 +756,7 @@ def check_wifi_connection():
         return False
      
 def get_dev_eui():
-    rak = RAK3172("/dev/ttyUSB0", 115200)
+    rak = RAK3172("/dev/ttyAMA0", 115200)
     rak.connect()
     ok=rak.get_dev_eui()
     rak.disconnect()
@@ -761,7 +764,7 @@ def get_dev_eui():
 
 def check_lora_available() -> bool: 
     
-    rak = RAK3172("/dev/ttyUSB0", 115200)
+    rak = RAK3172("/dev/ttyAMA0", 115200)
     rak.connect()
     expected=str(rak.get_dev_eui())
     print(f"LoRa Device EUI: {expected}"    )
@@ -771,13 +774,31 @@ def check_lora_available() -> bool:
     rak.disconnect()
     return False
 
+def check_lora_connection_no_Join() -> bool:
+    try:
+        with open("/tmp/rak_njs", "r") as f:
+            val = f.read().strip()
+            print(f"Read LoRa status from {"/tmp/rak_njs"}: {val}")
 
+        if val == "1":
+            print("Device is joined to the network.")
+            return True
+        elif val == "0":
+            print("Device not joined to the network.Trying to rejoin...")
+            return False
+    except FileNotFoundError:
+        return False
+
+    except Exception as e:
+        print(f"Error reading LoRa status: {e}")
+        return False
+    
 def check_lora_connection():
     """Check LoRa join status by reading the last saved state file."""
     STATUS_FILE = "/tmp/rak_njs"
     
     try:
-        rak = RAK3172("/dev/ttyUSB0", 115200)
+        rak = RAK3172("/dev/ttyAMA0", 115200)
         rak.connect()
         with open(STATUS_FILE, "r") as f:
             val = f.read().strip()
@@ -790,7 +811,6 @@ def check_lora_connection():
             print("Device not joined to the network.Trying to rejoin...")
 
             ok=rak.join_network(1,0,8,8)
-            time.sleep(1)
             return ok
         else:
             print("Invalid content in status file.")
@@ -799,7 +819,7 @@ def check_lora_connection():
     except FileNotFoundError:
         print("Status file not found — assuming not joined.")
         ok=rak.join_network(1,0,8,8)
-        time.sleep(1)
+        time.sleep(3)
         return ok
 
     except Exception as e:

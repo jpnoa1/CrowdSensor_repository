@@ -10,7 +10,7 @@ import pytz
 import uuid
 import netifaces as ni
 
-from swARM_at.RAK3172 import RAK3172
+from swARM_at_custom.swARM_at.RAK3172 import RAK3172
 import serial
 import sys
 from sensorFunctions import *
@@ -100,7 +100,7 @@ if uploadTechnology.lower() == "wifi":
 elif uploadTechnology.lower() == "lora":
 
     # Initialize RAK3172
-    rak = RAK3172("/dev/ttyUSB0", 115200)
+    rak = RAK3172("/dev/ttyAMA0", 115200)
     rak.connect()
     # Build payload (same logic as before)
     message = f"C,{detected_devices}"
@@ -115,7 +115,7 @@ elif uploadTechnology.lower() == "lora":
     if not sent:
         print("Failed to send via LoRa. Trying to re-join…")
         try:
-            rak.join_network(join=1, auto_join=0, reattempt_interval=8, join_attempts=8)
+            #rak.join_network(join=1, auto_join=0, reattempt_interval=8, join_attempts=8)
             time.sleep(1)
             sent = rak.send_lorawan_data(2, payload_hex)
         except Exception as e:

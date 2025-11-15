@@ -44,7 +44,7 @@ REBOOT_OPTIONS = {"0":"Daily","1":"Every two days","2":"Every three days","3":"W
 DEFAULTS: Dict[str, str] = {
     "Latitude": "38.7369",
     "Longitude": "-9.1427",
-    "Status": "enabled",
+    "Status": "Active",
     "Power Filtration": "0",
     "Cloud IP Address": "127.0.0.1",
     "InfluxDB Organization": "my-org",
@@ -149,8 +149,8 @@ def validate_sensor(cfg: Dict[str, str]) -> List[str]:
         errors.append("Longitude must be a number between -180 and 180.")
 
     # Status enum
-    if cfg.get("Status") not in ("enabled", "disabled"):
-        errors.append("Status must be 'enabled' or 'disabled'.")
+    if cfg.get("Status") not in ("Active", "Disabled"):
+        errors.append("Status must be 'Active' or 'Disabled'.")
 
     # Power filtration numeric
     if _to_float(cfg.get("Power Filtration", "")) is None:
@@ -232,10 +232,21 @@ def save():
 def success():
     sensor_cfg, connectivity = load_all()
 
+
+
     @after_this_request
     def _post_send(response):
         # Give the browser time to render the success page
-        sleep(2)
+        try:
+            print("[Flask] Applying sensor configuration...")
+            subprocess.run(
+                ["python3", "/home/kali/Desktop/sensorConfigurationRemotely.py"],
+                check=False
+            )
+        except Exception as exc:
+            print("[Flask] Error calling apply_config_from_toml:", exc)
+
+        sleep(5)
         # Try Wi-Fi if provided; then exit setup mode (restart service or reboot)
         connect_wifi_if_present(connectivity)
         sleep(2)

@@ -64,7 +64,7 @@ else:
 #Check LoRa upload connection
 if sensor_configuration is not None and current_upload_technology == "lora":
     if loraAvailable:
-        loraConnected = check_lora_connection()
+        loraConnected = check_lora_connection_no_Join()
     else:
         set_lora_connected(False)
         loraConnected = False

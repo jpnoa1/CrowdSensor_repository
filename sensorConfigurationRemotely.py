@@ -1,5 +1,6 @@
 import sqlite3
 import os
+from uuid import getnode
 from sensorFunctions import *
 from datetime import datetime
 
@@ -25,7 +26,8 @@ def apply_config_from_toml(toml_path: str):
     sensor = cfg.get("sensor", {})
 
     conn = sqlite3.connect(DB_PATH, timeout=30)
-    c = conn.cursor()
+    cursor = conn.cursor()
+
 
     rebootPeriodicity = sensor.get("Reboot Periodicity")
 
@@ -39,38 +41,73 @@ def apply_config_from_toml(toml_path: str):
     reboot_time = sensor.get("Reboot Time")
     if reboot_time == "" or reboot_time is None:
         reboot_time = 0
+    
+    
 
-    # Update SensorConfiguration
-    print("[Config] A atualizar SensorConfiguration...")
-    c.execute("""
-        UPDATE SensorConfiguration
-        SET Latitude=?, Longitude=?, Status=?, Power_Filtration=?,
-            Cloud_IP_Address=?, InfluxDB_Org=?, InfluxDB_Bucket=?, Authorization_Token=?,
-            Upload_Periodicity=?, Sliding_Window=?, Reboot_Periodicity=?, Reboot_Time=?,
-            Last_Update=CURRENT_TIMESTAMP
-    """, (
-        sensor.get("Latitude"), sensor.get("Longitude"), sensor.get("Status", "enabled"),
-        sensor.get("Power Filtration"), sensor.get("Cloud IP Address"),
-        sensor.get("InfluxDB Organization"), sensor.get("InfluxDB Bucket"),
-        sensor.get("InfluxDB Auth Token"), sensor.get("Upload Periodicity"),
-        sensor.get("Sliding Window"), rebootPeriodicity, reboot_time
-    ))
+    cursor.execute("SELECT COUNT(*) FROM SensorConfiguration")
+    exists = cursor.fetchone()[0] > 0
 
-    conn.commit()
+    if not exists:
+        cursor.execute("""
+            INSERT INTO SensorConfiguration (
+                Sensor_UUID, Sensor_Name, Latitude, Longitude, Status, Power_Filtration,
+                Cloud_IP_Address, InfluxDB_Org, InfluxDB_Bucket, Authorization_Token,
+                Upload_Periodicity, Sliding_Window, Reboot_Periodicity, Reboot_Time, Last_Update
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        """, (
+            getnode(), sensor.get("Sensor_Name"), sensor.get("Latitude"), sensor.get("Longitude"),
+            sensor.get("Status", "enabled"), sensor.get("Power Filtration"),
+            sensor.get("Cloud IP Address"), sensor.get("InfluxDB Organization"),
+            sensor.get("InfluxDB Bucket"), sensor.get("InfluxDB Auth Token"),
+            sensor.get("Upload Periodicity"), sensor.get("Sliding Window"),
+            rebootPeriodicity, reboot_time
+        ))
+        conn.commit()
+
+    else:
+        # Update SensorConfiguration
+        print("[Config] Updating SensorConfiguration...")
+        cursor.execute("""
+            UPDATE SensorConfiguration
+            SET Sensor_UUID=?, Sensor_Name=?, Latitude=?, Longitude=?, Status=?, Power_Filtration=?,
+                Cloud_IP_Address=?, InfluxDB_Org=?, InfluxDB_Bucket=?, Authorization_Token=?,
+                Upload_Periodicity=?, Sliding_Window=?, Reboot_Periodicity=?, Reboot_Time=?,
+                Last_Update=CURRENT_TIMESTAMP
+        """, (
+            getnode(), sensor.get("Sensor_Name"), sensor.get("Latitude"), sensor.get("Longitude"),
+            sensor.get("Status", "enabled"), sensor.get("Power Filtration"),
+            sensor.get("Cloud IP Address"), sensor.get("InfluxDB Organization"),
+            sensor.get("InfluxDB Bucket"), sensor.get("InfluxDB Auth Token"),
+            sensor.get("Upload Periodicity"), sensor.get("Sliding Window"),
+            rebootPeriodicity, reboot_time
+        ))
+        conn.commit()
 
     # Update SensorCommunication
     wifi_available = any(c.get("type") == "wifi" for c in connectivity)
     lora_available = any("lora" in c.get("type", "") for c in connectivity)
 
-    c.execute("""
-        UPDATE SensorCommunication
-        SET WifiAvailable=?, LoRaAvailable=?, Last_Update=CURRENT_TIMESTAMP
-    """, (int(wifi_available), int(lora_available)))
+
+    cursor.execute("SELECT COUNT(*) FROM SensorCommunication")
+    comm_exists = cursor.fetchone()[0] > 0
+
+    if not comm_exists:
+        cursor.execute("""
+            INSERT INTO SensorCommunication
+            (WifiAvailable, WifiConnected, LoRaAvailable, LoRaConnected, Last_Update)
+            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+        """, (int(wifi_available), int(wifi_available), int(lora_available), 0))
+    else:
+        cursor.execute("""
+            UPDATE SensorCommunication
+            SET WifiAvailable=?, WifiConnected=?, LoRaAvailable=?, LoRaConnected=?, Last_Update=CURRENT_TIMESTAMP
+        """, (int(wifi_available), int(wifi_available), int(lora_available), 0))
+
     conn.commit()
 
     # Update LoRaNetworks 
     print("[Config] Updating LoRaNetworks...")
-    c.execute("""
+    cursor.execute("""
     CREATE TABLE IF NOT EXISTS LoRaNetworks (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
@@ -83,14 +120,14 @@ def apply_config_from_toml(toml_path: str):
         last_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     """)
-    c.execute("DELETE FROM LoRaNetworks")
-
-
+    
+    
+    cursor.execute("DELETE FROM LoRaNetworks")
     
     lora_networks = [c for c in connectivity if "lora" in c.get("type", "")]
     for i, net in enumerate(lora_networks, start=1):
         name = net.get("name", net.get("type"))
-        c.execute("""
+        cursor.execute("""
             INSERT INTO LoRaNetworks
             (name, app_eui, app_key, dev_eui, available, connected, priority, last_update)
             VALUES (?, ?, ?, ?, 1, 0, ?, CURRENT_TIMESTAMP)
@@ -103,10 +140,11 @@ def apply_config_from_toml(toml_path: str):
 
     conn.commit()
 
-    # --- 4) Configure cronjobs and power filtration
+    # Configure cronjobs and power filtration
     power_fil = sensor.get("Power Filtration")
     if power_fil:
         change_power_filtration(int(power_fil))  # to be remove after scapy update
+
 
     # Cronjobs
     status = sensor.get("Status", "enabled")
@@ -116,11 +154,29 @@ def apply_config_from_toml(toml_path: str):
     _ , detectionInterface = check_upload_detection_interfaces(False)
     write_crontab_file(status, detectionInterface , upload_period, reboot_per, reboot_time)
 
+    if int(wifi_available) == 1 or int(lora_available) == 1:
+        
+        print("[Upload] Sending Sensor Location...")
+        try:
+            
+            subprocess.run(["pkill", "-f", "sendCrowdingData.py"])
+            #running sensor communication check script
+            subprocess.run(["python3", SENSOR_COMMUNICATION_AVAILABLE_FILEPATH])
+            time.sleep(3)
+            #sending location
+            subprocess.run(["python3", SENSOR_SEND_LOCATION_FILEPATH])
+            
+        except Exception as e:
+            print(f"[ERROR] Failed to send Location Data {e}")
+
     conn.close()
-    print(f"[OK] Configuração aplicada com sucesso ({datetime.now().strftime('%H:%M:%S')})")
+
+    print(f"[OK] Successful configuration ({datetime.now().strftime('%H:%M:%S')})")
 
 
 if __name__ == "__main__":
     default_path = "/home/kali/Desktop/sensor-config-site/data/sensor_config.toml"
-    print(f"[INFO] A aplicar configuração padrão: {default_path}")
     apply_config_from_toml(default_path)
+    #subprocess.run(["python3", SENSOR_COMMUNICATION_AVAILABLE_FILEPATH])
+    
+

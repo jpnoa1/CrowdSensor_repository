@@ -66,42 +66,26 @@ if uploadTechnology.lower() == "wifi":
 
 elif uploadTechnology.lower() == "lora":
 
-    serialPort = serial.Serial("/dev/ttyUSB0", 115200, timeout=2)
-    LoRaWAN = asr6501(serialPort, logging.DEBUG)
+    rak = RAK3172("/dev/ttyAMA0", 115200)
+    rak.connect()
 
     try:
-        # 2) Restaurar config e garantir join
-        LoRaWAN.restoreMacConfiguration()
-        
-        print(str(LoRaWAN.getStatus())+"este e o estado da rede")
-        if LoRaWAN.getStatus() == 5:  # Not joined
-            print("A ligar à TTN via OTAA…")
-            if not LoRaWAN.join():
-                print("Falha no join TTN.")
-                serialPort.close()
-                exit(1)
-            LoRaWAN.saveMacConfiguration()
-            print("Join concluído.")
-
-        #    fPort 3 for location messages
-        LoRaWAN.setApplicationPort(3)
         time.sleep(0.5)
         # CSV Format  "L,<lat>,<lon>,<uuid>"
-        
         payload = f"L,{float(latitude):.5f},{float(longitude):.5f}"
     
         print(f"A enviar via LoRa: {payload}")
-        sent = LoRaWAN.sendPayload(payload, confirm=0, nbtrials=8)
-        if not sent:
-            print("Falha a enviar via LoRa; vou tentar re-join e terminar.")
-            LoRaWAN.join()
+        payload_hex = payload.encode().hex()
+        sent = rak.send_lorawan_data(2, payload_hex)
+        if sent:
+            print("Localização enviada com sucesso via LoRa.")
         else:
-            print("Localização enviada via LoRa.")
+            print("Falha ao enviar localização via LoRa.")
         
     except Exception as e:
         print(f"Erro durante envio via LoRa: {e}")
     finally:
         try:
-            serialPort.close()
+            rak.close()
         except:
             pass

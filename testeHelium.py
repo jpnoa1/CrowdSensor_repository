@@ -3,7 +3,7 @@ import toml
 from swARM_at_custom.swARM_at.RAK3172 import RAK3172
 
 
-PORT = "/dev/ttyUSB0"   
+PORT = "/dev/ttyAMA0"   
 BAUD = 115200
 PAYLOAD = "48656C6C6F"  # "Hello" 
 
@@ -19,11 +19,13 @@ rak.connect()
 print("\n--- A configurar módulo para Helium ---")
 
 
-rak.set_dev_eui("0b8b1bd48d5e9373")
+rak.set_dev_eui("AC1F09FFFE15A753")
 
-rak.set_app_eui("30ba2a7487ac4225")
+rak.set_app_eui("AC1F09FFF8683172")
 
-rak.set_app_key("447909aeae9d7fd18bb18c4c688dfaf5")
+rak.set_app_key("AC1F09FFFE15A753AC1F09FFF8683172")
+
+
 
 
 print(" Parâmetros Helium aplicados")
