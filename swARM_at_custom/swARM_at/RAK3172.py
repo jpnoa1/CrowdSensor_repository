@@ -310,6 +310,38 @@ class RAK3172:
         print("Error or unknown response: ", response)
         return None
 
+    def receive_data_C(self, timeout=0.6):
+
+        response_lines = []
+
+        end = time.time() + timeout
+        while time.time() < end:
+            if self.serial_connection.in_waiting:
+                line = self.serial_connection.readline().decode(errors="ignore").strip()
+                if line:
+                    response_lines.append(line)
+            else:
+                time.sleep(0.05)
+
+        response = "\n".join(response_lines)
+        if response:
+            print(response)
+
+        # Only handle +EVT:RX_C (Class C real downlink)
+        if "+EVT:RX_C" in response:
+            try:
+                parts = response.split(":")
+                port = parts[-2].strip()
+                payload = parts[-1].strip()
+                print(f"Data received on port {port} with payload {payload}")
+                return port, payload
+
+            except Exception as e:
+                print("Failed to parse RX_C:", e)
+
+        return None, None
+
+
     def receive_data(self, timeout=0.6):
         """Reads any downlink or received LoRaWAN message from the serial port."""
         response_lines = []
@@ -349,7 +381,28 @@ class RAK3172:
             except Exception as e:
                 print("Error parsing RX_C:", e)
                 return None, None
+        
+        # Fallback: AT+RECV=PORT:HEX (may also return AT+RECV=0:)
+        recv_lines = [ln for ln in response_lines if ln.startswith("AT+RECV=")]
+        if recv_lines:
 
+            try:
+                body = recv_lines[-1][len("AT+RECV="):]  # strip prefix
+                if ":" in body:
+                    port, payload = body.split(":", 1)
+                    port = port.strip()
+                    payload = payload.strip()
+
+                    print(f"Data received on port {port} with payload {payload}")
+
+                    # AT+RECV=0: (empty) means "no new data"
+                    if port == "0" or payload == "":
+                        return None, None
+                    return port, payload
+
+            except Exception as e:
+                print("Error parsing RECV:", e)
+                return None, None
 
         print("No data received or unknown format.")
         return None, None

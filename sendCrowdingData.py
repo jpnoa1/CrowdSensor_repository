@@ -131,7 +131,7 @@ elif uploadTechnology.lower() == "lora":
         try:
             while time.time() < t_end:
 
-                port, payload = rak.receive_data()
+                port, payload = rak.receive_data_C()
                 if port and payload:
                     try:
                         text = bytes.fromhex(payload).decode("utf-8")
