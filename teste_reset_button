@@ -4,20 +4,43 @@ import lgpio
 
 PIN = 26      # GPIO26
 CHIP = 4      # Pi 5 usa gpiochip4
+HOLD_TIME = 10   # segundos de pressão contínua
 
 h = lgpio.gpiochip_open(CHIP)
 
-# Entrada com pull-up interno (mantém o pino em 1 quando solto)
+# Entrada com pull-up interno (pino fica em 1 quando solto)
 lgpio.gpio_claim_input(h, PIN, lgpio.SET_PULL_UP)
 
 print(f"A ler GPIO{PIN} no gpiochip{CHIP}... (CTRL+C para sair)")
+
+pressed_since = None   # Timestamp quando o botão começou a ser pressionado
+
 try:
     while True:
         val = lgpio.gpio_read(h, PIN)
-        print("Pressed" if val == 0 else "Released")
-        time.sleep(0.2)
+
+        if val == 0:   # Pressed
+            if pressed_since is None:
+                pressed_since = time.time()   # Marca início da pressão
+
+            held_time = time.time() - pressed_since
+
+            print(f"Pressed for {held_time:.1f} s", end="\r")
+
+            if held_time >= HOLD_TIME:
+                print(f"\nBotão pressionado por {HOLD_TIME} segundos!")
+                pressed_since = time.time()   # evita prints repetidos
+
+        else:   # Released
+            if pressed_since is not None:
+                print("\nBotão libertado.")
+            pressed_since = None
+
+        time.sleep(0.1)
+
 except KeyboardInterrupt:
     pass
+
 finally:
     lgpio.gpiochip_close(h)
     print("\nGPIO fechado.")

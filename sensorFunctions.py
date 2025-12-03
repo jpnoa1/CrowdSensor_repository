@@ -8,7 +8,7 @@ from paho.mqtt import client as mqtt_client
 import random
 import logging
 import serial
-from swARM_at.RAK3172 import RAK3172
+from swARM_at_custom.swARM_at.RAK3172 import RAK3172
 
 
 logging.basicConfig(level=logging.INFO)
@@ -762,17 +762,15 @@ def get_dev_eui():
     rak.disconnect()
     return ok
 
-def check_lora_available() -> bool: 
-    
+def check_lora_available() -> bool:
     rak = RAK3172("/dev/ttyAMA0", 115200)
-    rak.connect()
-    expected=str(rak.get_dev_eui())
-    print(f"LoRa Device EUI: {expected}"    )
-    if expected is not None:
+    try:
+        rak.connect()
+        dev_eui = rak.get_dev_eui()
+        print(f"LoRa Device EUI: {dev_eui}")
+        return bool(dev_eui and str(dev_eui).strip().lower() != "none")
+    finally:
         rak.disconnect()
-        return True
-    rak.disconnect()
-    return False
 
 def check_lora_connection_no_Join() -> bool:
     try:

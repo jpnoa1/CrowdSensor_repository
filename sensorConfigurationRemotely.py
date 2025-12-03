@@ -25,6 +25,15 @@ def apply_config_from_toml(toml_path: str):
     connectivity = cfg.get("Connectivity", [])
     sensor = cfg.get("sensor", {})
 
+    # Get cloud address from first Wi-Fi connectivity entry (if any)
+    wifi_cloud_address = None
+    for c in connectivity:
+        if c.get("type") == "wifi" and c.get("cloud_address"):
+            wifi_cloud_address = c["cloud_address"]
+            break
+
+
+
     conn = sqlite3.connect(DB_PATH, timeout=30)
     cursor = conn.cursor()
 
@@ -57,7 +66,7 @@ def apply_config_from_toml(toml_path: str):
         """, (
             getnode(), sensor.get("Sensor_Name"), sensor.get("Latitude"), sensor.get("Longitude"),
             sensor.get("Status", "enabled"), sensor.get("Power Filtration"),
-            sensor.get("Cloud IP Address"), sensor.get("InfluxDB Organization"),
+            wifi_cloud_address, sensor.get("InfluxDB Organization"),
             sensor.get("InfluxDB Bucket"), sensor.get("InfluxDB Auth Token"),
             sensor.get("Upload Periodicity"), sensor.get("Sliding Window"),
             rebootPeriodicity, reboot_time
@@ -76,7 +85,7 @@ def apply_config_from_toml(toml_path: str):
         """, (
             getnode(), sensor.get("Sensor_Name"), sensor.get("Latitude"), sensor.get("Longitude"),
             sensor.get("Status", "enabled"), sensor.get("Power Filtration"),
-            sensor.get("Cloud IP Address"), sensor.get("InfluxDB Organization"),
+            wifi_cloud_address, sensor.get("InfluxDB Organization"),
             sensor.get("InfluxDB Bucket"), sensor.get("InfluxDB Auth Token"),
             sensor.get("Upload Periodicity"), sensor.get("Sliding Window"),
             rebootPeriodicity, reboot_time
@@ -163,8 +172,12 @@ def apply_config_from_toml(toml_path: str):
             #running sensor communication check script
             subprocess.run(["python3", SENSOR_COMMUNICATION_AVAILABLE_FILEPATH])
             time.sleep(3)
-            #sending location
-            subprocess.run(["python3", SENSOR_SEND_LOCATION_FILEPATH])
+            
+            # send location only when join marker exists
+            if os.path.exists("/tmp/rak_njs"):
+                subprocess.run(["python3", SENSOR_SEND_LOCATION_FILEPATH])
+            else:
+                print("[Upload] /tmp/rak_njs not found, skipping sensor location upload.")
             
         except Exception as e:
             print(f"[ERROR] Failed to send Location Data {e}")

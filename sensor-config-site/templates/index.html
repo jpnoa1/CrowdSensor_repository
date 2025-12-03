@@ -65,15 +65,17 @@
       <legend>Device</legend>
       <div class="grid">
         <label>Latitude
-          <input name="Latitude" type="number" step="any" min="-90" max="90" value="{{ cfg['Latitude'] }}" required>
+          <input name="Latitude" type="number" step="any" min="-90" max="90"
+                 value="{{ cfg['Latitude'] }}" required>
         </label>
         <label>Longitude
-          <input name="Longitude" type="number" step="any" min="-180" max="180" value="{{ cfg['Longitude'] }}" required>
+          <input name="Longitude" type="number" step="any" min="-180" max="180"
+                 value="{{ cfg['Longitude'] }}" required>
         </label>
       </div>
       <label>Status
         <select name="Status" required>
-          <option value="Active"  {{ "selected" if cfg['Status']=="Active" else "" }}>Active</option>
+          <option value="Active"   {{ "selected" if cfg['Status']=="Active" else "" }}>Active</option>
           <option value="Disabled" {{ "selected" if cfg['Status']=="Disabled" else "" }}>Disabled</option>
         </select>
       </label>
@@ -83,16 +85,14 @@
     <fieldset>
       <legend>Processing</legend>
       <label>Power Filtration (dB)
-        <input name="Power Filtration" type="number" step="any" value="{{ cfg['Power Filtration'] }}" required>
+        <input name="Power Filtration" type="number" step="any"
+               value="{{ cfg['Power Filtration'] }}" required>
       </label>
     </fieldset>
 
     <!-- Server / InfluxDB -->
     <fieldset>
       <legend>Server / InfluxDB</legend>
-      <label>Cloud IP Address
-        <input name="Cloud IP Address" value="{{ cfg['Cloud IP Address'] }}" required>
-      </label>
       <div class="grid">
         <label>InfluxDB Organization
           <input name="InfluxDB Organization" value="{{ cfg['InfluxDB Organization'] }}" required>
@@ -102,7 +102,8 @@
         </label>
       </div>
       <label>InfluxDB Auth Token
-        <input type="password" name="InfluxDB Auth Token" value="{{ cfg['InfluxDB Auth Token'] }}" required>
+        <input type="password" name="InfluxDB Auth Token"
+               value="{{ cfg['InfluxDB Auth Token'] }}" required>
       </label>
     </fieldset>
 
@@ -111,10 +112,12 @@
       <legend>Upload & Windows</legend>
       <div class="grid">
         <label>Upload Periodicity (minutes)
-          <input type="number" min="1" step="1" name="Upload Periodicity" value="{{ cfg['Upload Periodicity'] }}" required>
+          <input type="number" min="1" step="1" name="Upload Periodicity"
+                 value="{{ cfg['Upload Periodicity'] }}" required>
         </label>
         <label>Sliding Window (minutes)
-          <input type="number" min="1" step="1" name="Sliding Window" value="{{ cfg['Sliding Window'] }}" required>
+          <input type="number" min="1" step="1" name="Sliding Window"
+                 value="{{ cfg['Sliding Window'] }}" required>
         </label>
       </div>
     </fieldset>
@@ -134,7 +137,8 @@
           </select>
         </label>
         <label>Reboot Time (HH:MM)
-          <input type="time" name="Reboot Time" id="reboot_time" value="{{ cfg['Reboot Time'] }}">
+          <input type="time" name="Reboot Time" id="reboot_time"
+                 value="{{ cfg['Reboot Time'] }}">
         </label>
       </div>
       <small>If “No Reboot (5)” is selected, time is ignored.</small>
@@ -173,9 +177,13 @@
               <input name="WiFi Password" type="password" placeholder="Password">
             </label>
           </div>
+          <label>Cloud Address
+            <input name="WiFi Cloud Address" placeholder="Hostname or IP">
+          </label>
           <button type="button" class="remove-network">Remove</button>
           <hr>
-        </div>`,
+        </div>
+      `,
       ttn: `
         <div class="network-box" data-type="lorattn">
           <h4>LoRa TTN</h4>
@@ -195,45 +203,95 @@
           </div>
           <button type="button" class="remove-network">Remove</button>
           <hr>
-        </div>`,
-      helium: `
-        <div class="network-box" data-type="lorahelium">
-          <h4>LoRa Helium</h4>
-          <div class="grid">
-            <label>Helium Org
-              <input name="Helium Org" placeholder="Organization name">
-            </label>
-            <label>Helium API Key
-              <input name="Helium API Key" placeholder="API key">
-            </label>
+        </div>
+      `,
+        helium: `
+          <div class="network-box" data-type="lorahelium">
+            <h4>LoRa Helium</h4>
+            <div class="grid">
+              <label>Helium Device ID
+                <input name="Helium Device ID" placeholder="my-helium-device-001">
+              </label>
+              <label>Helium App EUI
+                <input name="Helium App EUI" placeholder="70B3D57ED000XXXX">
+              </label>
+              <label>Helium App Key
+                <input name="Helium App Key" placeholder="Hex key">
+              </label>
+              <label>Helium Dev EUI
+                <input name="Helium Dev EUI" placeholder="Device EUI">
+              </label>
+            </div>
+            <button type="button" class="remove-network">Remove</button>
+            <hr>
           </div>
-          <button type="button" class="remove-network">Remove</button>
-          <hr>
-        </div>`
+        `,
+
     };
 
     // DOM refs
-    const list    = document.getElementById('network-list');
-    const modal   = document.getElementById('networkModal');
-    const addBtn  = document.getElementById('add-network');
+    const list   = document.getElementById('network-list');
+    const modal  = document.getElementById('networkModal');
+    const addBtn = document.getElementById('add-network');
 
     // Modal helpers
-    function openModal(){ modal.style.display = 'flex'; modal.setAttribute('aria-hidden','false'); }
-    function closeModal(){ modal.style.display = 'none';  modal.setAttribute('aria-hidden','true'); }
+    function openModal(){
+      modal.style.display = 'flex';
+      modal.setAttribute('aria-hidden','false');
+    }
+    function closeModal(){
+      modal.style.display = 'none';
+      modal.setAttribute('aria-hidden','true');
+    }
 
-    // Add box helpers
-    function appendBox(html){
+    // Add network block (optionally pre-filled from TOML)
+    function addNetwork(type, data){
       const wrapper = document.createElement('div');
-      wrapper.innerHTML = html.trim();
+      wrapper.innerHTML = TPL[type].trim();
       const box = wrapper.firstElementChild;
+
+      // Wire remove button
       box.querySelector('.remove-network').onclick = () => box.remove();
       list.appendChild(box);
+
+      // Pre-fill fields when data is provided (loaded from TOML)
+      if (data && type === 'wifi') {
+        const ssid    = box.querySelector('input[name="WiFi SSID"]');
+        const pwd     = box.querySelector('input[name="WiFi Password"]');
+        const cloud   = box.querySelector('input[name="WiFi Cloud Address"]');
+        if (ssid)  ssid.value  = data.ssid  || "";
+        if (pwd)   pwd.value   = data.password || "";
+        if (cloud) cloud.value = data.cloud_address || "";
+      }
+
+      if (data && type === 'ttn') {
+        const appEui = box.querySelector('input[name="TTN App EUI"]');
+        const appKey = box.querySelector('input[name="TTN App Key"]');
+        const devEui = box.querySelector('input[name="TTN Dev EUI"]');
+        if (appEui) appEui.value = data.app_eui || "";
+        if (appKey) appKey.value = data.app_key || "";
+        if (devEui) devEui.value = data.dev_eui || "";
+        // TTN Device ID (UI only, opcional)
+        const devId = box.querySelector('input[name="TTN Device ID"]');
+        if (devId && data.device_id) devId.value = data.device_id;
+      }
+
+      if (data && type === 'helium') {
+        const devId  = box.querySelector('input[name="Helium Device ID"]');
+        const appEui = box.querySelector('input[name="Helium App EUI"]');
+        const appKey = box.querySelector('input[name="Helium App Key"]');
+        const devEui = box.querySelector('input[name="Helium Dev EUI"]');
+        if (devId)  devId.value  = data.device_id || "";
+        if (appEui) appEui.value = data.app_eui   || "";
+        if (appKey) appKey.value = data.app_key   || "";
+        if (devEui) devEui.value = data.dev_eui   || "";
+      }
     }
 
     // Wire modal buttons
-    document.getElementById('btn-add-wifi').onclick   = () => { appendBox(TPL.wifi);   closeModal(); };
-    document.getElementById('btn-add-ttn').onclick    = () => { appendBox(TPL.ttn);    closeModal(); };
-    document.getElementById('btn-add-helium').onclick = () => { appendBox(TPL.helium); closeModal(); };
+    document.getElementById('btn-add-wifi').onclick   = () => { addNetwork('wifi');   closeModal(); };
+    document.getElementById('btn-add-ttn').onclick    = () => { addNetwork('ttn');    closeModal(); };
+    document.getElementById('btn-add-helium').onclick = () => { addNetwork('helium'); closeModal(); };
     document.getElementById('btn-cancel-modal').onclick = closeModal;
 
     // Open modal from "+ Add Network"
@@ -249,6 +307,19 @@
     }
     rp.addEventListener('change', syncTime);
     syncTime();
+
+    // Flask / Jinja gera um JSON em string e depois fazemos parse em JS
+    const existingNetworks = JSON.parse(
+      '{{ connectivity | default([]) | tojson | safe }}'
+    );
+
+    window.addEventListener('DOMContentLoaded', () => {
+      existingNetworks.forEach(n => {
+        if (n.type === 'wifi')       addNetwork('wifi',   n);
+        if (n.type === 'lorattn')    addNetwork('ttn',    n);
+        if (n.type === 'lorahelium') addNetwork('helium', n);
+      });
+    });
 
     // Client-side guard: at least one connectivity block is required
     document.querySelector('form').addEventListener('submit', (e) => {

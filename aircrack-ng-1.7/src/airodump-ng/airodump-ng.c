@@ -103,7 +103,7 @@
 //#define DEBUG
 
 //Packet filtering
-#define PACKET_POWER_FILTRATION -40
+#define PACKET_POWER_FILTRATION -50
 
 //Mobile device manufacturers list
 #define MORE_LINES 1024
