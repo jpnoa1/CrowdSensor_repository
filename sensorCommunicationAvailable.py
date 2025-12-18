@@ -81,24 +81,32 @@ try:
         else:
 
             sensor_uuid = sensor_configuration[0]
-
-            #Decide upload technology
-            if wifiAvailable and wifiConnected:
-                uploadTechnology = 'wifi'
-            elif loraAvailable:
-                uploadTechnology = 'lora'
-            else:
-                uploadTechnology = 'none'
-
-            #Check if upload technology changed
             current_upload_tech = sensor_configuration[12]
-
-            if current_upload_tech != uploadTechnology:    
-                print(f"Upload communication changed from '{current_upload_tech}' to '{uploadTechnology}'. Updating database.")
-                cwifi.execute("""UPDATE SensorConfiguration SET Upload_Technology=?, Last_Update=CURRENT_TIMESTAMP""", (uploadTechnology,))
-
+            
+            current_lora_network = None
+            if len(sensor_configuration) > 16:
+                current_lora_network = sensor_configuration[16]
+            
+            print(f"[BOOT] Current configuration - Technology: {current_upload_tech}, LoRa Network: {current_lora_network}")
+            
+            upload_tech, active_lora_network = decide_upload_technology(cursor=cwifi)
+            
+            print(f"[BOOT] Handover cascade completed - Selected: {upload_tech}")
+            if active_lora_network:
+                print(f"[BOOT] Active LoRa network: {active_lora_network}")
+            elif upload_tech == 'none':
+                print(f"[BOOT] No connectivity available - uploads disabled")
+            
+            if current_upload_tech != upload_tech:
+                print(f"[BOOT] Upload technology changed: '{current_upload_tech}' → '{upload_tech}'")
             else:
-                print(f"Upload technology remained the same: '{current_upload_tech}'. No changes made.")
+                print(f"[BOOT] Upload technology unchanged: '{upload_tech}'")
+            
+            lora_connected_flag = (upload_tech == 'lora')
+            cwifi.execute(
+                """UPDATE SensorCommunication SET LoRaConnected=?, Last_Update=CURRENT_TIMESTAMP""",
+                (lora_connected_flag,)
+            )
 
 
             #Check if detection interface changed

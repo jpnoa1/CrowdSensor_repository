@@ -31,6 +31,12 @@ try:
 
         sensor_uuid = sensor_configuration[0]
         current_upload_technology = sensor_configuration[12]
+        
+        current_lora_network = None
+        if len(sensor_configuration) > 16:
+            current_lora_network = sensor_configuration[16]
+        
+        print(f"[CHECK] Current technology: '{current_upload_technology}', LoRa network: {current_lora_network}")
 
     sensor_communication = cwifi.execute("""SELECT * FROM SensorCommunication""").fetchone()
 
@@ -64,7 +70,12 @@ else:
 #Check LoRa upload connection
 if sensor_configuration is not None and current_upload_technology == "lora":
     if loraAvailable:
-        loraConnected = check_lora_connection_no_Join()
+        if current_lora_network:
+            loraConnected = check_lora_network_status(current_lora_network)
+            print(f"[CHECK] LoRa network {current_lora_network} status: {'joined' if loraConnected else 'failed'}")
+        else:
+            loraConnected = check_lora_connection_no_Join()
+            print("[CHECK] Active_LoRa_Network is NULL, using legacy check")
     else:
         set_lora_connected(False)
         loraConnected = False
@@ -97,6 +108,39 @@ if curr_detect_if != detection_interface:
 
         write_crontab_file(status, detection_interface, uploadPeriodicity, rebootPeriodicity, rebootTime)
 
+needs_handover = False
+
+if current_upload_technology == "wifi":
+    if not wifiConnected:
+        needs_handover = True
+        print("[CHECK] WiFi connection lost, triggering handover")
+elif current_upload_technology == "lora":
+    if not loraConnected:
+        needs_handover = True
+        if current_lora_network:
+            print(f"[CHECK] LoRa network {current_lora_network} failed, triggering handover cascade")
+        else:
+            print("[CHECK] LoRa connection lost, triggering handover")
+elif current_upload_technology == "none":
+    needs_handover = True
+    print("[CHECK] No active technology, attempting handover cascade")
+
+if needs_handover:
+    new_tech, new_network = decide_upload_technology(cursor=cwifi)
+    
+    print(f"[CHECK] Handover completed - New technology: {new_tech}")
+    if new_network:
+        print(f"[CHECK] Active LoRa network: {new_network}")
+    elif new_tech == 'none':
+        print("[CHECK] Handover failed - no connectivity available")
+    
+    lora_connected_flag = (new_tech == 'lora')
+    cwifi.execute(
+        """UPDATE SensorCommunication SET LoRaConnected=?, Last_Update=CURRENT_TIMESTAMP""",
+        (lora_connected_flag,)
+    )
+else:
+    print(f"[CHECK] Current technology '{current_upload_technology}' operational, no handover needed")
 
 #Commit changes
 connwifi.commit()

@@ -40,6 +40,11 @@ except sqlite3.Error as error:
     print("Failed to read sensor configuration from local database.")
     exit(0)
 
+finally:
+    if connwifi:
+        cwifi.close()
+        connwifi.close()
+
 
 dataAtual=dt.datetime.now(pytz.utc).replace(tzinfo=None)
 
@@ -53,15 +58,8 @@ json_location = json.dumps(location)
 
 # Send sensor location to InfluxDB
 if uploadTechnology.lower() == "wifi":
-    #publish_mqtt_message(json_location, f"mqtt/wifi/sensorLocation/{influxdb_bucket}/{ip_address}/{sensorName}")
-
-    cmd =f"curl -i   --request POST \"http://{cloud_ip_addr}:8086/api/v2/write?org={influx_org}&bucket={influx_bucket}&precision=s\"  \
-                     --header \"Authorization: Token {influx_token}\"  \
-                     --header \"Content-Type: text/plain; charset=utf-8\"  \
-                     --header \"Accept: application/json\" \
-                     --data-binary 'sensorLocation,sensor_UUID={sensor_UUID},sensor_name={sensor_name} latitude={latitude},longitude={longitude} {str(int( (dataAtual - dt.datetime(1970,1,1)).total_seconds()))}'"
-    os.system(cmd)
-
+   
+    publish_mqtt_message(json_location, f"sttoolkit/mqtt/wifi/sensorLocation/{influx_bucket}/{ip_address}/{sensor_name}/{sensor_UUID}")
     print(f"Location '({latitude},{longitude})' was sent to the cloud server for sensor '{sensor_name}'.")
 
 elif uploadTechnology.lower() == "lora":
@@ -86,6 +84,6 @@ elif uploadTechnology.lower() == "lora":
         print(f"Erro durante envio via LoRa: {e}")
     finally:
         try:
-            rak.close()
+            rak.disconnect()
         except:
             pass

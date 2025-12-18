@@ -32,6 +32,10 @@ try:
         upload_periodicity = sensor_configuration[0][10]
         slidingWindow = sensor_configuration[0][11]
         uploadTechnology = sensor_configuration[0][12]
+        
+        active_lora_network = None
+        if len(sensor_configuration[0]) > 16:
+            active_lora_network = sensor_configuration[0][16]
 
         if uploadTechnology.lower() == "wifi":
             ip_address = cwifi.execute("""SELECT IP_Address FROM SensorCommunication""").fetchone()[0]
@@ -98,34 +102,63 @@ if uploadTechnology.lower() == "wifi":
 # Upload via LoRa
 
 elif uploadTechnology.lower() == "lora":
-
-    # Initialize RAK3172
+    
+    if not active_lora_network:
+        print("[UPLOAD] Upload_Technology is 'lora' but Active_LoRa_Network is NULL!")
+        print("[UPLOAD] Run sensorCommunicationCheck.py to trigger handover")
+        exit(1)
+    
+    print(f"[UPLOAD] Using LoRa ({active_lora_network}) to send data (count: {detected_devices})")
+    
+    try:
+        network_creds = cwifi.execute(
+            """SELECT app_eui, app_key, dev_eui FROM LoRaNetworks WHERE name=?""",
+            (active_lora_network,)
+        ).fetchone()
+        
+        if network_creds is None:
+            print(f"[UPLOAD] Network '{active_lora_network}' not found in LoRaNetworks table!")
+            exit(1)
+        
+        app_eui, app_key, dev_eui = network_creds
+        print(f"[UPLOAD] Using credentials for {active_lora_network} (Dev EUI: {dev_eui})")
+    
+    except sqlite3.Error as error:
+        print(f"[UPLOAD] Failed to read LoRa credentials: {error}")
+        exit(1)
+    
     rak = RAK3172("/dev/ttyAMA0", 115200)
     rak.connect()
-    # Build payload (same logic as before)
+    
+    print(f"[UPLOAD] Configuring RAK3172 for {active_lora_network}")
+    rak.set_dev_eui(dev_eui)
+    rak.set_app_eui(app_eui)
+    rak.set_app_key(app_key)
+    
+    joined = check_lora_network_status(active_lora_network)
+    print(f"[UPLOAD] Join status check: {'joined' if joined else 'not joined'}")
+    
+    if not joined:
+        print(f"[UPLOAD] Not joined to {active_lora_network}, marking as failed")
+        mark_lora_network_failed(active_lora_network)
+        print("[UPLOAD] Handover will be triggered on next sensorCommunicationCheck cycle")
+        rak.disconnect()
+        exit(0)
+    
     message = f"C,{detected_devices}"
-    print(f"Payload to send: {message}")
-
-    # Convert to hexadecimal (LoRaWAN expects hex payloads)
     payload_hex = message.encode().hex()
-
-    # Try sending payload on port 2
-    sent = rak.send_lorawan_data(2, payload_hex)
-
+    
+    print(f"[UPLOAD] Sending payload: {message} (hex: {payload_hex})")
+    sent = rak.send_lorawan_data(port=2, data=payload_hex)
+    
     if not sent:
-        print("Failed to send via LoRa. Trying to re-join…")
-        try:
-            #rak.join_network(join=1, auto_join=0, reattempt_interval=8, join_attempts=8)
-            time.sleep(1)
-            sent = rak.send_lorawan_data(2, payload_hex)
-        except Exception as e:
-            print(f"Unexpected error during join: {e}")
+        print(f"[UPLOAD] Failed to send via {active_lora_network}")
+        mark_lora_network_failed(active_lora_network)
+        print("[UPLOAD] Network marked as failed, handover will be attempted")
     else:
-        print(f"Message sent successfully: {message}")
-
-    # Listen for downlinks during the upload window
-    if sent:
-        print("Waiting for downlinks...")
+        print(f"[UPLOAD] Successfully sent via {active_lora_network}")
+        
+        print(f"[UPLOAD] Listening for downlinks for {upload_periodicity} min...")
         t_end = time.time() + (upload_periodicity * 60) - 25
         #t_end = 20
         try:
@@ -149,17 +182,12 @@ elif uploadTechnology.lower() == "lora":
                     else:
                         print("Unknown command received.")
                 time.sleep(1)
-            
-            STATUS_FILE = "/tmp/rak_njs"
-
-            joined = rak.check_join_status()
-            print("este foi o joined"+str(joined))   # returns True/False
-            with open(STATUS_FILE, "w") as f:  # write plain text: '1' or '0'
-                f.write("1" if joined else "0")
-            print(f"Join status saved to {STATUS_FILE}: {'1' if joined else '0'}")
                 
         except KeyboardInterrupt:
-            print("Interrupted by user, exiting…")
+            print("[UPLOAD] Interrupted by user, exiting...")
+        except Exception as e:
+            print(f"[UPLOAD] LoRa communication error: {e}")
+            mark_lora_network_failed(active_lora_network)
     
     rak.disconnect()
 

@@ -932,17 +932,21 @@ def set_lora_connected(loraAvailable:bool):
     except sqlite3.Error as error:
         print("Failed to update database.", error)
 
-def set_upload_technology(upload_technology):
+def set_upload_technology(upload_technology, cursor=None):
+    own_connection = (cursor is None)
     try:
-
-        connwifi = sqlite3.connect('/home/kali/Desktop/DB/SensorConfiguration.db', timeout=30)
-        cwifi = connwifi.cursor()
+        if cursor is None:
+            connwifi = sqlite3.connect('/home/kali/Desktop/DB/SensorConfiguration.db', timeout=30)
+            cwifi = connwifi.cursor()
+        else:
+            cwifi = cursor
 
         cwifi.execute("""UPDATE SensorConfiguration SET Upload_Technology=?, Last_Update=CURRENT_TIMESTAMP""", (upload_technology,))
 
-        connwifi.commit()
-        cwifi.close()
-        connwifi.close()
+        if own_connection:
+            connwifi.commit()
+            cwifi.close()
+            connwifi.close()
 
     except sqlite3.Error as error:
         print("Failed to update database.", error)
@@ -976,30 +980,194 @@ def get_upload_technology():
         print("Upload via 'lora' automatically selected for data communication.")
         return 'lora'
 
-def decide_upload_technology():
+def try_join_lora_network(network_name, app_eui, app_key, dev_eui, join_attempts=2):
+    """
+    Attempt to join a specific LoRa network with network-specific credentials
+    
+    Args:
+        network_name: Network identifier (e.g., "TTN", "Helium")
+        app_eui: Application EUI (16 hex chars)
+        app_key: Application Key (32 hex chars)
+        dev_eui: Device EUI (16 hex chars, network-specific)
+        join_attempts: Number of join attempts (default 2)
+    
+    Returns:
+        bool: True if joined successfully, False otherwise
+    """
+    rak = RAK3172("/dev/ttyAMA0", 115200)
+    
     try:
+        rak.connect()
+        logger.info(f"[LORA] Configuring RAK3172 for {network_name}")
+        
+        rak.set_dev_eui(dev_eui)
+        rak.set_app_eui(app_eui)
+        rak.set_app_key(app_key)
+        
+        logger.info(f"[LORA] Attempting join to {network_name} (Dev EUI: {dev_eui})")
+        joined = rak.join_network(
+            join=1, 
+            auto_join=0, 
+            reattempt_interval=5, 
+            join_attempts=join_attempts
+        )
+        
+        if joined:
+            logger.info(f"[LORA] Successfully joined {network_name}")
+            
+            with open(f"/tmp/rak_njs_{network_name.lower()}", "w") as f:
+                f.write("1")
+            
+            with open("/tmp/rak_njs", "w") as f:
+                f.write("1")
+            
+            with open("/tmp/rak_network", "w") as f:
+                f.write(network_name)
+            
+            return True
+        else:
+            logger.warning(f"[LORA] Failed to join {network_name}")
+            
+            with open(f"/tmp/rak_njs_{network_name.lower()}", "w") as f:
+                f.write("0")
+            
+            return False
+    
+    except Exception as e:
+        logger.error(f"[LORA] Error joining {network_name}: {e}")
+        return False
+    
+    finally:
+        rak.disconnect()
 
-        connwifi = sqlite3.connect('/home/kali/Desktop/DB/SensorConfiguration.db', timeout=30)
-        cwifi = connwifi.cursor()
 
-        sensor_communication = cwifi.execute("""SELECT WifiAvailable, LoRaAvailable, WifiConnected, LoRaConnected FROM SensorCommunication""").fetchone()
+def mark_lora_network_failed(network_name):
+    """
+    Mark a LoRa network as failed (triggers handover on next check)
+    
+    Args:
+        network_name: Network identifier (e.g., "TTN", "Helium")
+    """
+    try:
+        with open(f"/tmp/rak_njs_{network_name.lower()}", "w") as f:
+            f.write("0")
+        logger.warning(f"[LORA] Network {network_name} marked as failed")
+    except Exception as e:
+        logger.error(f"[LORA] Failed to mark {network_name} as failed: {e}")
+
+
+def check_lora_network_status(network_name):
+    """
+    Check if a specific LoRa network is currently joined
+    
+    Args:
+        network_name: Network identifier (e.g., "TTN", "Helium")
+    
+    Returns:
+        bool: True if network is joined, False otherwise
+    """
+    status_file = f"/tmp/rak_njs_{network_name.lower()}"
+    
+    if not os.path.exists(status_file):
+        return False
+    
+    try:
+        with open(status_file, "r") as f:
+            status = f.read().strip()
+            return status == "1"
+    except:
+        return False
+
+
+def decide_upload_technology(cursor=None):
+    """
+    Handover cascade: WiFi (priority 1) → LoRa networks (priority 2+)
+    
+    Args:
+        cursor: Reuse existing DB connection to avoid locks
+    
+    Returns:
+        tuple: (upload_tech, network_name)
+               - upload_tech: 'wifi', 'lora', or 'none'
+               - network_name: Active LoRa network name or None
+    """
+    own_connection = (cursor is None)
+    
+    if cursor is None:
+        try:
+            connwifi = sqlite3.connect('/home/kali/Desktop/DB/SensorConfiguration.db', timeout=30)
+            cwifi = connwifi.cursor()
+        except sqlite3.Error as error:
+            logger.error(f"[HANDOVER] Database connection error: {error}")
+            return ('none', None)
+    else:
+        cwifi = cursor
+        connwifi = None
+    
+    try:
+        sensor_communication = cwifi.execute(
+            """SELECT WifiAvailable, LoRaAvailable, WifiConnected FROM SensorCommunication"""
+        ).fetchone()
 
         wifiAvailable = sensor_communication[0]
         loraAvailable = sensor_communication[1]
         wifiConnected = sensor_communication[2]
-        loraConnected = sensor_communication[3]
+
+        upload_tech = 'none'
+        active_network = None
 
         if wifiAvailable and wifiConnected:
-            set_upload_technology('wifi')
-        elif loraAvailable and loraConnected:
-            set_upload_technology('lora')
+            upload_tech = 'wifi'
+            logger.info("[HANDOVER] Using WiFi for uploads")
 
-        connwifi.commit()
-        cwifi.close()
-        connwifi.close()
+        elif loraAvailable:
+            logger.info("[HANDOVER] WiFi unavailable, trying LoRa networks in priority order")
+            
+            networks = cwifi.execute(
+                """SELECT name, app_eui, app_key, dev_eui FROM LoRaNetworks ORDER BY id ASC"""
+            ).fetchall()
+            
+            if not networks:
+                logger.warning("[HANDOVER] No LoRa networks configured in database")
+            else:
+                for net_name, app_eui, app_key, dev_eui in networks:
+                    logger.info(f"[HANDOVER] Trying {net_name}...")
+                    
+                    if try_join_lora_network(net_name, app_eui, app_key, dev_eui, join_attempts=2):
+                        upload_tech = 'lora'
+                        active_network = net_name
+                        logger.info(f"[HANDOVER] Successfully using LoRa ({net_name})")
+                        break
+                    else:
+                        logger.info(f"[HANDOVER] {net_name} failed, trying next network")
+
+        if active_network:
+            cwifi.execute(
+                """UPDATE SensorConfiguration SET Upload_Technology=?, Active_LoRa_Network=?, Last_Update=CURRENT_TIMESTAMP""",
+                (upload_tech, active_network)
+            )
+        else:
+            cwifi.execute(
+                """UPDATE SensorConfiguration SET Upload_Technology=?, Active_LoRa_Network=NULL, Last_Update=CURRENT_TIMESTAMP""",
+                (upload_tech,)
+            )
+
+        if own_connection:
+            connwifi.commit()
+
+        if upload_tech == 'none':
+            logger.error("[HANDOVER] No connectivity available - uploads disabled")
+
+        return (upload_tech, active_network)
 
     except sqlite3.Error as error:
-        print("Failed to update database.", error)
+        logger.error(f"[HANDOVER] Database error during technology selection: {error}")
+        return ('none', None)
+
+    finally:
+        if own_connection and connwifi:
+            cwifi.close()
+            connwifi.close()
 
 
 
