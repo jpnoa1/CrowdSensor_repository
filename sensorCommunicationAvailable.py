@@ -39,8 +39,8 @@ else:
 #If LoRa available, get dev_eui from LoRa board
 if loraAvailable:
     dev_eui = get_dev_eui()
-    #loraConnected= True
-    loraConnected = check_lora_connection() 
+    # Don't check connection here - let decide_upload_technology() handle join
+    loraConnected = False
 else:
     loraConnected = False
     dev_eui = ""

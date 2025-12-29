@@ -5,14 +5,33 @@ import lgpio
 
 PIN = 26       # Button GPIO
 CHIP = 4       # gpiochip4 on Raspberry Pi 5
-HOLD_TIME = 10         # Must press 10 seconds continuously
+HOLD_TIME = 5         # Must press 5 seconds continuously
 WINDOW_TIME = 40       # Only active during first 40 seconds of boot
 
 HOTSPOT_SSID = "CrowdSensor-Setup"
 HOTSPOT_PASSWORD = "kalikali"
 
+def wait_for_network_manager(timeout=60):
+    """Wait for NetworkManager to be ready, return True if ready within timeout"""
+    print("[SetupButton] Waiting for NetworkManager to be ready...")
+    start = time.time()
+    while time.time() - start < timeout:
+        try:
+            result = subprocess.run(
+                ["systemctl", "is-active", "NetworkManager.service"],
+                capture_output=True, text=True, timeout=2
+            )
+            if result.stdout.strip() == "active":
+                print("[SetupButton] NetworkManager is ready.")
+                return True
+        except Exception as e:
+            pass
+        time.sleep(1)
+    print("[SetupButton] ERROR: NetworkManager not ready after timeout!")
+    return False
+
 print("[SetupButton] Boot window started (40 seconds).")
-print("[SetupButton] Hold button for 10 seconds to enter configuration mode.")
+print("[SetupButton] Hold button for 5 seconds to enter configuration mode.")
 
 # Open GPIO chip
 h = lgpio.gpiochip_open(CHIP)
@@ -40,6 +59,12 @@ try:
 
             if held >= HOLD_TIME:
                 print("\n[SetupButton] Trigger detected!")
+                
+                # Wait for NetworkManager to be ready
+                if not wait_for_network_manager(timeout=60):
+                    print("[SetupButton] Cannot start hotspot without NetworkManager. Exiting.")
+                    break
+                
                 print("[SetupButton] Enabling hotspot...")
 
                 # Start hotspot (NetworkManager)

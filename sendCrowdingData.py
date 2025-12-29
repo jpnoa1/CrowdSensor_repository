@@ -57,7 +57,7 @@ dataAnalizar= dataAtual - dt.timedelta(minutes=int(slidingWindow))
 # Get number of devices detected from database
 try:
 
-    conndev= sqlite3.connect('/home/kali/Desktop/DB/DeviceRecords.db' , timeout=30)
+    conndev= sqlite3.connect('/home/kali/Desktop/MemoryDB/DeviceRecords.db' , timeout=30)
     cdev = conndev.cursor()
 
     # Device counting - Data packets

@@ -1,110 +1,38 @@
-Apple
-Samsung
-SAMSUNG
-Huawei
+Apple, Inc.
+Samsung Electronics
+Huawei Device
+Huawei Technologies
 Xiaomi
-XIAOMI
 OnePlus
-Oppo
-OPPO
-Google
-Lg
-LG
-Acer 
-Airo Wireless 
-Alcatel 
-Amazon 
-Amazon.com
-Amoi
-Archos
-Asus
-ASUS
-At&t
-AT&T
-Barnes&Noble
-BenQ
-Best Buy
-Ningbo Bird
+OPPO Digital
+Oppo Mobile Telecommunications
+Google, Inc.
+ASUSTek COMPUTER INC.
 BlackBerry
-BLU
-Casio
-Caterpillar
-COWON
-Dell
-Doro
-EMPORIA
-Ericsson
-Essential
-ETEN
+BLU Products
 Fairphone
-Firefly
-Fujitsu
-Garmin
 Gionee
-Haier
-Helio
-Hitachi
-HITACHI
-Honor
-HP
-HTC 
-i-mate
-INQ
-Jolla
-kyocera
-KYOCERA
-Lava
-Lemon
+HTC Corporation
+Lava International
 Lenovo
-Lumigon
-Maxon
-MEIZU
-MediaTek
-Microsoft
-Mitac
-Mitsubishi
-Motorola
-Nec 
-NEC 
-Neonode
+LG Electronics
+LG Innotek
+Meizu
+Microsoft Mobile Oy
+Motorola Mobility
+Motorola (Wuhan) Mobility
 Nokia
 Nothing Technology
-Notion
 Nubia
-Nvidia
-NVIDIA
-O2
-Orange
-Orbic
-Palm
-Panasonic
-Pantech
-Philips
-PLUM
-Razer
 Realme
-Sagem
-Sanyo
-SANYO
-Sendo
-Sharp 
-SHARP 
-Siemens
-SIEMENS 
-Sierra Wireless
-Sonim
+SHARP Corporation
 Sony
-SONY
-Ericsson
-TCL
-T-Mobile
-Toshiba
-Verizon
-Vertu
-Videocon
-ViewSonic
-vivo 
-Vivo 
-Vizio
-Yota
-zte 
+Tcl Communication
+Tcl Incorporated
+TCL King
+TCL New Technology
+TCL Technoly Electronics
+TCL Yuxin Zhixing Technology
+vivo Mobile
+zte corporation
+Honor

@@ -441,16 +441,18 @@ def write_crontab_file(status, detection_if, upload_periodicity, reboot_periodic
     f.write("*/5 * * * * /usr/bin/python3 /home/kali/Desktop/sensorCommunicationCheck.py\n")
     if status == "Active":
         f.write("# Wi-Fi detection of devices\n")
-        f.write("*/10 * * * * timeout -k 1 590s sudo airodump-ng --background 1 " + str(detection_if + "\n"))
-        f.write("*/10 * * * * sleep 595 && sudo pkill airodump-ng\n")
+        #f.write("*/10 * * * * timeout -k 1 590s sudo airodump-ng --background 1 " + str(detection_if + "\n"))
+        #f.write("*/10 * * * * sleep 595 && sudo pkill airodump-ng\n")
+        f.write("@reboot sleep 90 && sudo /usr/bin/python3 /home/kali/Desktop/sensorStartup.py\n")
         f.write("# Periodic upload of crowding data to the Cloud Server\n")
         f.write("*/" + str(upload_periodicity) + " * * * * /usr/bin/python3 /home/kali/Desktop/sendCrowdingData.py \n")
         f.write("# Periodic delete of outdated and unnecessary data from local database\n")
         f.write("0 * * * * /usr/bin/python3 /home/kali/Desktop/dataRetentionManager.py 30\n")
     elif status == "Disabled":
         f.write("# Wi-Fi detection of devices\n")
-        f.write("#*/10 * * * * timeout -k 1 590s sudo airodump-ng --background 1 " + str(detection_if + "\n"))
-        f.write("#*/10 * * * * sleep 595 && sudo pkill airodump-ng\n")
+        #f.write("#*/10 * * * * timeout -k 1 590s sudo airodump-ng --background 1 " + str(detection_if + "\n"))
+        f.write("#@reboot sleep 90 && sudo /usr/bin/python3 /home/kali/Desktop/sensorStartup.py\n")
+        #f.write("#*/10 * * * * sleep 595 && sudo pkill airodump-ng\n")
         f.write("# Periodic upload of crowding data to the Cloud Server\n")
         f.write("#*/" + str(upload_periodicity) + " * * * * /usr/bin/python3 /home/kali/Desktop/sendCrowdingData.py \n")
         f.write("# Periodic delete of outdated and unnecessary data from local database\n")
@@ -1191,3 +1193,17 @@ def downlink_cb(mType, port, length, msgHex):
         #receive_disable()
     else:
         logger.info(f"=> comando desconhecido '{payload}'")
+
+def publish_location_mqtt_message(msg_payload, topic):
+    client = connect_mqtt()
+
+    result = client.publish(topic, msg_payload)
+
+    # result: [0, 1]
+    status = result[0]
+    if status == 0:
+        print(f"Send `{msg_payload}` to topic `{topic}`.")
+        return True
+    else:
+        print("\nFailed to publish mqtt message.")
+        return False

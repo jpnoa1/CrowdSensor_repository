@@ -59,7 +59,7 @@ json_location = json.dumps(location)
 # Send sensor location to InfluxDB
 if uploadTechnology.lower() == "wifi":
    
-    publish_mqtt_message(json_location, f"sttoolkit/mqtt/wifi/sensorLocation/{influx_bucket}/{ip_address}/{sensor_name}/{sensor_UUID}")
+    publish_location_mqtt_message(json_location, f"sttoolkit-test/mqtt/wifi/sensorLocation/{influx_bucket}/{ip_address}/{sensor_name}/{sensor_UUID}")
     print(f"Location '({latitude},{longitude})' was sent to the cloud server for sensor '{sensor_name}'.")
 
 elif uploadTechnology.lower() == "lora":
