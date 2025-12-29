@@ -5,7 +5,7 @@ It integrates configurable sensor nodes capable of detecting nearby mobile devic
 
 ---
 
-## 🧠 Project Overview
+## Project Overview
 
 The system is designed for **real-time crowd estimation** in public spaces using device fingerprinting and signal detection techniques.  
 It operates under a flexible communication architecture that allows dynamic switching between **Wi-Fi** and **LoRaWAN** networks depending on connectivity and bandwidth availability.
@@ -19,7 +19,7 @@ Core features include:
 
 ---
 
-## ⚙️ System Architecture
+## System Architecture
 
 Each sensor node consists of:
 - **Main scripts** responsible for data collection and transmission (`sendCrowdingData.py`, `sendSensorLocation.py`).
@@ -30,7 +30,7 @@ Each sensor node consists of:
 
 ---
 
-## 🛰 Communication Workflow
+## Communication Workflow
 
 1. **Data Collection** — Device probes are captured via Wi-Fi sniffing or BLE scanning.  
 2. **Local Processing** — Data is filtered, deduplicated, and stored locally in SQLite.  
@@ -41,7 +41,7 @@ Each sensor node consists of:
 
 ---
 
-## 🧰 Dependencies
+## Dependencies
 
 This project relies on:
 - Python ≥ 3.10  
