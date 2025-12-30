@@ -3,6 +3,7 @@ from scapy.all import *
 import sqlite3
 import signal
 import sys
+import sqlite3
 
 from sensorFunctions import publish_mqtt_message
 
@@ -19,6 +20,12 @@ sc_con = sqlite3.connect('/home/kali/Desktop/DB/SensorConfiguration.db', timeout
 sc_cur = sc_con.cursor()
 
 PACKET_POWER_FILTRATION = sc_cur.execute("Select Power_Filtration from SensorConfiguration;").fetchone()[0]
+
+#for sensor calibration info
+sensor_info = sc_cur.execute("SELECT Sensor_UUID, Sensor_Name FROM SensorConfiguration;").fetchone()
+SENSOR_UUID = sensor_info[0] if sensor_info else "UNKNOWN_UUID"
+SENSOR_NAME = sensor_info[1] if sensor_info else "UNKNOWN_NAME"
+
 sc_con.close()
 
 OUI_DICT = {}
@@ -37,9 +44,9 @@ def frame_processing(frame):
             rssi = frame[RadioTap].dBm_AntSignal    
         except Exception:
             return                                  
-
+        
         ts = int(time.time() * 1000)                
-        payload = f"{ts},{rssi}"                    
+        payload = f"calibration,sensor_uuid={SENSOR_UUID},sensor_name={SENSOR_NAME} rssi={rssi},timestamp={ts}"                   
         topic = "calibration/rssi"                  
 
         publish_mqtt_message(payload, topic)        

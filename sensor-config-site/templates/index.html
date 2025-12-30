@@ -79,12 +79,13 @@
           <option value="Disabled" {{ "selected" if cfg['Status']=="Disabled" else "" }}>Disabled</option>
         </select>
       </label>
+      <small>Active: device is performing detection. Disabled: device is not counting.</small>
     </fieldset>
 
-    <!-- Processing -->
+    <!-- Sensibility -->
     <fieldset>
-      <legend>Processing</legend>
-      <label>Power Filtration (dB)
+      <legend>Sensibility</legend>
+      <label>Power Filtration (dBm)
         <input name="Power Filtration" type="number" step="any"
                value="{{ cfg['Power Filtration'] }}" required>
       </label>
