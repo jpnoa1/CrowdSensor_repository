@@ -6,3 +6,5 @@ teste_Downlink_reboot/
 DB/
 testeRAK372h/
 lg-master/
+sniffer.pid
+MemoryDB/

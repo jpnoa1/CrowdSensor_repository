@@ -39,14 +39,22 @@ def frame_processing(frame):
     mac = frame[Dot11].addr2.upper()                # (frame[Dot11].addr2" -> Transmitter/Source Address)
     oui = mac[:8]
 
-    if mac == CALIBRATION_MAC:                      
+    if mac == CALIBRATION_MAC:                    
         try:
             rssi = frame[RadioTap].dBm_AntSignal    
         except Exception:
             return                                  
         
-        ts = int(time.time() * 1000)                
-        payload = f"calibration,sensor_uuid={SENSOR_UUID},sensor_name={SENSOR_NAME} rssi={rssi},timestamp={ts}"                   
+                    
+        ts_ms = int(time.time() * 1000)
+        ts_ns = ts_ms * 1_000_000
+
+        payload = (
+            f"calibration,"
+            f"sensor_uuid={SENSOR_UUID},sensor_name={SENSOR_NAME} "
+            f"rssi={rssi} {ts_ns}"
+        )
+                   
         topic = "calibration/rssi"                  
 
         publish_mqtt_message(payload, topic)        

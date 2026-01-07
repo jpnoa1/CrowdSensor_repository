@@ -14,15 +14,15 @@ dr_cur.execute("CREATE TABLE Data_Packets (Frame_Type TEXT, ID TEXT, First_Recor
 dr_cur.execute("CREATE TABLE Probe_Requests (Frame_Type TEXT, ID TEXT, First_Record DATETIME, Last_Time_Found DATETIME, Manufacturer TEXT);")
 dr_con.commit()
 
-# snifferProcess = subprocess.Popen(
-#     ["sudo", "/usr/bin/python3", "/home/kali/Desktop/crowdingSniffer.py"]#,
-#     #stdout=subprocess.PIPE,
-#     #stderr=subprocess.PIPE,
-#     #text=True
-# )
+snifferProcess = subprocess.Popen(
+    ["sudo", "/usr/bin/python3", "/home/kali/Desktop/crowdingSniffer.py"]#,
+    #stdout=subprocess.PIPE,
+    #stderr=subprocess.PIPE,
+    #text=True
+)
 
-#with open(PID_FILE, "w") as f:
-#    f.write(str(snifferProcess.pid))
+with open(PID_FILE, "w") as f:
+   f.write(str(snifferProcess.pid))
 
 #hopperProcess = subprocess.Popen(
 #    ["sudo", "/usr/bin/python3", "/home/kali/Desktop/channelHopper.py"]
