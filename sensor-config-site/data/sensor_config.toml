@@ -11,6 +11,7 @@ app_key = "AC1F09FFFE15A753AC1F09FFF8683172"
 dev_eui = "AC1F09FFFE15A753"
 
 [sensor]
+"Sensor Name" = "Lora_sensor"
 Latitude = "38.73690"
 Longitude = "-9.1427"
 Status = "Active"

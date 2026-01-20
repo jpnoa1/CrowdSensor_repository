@@ -42,6 +42,7 @@ os.makedirs(DATA_DIR, exist_ok=True)
 REBOOT_OPTIONS = {"0":"Daily","1":"Every two days","2":"Every three days","3":"Weekly","4":"Monthly","5":"No Reboot"}
 
 DEFAULTS: Dict[str, str] = {
+    "Sensor Name": "",
     "Latitude": "38.7369",
     "Longitude": "-9.1427",
     "Status": "Active",
@@ -117,14 +118,16 @@ def parse_connectivity(form) -> tuple[list[dict], list[str]]:
     ssids  = [s.strip() for s in form.getlist("WiFi SSID")]
     pwds   = [s.strip() for s in form.getlist("WiFi Password")]
     clouds = [s.strip() for s in form.getlist("WiFi Cloud Address")]
+    mqtt_ports = [s.strip() for s in form.getlist("MQTT Port")]
 
-    for ssid, pwd, addr in zip(ssids, pwds, clouds):
+    for ssid, pwd, addr, port in zip(ssids, pwds, clouds, mqtt_ports):
         if ssid or pwd or addr:
             conn.append({
                 "type": "wifi",
                 "ssid": ssid,
                 "password": pwd,
-                "cloud_address": addr
+                "cloud_address": addr,
+                "mqtt_port": port if port else "1883"
             })
         else:
             errs.append("Wi-Fi entries must include SSID, Password and Cloud Address.")
@@ -173,6 +176,13 @@ def validate_sensor(cfg: Dict[str, str]) -> List[str]:
     # Required scalar fields
     for key in DEFAULTS.keys():
         if key == "Reboot Time" and cfg.get("Reboot Periodicity") == "5":
+            continue
+        if key == "Sensor Name":
+            sensor_name = str(cfg.get(key, "")).strip()
+            if not sensor_name:
+                errors.append("Sensor Name is required.")
+            elif len(sensor_name) > 50:
+                errors.append("Sensor Name must be 50 characters or less.")
             continue
         if not str(cfg.get(key, "")).strip():
             errors.append(f"{key} is required.")
@@ -232,6 +242,7 @@ def validate_connectivity(conn):
             ssid  = c.get("ssid", "")
             pwd   = c.get("password", "")
             cloud = c.get("cloud_address", "")
+            mqtt_port = c.get("mqtt_port", "1883")
 
             if not ssid:
                 errors.append(f"Wi-Fi #{i}: SSID is required.")
@@ -243,6 +254,11 @@ def validate_connectivity(conn):
                 errors.append(
                     f"Wi-Fi #{i}: Cloud Address must be a valid hostname or IP."
                 )
+            
+            # Validate MQTT Port
+            port_int = _to_int(mqtt_port)
+            if port_int is None or not (1 <= port_int <= 65535):
+                errors.append(f"Wi-Fi #{i}: MQTT Port must be a number between 1 and 65535.")
 
         # --- TTN ------------------------------------------------------------
         if t == "lorattn":

@@ -64,7 +64,7 @@ def apply_config_from_toml(toml_path: str):
                 Upload_Periodicity, Sliding_Window, Reboot_Periodicity, Reboot_Time, Last_Update
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
         """, (
-            getnode(), sensor.get("Sensor_Name"), sensor.get("Latitude"), sensor.get("Longitude"),
+            getnode(), sensor.get("Sensor Name"), sensor.get("Latitude"), sensor.get("Longitude"),
             sensor.get("Status", "enabled"), sensor.get("Power Filtration"),
             wifi_cloud_address, sensor.get("InfluxDB Organization"),
             sensor.get("InfluxDB Bucket"), sensor.get("InfluxDB Auth Token"),
@@ -83,7 +83,7 @@ def apply_config_from_toml(toml_path: str):
                 Upload_Periodicity=?, Sliding_Window=?, Reboot_Periodicity=?, Reboot_Time=?,
                 Last_Update=CURRENT_TIMESTAMP
         """, (
-            getnode(), sensor.get("Sensor_Name"), sensor.get("Latitude"), sensor.get("Longitude"),
+            getnode(), sensor.get("Sensor Name"), sensor.get("Latitude"), sensor.get("Longitude"),
             sensor.get("Status", "enabled"), sensor.get("Power Filtration"),
             wifi_cloud_address, sensor.get("InfluxDB Organization"),
             sensor.get("InfluxDB Bucket"), sensor.get("InfluxDB Auth Token"),

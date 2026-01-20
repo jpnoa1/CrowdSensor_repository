@@ -63,6 +63,10 @@
     <!-- Device -->
     <fieldset>
       <legend>Device</legend>
+      <label>Sensor Name
+        <input name="Sensor Name" type="text" maxlength="100"
+               value="{{ cfg.get('Sensor Name', '') }}" required>
+      </label>
       <div class="grid">
         <label>Latitude
           <input name="Latitude" type="number" step="any" min="-90" max="90"
@@ -181,6 +185,15 @@
           <label>Cloud Address
             <input name="WiFi Cloud Address" placeholder="Hostname or IP">
           </label>
+          <label style="margin-top:12px;">
+            <input type="checkbox" class="use-default-mqtt" checked>
+            Use Default MQTT Port (1883) - Recommended
+          </label>
+          <label class="mqtt-port-label" style="margin-top:8px;display:none;">MQTT Port
+            <input name="MQTT Port" type="number" min="1" max="65535" step="1"
+                   class="mqtt-port-input" value="1883">
+          </label>
+          <small>Only change if your MQTT broker uses a non-standard port.</small>
           <button type="button" class="remove-network">Remove</button>
           <hr>
         </div>
@@ -263,6 +276,31 @@
         if (ssid)  ssid.value  = data.ssid  || "";
         if (pwd)   pwd.value   = data.password || "";
         if (cloud) cloud.value = data.cloud_address || "";
+
+        // Setup MQTT Port toggle for this Wi-Fi block
+        const mqttCheckbox = box.querySelector('.use-default-mqtt');
+        const mqttPortLabel = box.querySelector('.mqtt-port-label');
+        const mqttPortInput = box.querySelector('.mqtt-port-input');
+
+        function toggleMqttPort() {
+          const useDefault = mqttCheckbox.checked;
+          mqttPortLabel.style.display = useDefault ? 'none' : 'block';
+          if (useDefault) {
+            mqttPortInput.value = '1883';
+            mqttPortInput.disabled = true;
+          } else {
+            mqttPortInput.disabled = false;
+          }
+        }
+
+        mqttCheckbox.addEventListener('change', toggleMqttPort);
+        
+        // Set initial state based on data
+        if (data.mqtt_port && data.mqtt_port !== '1883') {
+          mqttPortInput.value = data.mqtt_port;
+          mqttCheckbox.checked = false;
+        }
+        toggleMqttPort();
       }
 
       if (data && type === 'ttn') {
