@@ -184,12 +184,27 @@ def apply_config_from_toml(toml_path: str):
 
     conn.close()
 
-    print(f"[OK] Successful configuration ({datetime.now().strftime('%H:%M:%S')})")
+    print(f"[OK] Successful Local configuration ({datetime.now().strftime('%H:%M:%S')})")
+    
+    # Publish sensor state to MQTT broker
+    publish_sensor_state(
+    cfg=cfg,
+    mqtt_host="t.monicrowd.sensinglab.eu",
+    mqtt_port=1883 
+)
+    # Publish sensor networks to MQTT broker
+    publish_sensor_networks(
+    cfg=cfg,
+    mqtt_host="t.monicrowd.sensinglab.eu",
+    mqtt_port=1883
+)
+
 
 
 if __name__ == "__main__":
     default_path = "/home/kali/Desktop/sensor-config-site/data/sensor_config.toml"
     apply_config_from_toml(default_path)
+    
     #subprocess.run(["python3", SENSOR_COMMUNICATION_AVAILABLE_FILEPATH])
     
 

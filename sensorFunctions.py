@@ -7,8 +7,11 @@ import time
 from paho.mqtt import client as mqtt_client
 import random
 import logging
-import serial
 from swARM_at_custom.swARM_at.RAK3172 import RAK3172
+import json
+from datetime import datetime
+
+
 
 
 logging.basicConfig(level=logging.INFO)
@@ -55,7 +58,7 @@ AIRODUMP_FILEPATH = "/home/kali/Desktop/aircrack-ng-1.7/src/airodump-ng/airodump
 MQTT_PORT = 1883
 MQTT_USERNAME = 'tmmss1'
 MQTT_PASSWORD = 'tomasantos00'
-
+TOPIC_NETWORKS = "monicrowd/sensors/networks"
 
 #Number of configuration parameters (uuid, name, etc...)
 SENSOR_CONFIG_PARAMETERS_NUMB = 15
@@ -1207,3 +1210,81 @@ def publish_location_mqtt_message(msg_payload, topic):
     else:
         print("\nFailed to publish mqtt message.")
         return False
+    
+
+def publish_sensor_state(cfg, mqtt_host, mqtt_port=1883):
+    payload = {
+        "uuid": str(uuid.getnode()),
+        "sensor_name": cfg["sensor"]["Sensor Name"],
+        "latitude": float(cfg["sensor"]["Latitude"]),
+        "longitude": float(cfg["sensor"]["Longitude"]),
+        "status": cfg["sensor"]["Status"],
+        "connectivity_mode": cfg["Connectivity"][0]["type"],
+        "firmware_version": "1.0.0",
+        "power_filtration_db": int(cfg["sensor"]["Power Filtration"]),
+        "messages_periodicity_min": int(cfg["sensor"]["Upload Periodicity"]),
+        "sliding_window_min": int(cfg["sensor"]["Sliding Window"]),
+        "timestamp": datetime.utcnow().isoformat() + "Z"
+    }
+    
+    client = mqtt_client.Client()
+    client.username_pw_set("tmmss1", "tomasantos00")
+    client.connect(mqtt_host, mqtt_port, 60)
+    client.publish(
+        topic="monicrowd/sensors/state",
+        payload=json.dumps(payload),
+        qos=1,
+        retain=True
+    )
+    client.disconnect()
+
+
+
+
+def publish_sensor_networks(cfg, mqtt_host, mqtt_port=1883):
+    connectivity = cfg.get("Connectivity", [])
+    networks = []
+    priority = 1
+
+    for c in connectivity:
+        ctype = (c.get("type") or "").strip().lower()
+        if not ctype:
+            continue
+
+        entry = {
+            "type": ctype,
+            "name": c.get("name", ctype),
+            "priority": priority,
+            "available": True,
+            "connected": None
+        }
+
+        if ctype == "wifi":
+            entry["ssid"] = c.get("ssid")
+            entry["cloud_address"] = c.get("cloud_address")
+
+        if "lora" in ctype:
+            entry["dev_eui"] = c.get("dev_eui")
+            entry["app_eui"] = c.get("app_eui")
+
+        networks.append(entry)
+        priority += 1
+
+    payload = {
+        "uuid": str(uuid.getnode()),
+        "networks": networks
+    }
+
+    client = mqtt_client.Client()
+    client.username_pw_set("tmmss1", "tomasantos00")
+    client.connect(mqtt_host, mqtt_port, 60)
+
+    client.publish(
+        "monicrowd/sensors/networks",
+        json.dumps(payload),
+        retain=True   # keep retain
+    )
+
+    client.disconnect()
+    print(f"[OK][NET] Published {len(networks)} network(s)")
+

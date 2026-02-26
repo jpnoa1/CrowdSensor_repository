@@ -90,7 +90,7 @@ def _is_host_or_ip(s: str) -> bool:
 
 
 
-# --- Persistence helpers --------------------------------------------------------
+
 def load_all() -> Tuple[Dict[str, str], List[dict]]:
     """Load sensor section and connectivity list; merge defaults for missing keys."""
     if not os.path.exists(CONFIG_PATH):
