@@ -67,6 +67,8 @@ DEFAULT_CONFIG_PARAMETERS_NUMB = 12
 #Raspberry Pi OUIs List
 rpi_oui = ["dc:a6:32", "b8:27:eb", "28:cd:c1", "2c:cf:67", "3a:35:41", "d8:3a:dd", "e4:5f:01"]
 
+#Lora
+LORA_SERIAL_PORT = "/dev/ttyAMA0"
 
 #Auxiliary functions
 
@@ -761,14 +763,14 @@ def check_wifi_connection():
         return False
      
 def get_dev_eui():
-    rak = RAK3172("/dev/ttyAMA0", 115200)
+    rak = RAK3172(LORA_SERIAL_PORT, 115200)
     rak.connect()
     ok=rak.get_dev_eui()
     rak.disconnect()
     return ok
 
 def check_lora_available() -> bool:
-    rak = RAK3172("/dev/ttyAMA0", 115200)
+    rak = RAK3172(LORA_SERIAL_PORT, 115200)
     try:
         rak.connect()
         dev_eui = rak.get_dev_eui()
@@ -781,7 +783,7 @@ def check_lora_connection_no_Join() -> bool:
     try:
         with open("/tmp/rak_njs", "r") as f:
             val = f.read().strip()
-            print(f"Read LoRa status from {"/tmp/rak_njs"}: {val}")
+            print(f"Read LoRa status from /tmp/rak_njs: {val}")
 
         if val == "1":
             print("Device is joined to the network.")
@@ -801,7 +803,7 @@ def check_lora_connection():
     STATUS_FILE = "/tmp/rak_njs"
     
     try:
-        rak = RAK3172("/dev/ttyAMA0", 115200)
+        rak = RAK3172(LORA_SERIAL_PORT, 115200)
         rak.connect()
         with open(STATUS_FILE, "r") as f:
             val = f.read().strip()
@@ -999,7 +1001,7 @@ def try_join_lora_network(network_name, app_eui, app_key, dev_eui, join_attempts
     Returns:
         bool: True if joined successfully, False otherwise
     """
-    rak = RAK3172("/dev/ttyAMA0", 115200)
+    rak = RAK3172(LORA_SERIAL_PORT, 115200)
     
     try:
         rak.connect()

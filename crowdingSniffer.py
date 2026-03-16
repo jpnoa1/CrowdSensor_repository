@@ -1,4 +1,4 @@
-from _t1ha0_module import ffi, lib
+from t1ha0 import ffi, lib
 from scapy.all import *
 import sqlite3
 import signal
