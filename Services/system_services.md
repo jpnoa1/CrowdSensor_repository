@@ -76,14 +76,39 @@ Restart=no
 WantedBy=multi-user.target
 
 --------------------------------------------------
+[Unit]
+Description=MoniCrowd Sensor Downlink Listener
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=kali
+Group=kali
+WorkingDirectory=/home/kali/Desktop/service_scripts
+
+ExecStart=/usr/bin/python3 /home/kali/Desktop/service_scripts/downlink_listener.py
+
+Restart=on-failure
+RestartSec=10
+
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
+
+--------------------------------------------------
 
 ENABLING SERVICES
 
-To enable both services:
+To enable the services:
 
 sudo systemctl daemon-reload
 sudo systemctl enable sensor-setup.service
 sudo systemctl enable setup-button-window.service
+sudo systemctl enable sensor-downlink-listener.service
 
 --------------------------------------------------
 

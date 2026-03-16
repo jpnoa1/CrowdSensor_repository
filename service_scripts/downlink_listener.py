@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import json
 import os
+import sys
 import time
 import threading
 import subprocess
@@ -17,7 +18,8 @@ except ImportError:
     tomli_w = None
 
 import paho.mqtt.client as mqtt
-from sensorConfigurationRemotely import apply_config_from_toml
+sys.path.append("/home/kali/Desktop/")
+import sensorConfigurationRemotely
 
 
 MQTT_HOST = "t.monicrowd.sensinglab.eu"
