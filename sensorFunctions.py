@@ -52,7 +52,7 @@ DEFAULT_CRONJOBS_FILEPATH = "/home/kali/Desktop/cronjobs_default.txt"
 CONFIGURED_CRONJOBS_FILEPATH = "/home/kali/Desktop/cronjobs_configured.txt"
 
 # Filepath of airodump-ng.c detection software
-AIRODUMP_FILEPATH = "/home/kali/Desktop/aircrack-ng-1.7/src/airodump-ng/airodump-ng.c"
+#AIRODUMP_FILEPATH = "/home/kali/Desktop/aircrack-ng-1.7/src/airodump-ng/airodump-ng.c"
 
 #MQTT Paramenters
 MQTT_PORT = 1883
@@ -444,6 +444,9 @@ def write_crontab_file(status, detection_if, upload_periodicity, reboot_periodic
     f.write("@reboot sleep 15 && /usr/bin/python3 /home/kali/Desktop/sensorCommunicationAvailable.py\n")
     f.write("# Periodic check of communication technologies and interfaces\n")
     f.write("*/5 * * * * /usr/bin/python3 /home/kali/Desktop/sensorCommunicationCheck.py\n")
+    #f.write("# Monitor battery powerbank\n")
+    #f.write("* * * * * /usr/bin/python3 /home/kali/Desktop/bat_powerbank.py\n")
+    
     if status == "Active":
         f.write("# Wi-Fi detection of devices\n")
         #f.write("*/10 * * * * timeout -k 1 590s sudo airodump-ng --background 1 " + str(detection_if + "\n"))
@@ -506,19 +509,19 @@ def check_upload_detection_interfaces(start_monitor_mode:bool):
 
     interfaces = ni.interfaces()
 
-    upload_interface='None'
+    upload_interface = None
 
     for iface in interfaces:
 
         if iface == "eth0" and len(ni.ifaddresses(iface)) > 2: 
-            upload_interface=iface
+            upload_interface = iface
             break
 
         elif iface[:4] == "wlan":
                 
-                if ni.ifaddresses(iface)[ni.AF_LINK][0]['addr'][:8] in rpi_oui:
-                        upload_interface=iface
-                        break                
+            if ni.AF_INET in ni.ifaddresses(iface):
+                upload_interface = iface
+                break                
 
 
     detection_interface = None
@@ -566,11 +569,14 @@ def check_upload_detection_interfaces(start_monitor_mode:bool):
             subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT).decode("utf-8")
             print(f"Started monitor mode on interface '{start_monitor_interface}'.")
         
-    if upload_interface is not None: print("Interface '" + upload_interface + "' automatically selected for uploading data.")
-    if detection_interface is not None: print("Interface '" + detection_interface + "' automatically selected for detecting devices.")
+    if upload_interface is not None: 
+        print("Interface '" + upload_interface + "' automatically selected for uploading data.")
+    if detection_interface is not None: 
+        print("Interface '" + detection_interface + "' automatically selected for detecting devices.")
 
     return upload_interface, detection_interface
 
+    
 def publish_mqtt_message(msg_payload, topic):
     client = connect_mqtt()
 
@@ -584,6 +590,74 @@ def publish_mqtt_message(msg_payload, topic):
     else:
         print("\nFailed to publish mqtt message.")
         return False
+
+def publish_detections_mqtt_message(unix_timestamp, devices_detected: int, topic):
+    client = connect_mqtt()
+
+    msg_payload = {
+        "timestamp": unix_timestamp,
+        "devices_detected": int(devices_detected)
+    }
+
+    json_msg_payload = json.dumps(msg_payload, separators=(",", ":"))
+
+    result = client.publish(topic, json_msg_payload)
+
+    # result: [0, 1]
+    status = result[0]
+    if status == 0:
+        print(f"Send `{msg_payload}` to topic `{topic}`.")
+        return True
+    else:
+        print("\nFailed to publish mqtt message.")
+        # Save measurement in database
+        store_pending_measurement(unix_timestamp, devices_detected)
+        return False
+
+# Insert pending measurement in database
+def store_pending_measurement(unix_timestamp, devices_detected):
+    conn = sqlite3.connect('/home/kali/Desktop/DB/StoredMeasurements.db' , timeout=30)
+    cursor = conn.cursor()
+    cursor.execute("""INSERT INTO PendingMeasurements VALUES (?, ?) """, (unix_timestamp, devices_detected))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    print(f"Measurement '({unix_timestamp},{devices_detected})' stored in the database.")
+
+
+# Get first pending measurement from database
+def get_1st_pending_measurement():
+    conn = sqlite3.connect('/home/kali/Desktop/DB/StoredMeasurements.db' , timeout=30)
+    cursor = conn.cursor()
+    
+    first_row = cursor.execute("""SELECT * FROM PendingMeasurements ORDER BY Timestamp ASC LIMIT 1 """).fetchone()
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    if first_row is None:
+        # No pending measurements, database is empty
+        print("There are no pending measurements, database is empty.")
+        return None
+    else:
+        return first_row
+        
+
+# Remove first pending measurement from database
+def remove_1st_pending_measurement():
+    conn = sqlite3.connect('/home/kali/Desktop/DB/StoredMeasurements.db' , timeout=30)
+    cursor = conn.cursor()
+    
+    cursor.execute("""DELETE FROM PendingMeasurements WHERE Timestamp IN (SELECT Timestamp FROM PendingMeasurements ORDER BY Timestamp ASC LIMIT 1)""")
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+
+
+
 
 def check_config_mode():
     configuration_mode = ''
@@ -612,6 +686,7 @@ def confirm(question):
         else:
             print("Please enter yes/no.")
 
+
 def change_power_filtration(power_filtration):
 
     if not (int(power_filtration) >= -100 and int(power_filtration) <= 0):
@@ -621,31 +696,29 @@ def change_power_filtration(power_filtration):
     else:
 
         # Stop the current Wi-fi detection processes
-        cmd = "sudo pkill airodump-ng"
-        os.system(cmd)
+        # cmd = "sudo pkill airodump-ng"
+        # os.system(cmd)
+        with open(PID_FILE, "r") as f:
+            pid = f.read().strip()
 
-        # Access the airodump-ng.c file
-        f = open(AIRODUMP_FILEPATH, 'r')
-        filecontent = f.readlines()
+        if pid:
+            os.system("sudo kill " + pid)
 
-        # Change the power filtration value to the value passed in the argument
-        if power_filtration == 0:
-            # Comment line (no packet power filtration)
-            filecontent[105] = f"//#define PACKET_POWER_FILTRATION {power_filtration}\n"
-        else:
-            # Add packet power filtration
-            filecontent[105] = f"#define PACKET_POWER_FILTRATION {power_filtration}\n"
+        try:
+            process = subprocess.Popen(
+                ["sudo", "python3", "crowdingSniffer.py"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
 
+            with open(PID_FILE, "w") as f:
+                f.write(str(process.pid))
 
-        # Re-write file with everything back
-        with open(AIRODUMP_FILEPATH, 'w') as f:
-            f.writelines(filecontent)
+        except Exception as e:
+            print(f"Error starting crowdingSniffer.py: {e}")
 
-
-        with open(os.devnull, 'wb') as devnull:
-            commands = "sudo make uninstall; make; sudo make install"
-            subprocess.run(commands, cwd='/home/kali/Desktop/aircrack-ng-1.7/', shell=True, stdout=devnull, stderr=subprocess.STDOUT)
-
+            
 def compare_db_with_cronjobs():
     
     #Obter parametros da base de dados local
