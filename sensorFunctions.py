@@ -64,6 +64,8 @@ TOPIC_NETWORKS = "monicrowd/sensors/networks"
 SENSOR_CONFIG_PARAMETERS_NUMB = 15
 DEFAULT_CONFIG_PARAMETERS_NUMB = 12
 
+PID_FILE = "/home/kali/Desktop/sniffer.pid"
+
 #Raspberry Pi OUIs List
 rpi_oui = ["dc:a6:32", "b8:27:eb", "28:cd:c1", "2c:cf:67", "3a:35:41", "d8:3a:dd", "e4:5f:01"]
 
@@ -611,7 +613,7 @@ def publish_detections_mqtt_message(unix_timestamp, devices_detected: int, topic
     else:
         print("\nFailed to publish mqtt message.")
         # Save measurement in database
-        store_pending_measurement(unix_timestamp, devices_detected)
+        #store_pending_measurement(unix_timestamp, devices_detected)
         return False
 
 # Insert pending measurement in database
@@ -1088,7 +1090,7 @@ def try_join_lora_network(network_name, app_eui, app_key, dev_eui, join_attempts
         joined = rak.join_network(
             join=1, 
             auto_join=0, 
-            reattempt_interval=5, 
+            reattempt_interval=8, 
             join_attempts=join_attempts
         )
         
@@ -1162,17 +1164,17 @@ def check_lora_network_status(network_name):
 def decide_upload_technology(cursor=None):
     """
     Handover cascade: WiFi (priority 1) → LoRa networks (priority 2+)
-    
+
     Args:
         cursor: Reuse existing DB connection to avoid locks
-    
+
     Returns:
         tuple: (upload_tech, network_name)
                - upload_tech: 'wifi', 'lora', or 'none'
                - network_name: Active LoRa network name or None
     """
     own_connection = (cursor is None)
-    
+
     if cursor is None:
         try:
             connwifi = sqlite3.connect('/home/kali/Desktop/DB/SensorConfiguration.db', timeout=30)
@@ -1183,7 +1185,7 @@ def decide_upload_technology(cursor=None):
     else:
         cwifi = cursor
         connwifi = None
-    
+
     try:
         sensor_communication = cwifi.execute(
             """SELECT WifiAvailable, LoRaAvailable, WifiConnected FROM SensorCommunication"""
@@ -1201,25 +1203,46 @@ def decide_upload_technology(cursor=None):
             logger.info("[HANDOVER] Using WiFi for uploads")
 
         elif loraAvailable:
-            logger.info("[HANDOVER] WiFi unavailable, trying LoRa networks in priority order")
-            
-            networks = cwifi.execute(
-                """SELECT name, app_eui, app_key, dev_eui FROM LoRaNetworks ORDER BY id ASC"""
-            ).fetchall()
-            
-            if not networks:
-                logger.warning("[HANDOVER] No LoRa networks configured in database")
+            logger.info("[HANDOVER] WiFi unavailable, evaluating LoRa networks")
+
+            # 1) Tentar reutilizar a rede LoRa atualmente ativa, se já estiver joined
+            current_cfg = cwifi.execute(
+                """SELECT Active_LoRa_Network FROM SensorConfiguration"""
+            ).fetchone()
+
+            current_network = current_cfg[0] if current_cfg else None
+
+            if current_network and check_lora_network_status(current_network):
+                upload_tech = 'lora'
+                active_network = current_network
+                logger.info(f"[HANDOVER] Reusing already-joined LoRa network: {current_network}")
+
             else:
-                for net_name, app_eui, app_key, dev_eui in networks:
-                    logger.info(f"[HANDOVER] Trying {net_name}...")
-                    
-                    if try_join_lora_network(net_name, app_eui, app_key, dev_eui, join_attempts=2):
-                        upload_tech = 'lora'
-                        active_network = net_name
-                        logger.info(f"[HANDOVER] Successfully using LoRa ({net_name})")
-                        break
-                    else:
-                        logger.info(f"[HANDOVER] {net_name} failed, trying next network")
+                # 2) Caso não exista rede ativa válida, ver redes por prioridade
+                networks = cwifi.execute(
+                    """SELECT name, app_eui, app_key, dev_eui FROM LoRaNetworks ORDER BY id ASC"""
+                ).fetchall()
+
+                if not networks:
+                    logger.warning("[HANDOVER] No LoRa networks configured in database")
+                else:
+                    for net_name, app_eui, app_key, dev_eui in networks:
+                        # Primeiro verificar se já existe estado cached de joined
+                        if check_lora_network_status(net_name):
+                            upload_tech = 'lora'
+                            active_network = net_name
+                            logger.info(f"[HANDOVER] Using cached joined network {net_name}")
+                            break
+
+                        # Só se não estiver joined é que tenta join
+                        logger.info(f"[HANDOVER] Trying join on {net_name}...")
+                        if try_join_lora_network(net_name, app_eui, app_key, dev_eui, join_attempts=3):
+                            upload_tech = 'lora'
+                            active_network = net_name
+                            logger.info(f"[HANDOVER] Successfully using LoRa ({net_name})")
+                            break
+                        else:
+                            logger.info(f"[HANDOVER] {net_name} failed, trying next network")
 
         if active_network:
             cwifi.execute(
@@ -1248,6 +1271,7 @@ def decide_upload_technology(cursor=None):
         if own_connection and connwifi:
             cwifi.close()
             connwifi.close()
+
 
 
 

@@ -59,6 +59,11 @@ except sqlite3.Error as error:
     print("Failed to read upload technologies from database.", error)
 
 
+#debug 
+#cwifi.execute("UPDATE SensorConfiguration SET Upload_Technology='wifi', Active_LoRa_Network=NULL")
+#connwifi.commit()
+#sys.exit(0) # Termina o script aqui para impedir que ele faça as verificações de hardware e reverta para lora/wifi
+#wifiAvailable= False
 #Check Wi-Fi connection
 if wifiAvailable:
     wifiConnected = check_wifi_connection()
@@ -79,6 +84,7 @@ if sensor_configuration is not None and current_upload_technology == "lora":
     else:
         set_lora_connected(False)
         loraConnected = False
+
 
 
 #Check upload and detection interfaces
@@ -115,7 +121,11 @@ if current_upload_technology == "wifi":
         needs_handover = True
         print("[CHECK] WiFi connection lost, triggering handover")
 elif current_upload_technology == "lora":
-    if not loraConnected:
+    if wifiConnected:
+        needs_handover = True
+        print("[CHECK] Preferred uplink WiFi is available again, returning from LoRa to WiFi")
+
+    elif not loraConnected:
         needs_handover = True
         if current_lora_network:
             print(f"[CHECK] LoRa network {current_lora_network} failed, triggering handover cascade")
