@@ -1,5 +1,4 @@
 import sqlite3
-import os
 import subprocess
 import netifaces as ni
 import sys
@@ -18,6 +17,21 @@ from sensorFunctions import *
 #   Author: Tomas Mestre Santos
 #   Date: 09-03-2024
 #
+
+if not os.path.exists(BOOT_COMPLETE_FILE):
+    print("[CHECK] Boot initialization not complete yet. Exiting.")
+    sys.exit(0)
+
+_, available_released = wait_for_script_lock(
+    COMM_AVAILABLE_LOCK_FILE,
+    max_wait_sec=90,
+    poll_sec=2,
+    log_prefix="[CHECK]"
+)
+
+if not available_released:
+    print("[CHECK] sensorCommunicationAvailable.py still running. Skipping this cycle to avoid serial contention.")
+    sys.exit(0)
 
 #Get Lora upload available and current upload technology
 try:
@@ -63,7 +77,7 @@ except sqlite3.Error as error:
 #cwifi.execute("UPDATE SensorConfiguration SET Upload_Technology='wifi', Active_LoRa_Network=NULL")
 #connwifi.commit()
 #sys.exit(0) # Termina o script aqui para impedir que ele faça as verificações de hardware e reverta para lora/wifi
-#wifiAvailable= False
+wifiAvailable= False
 #Check Wi-Fi connection
 if wifiAvailable:
     wifiConnected = check_wifi_connection()

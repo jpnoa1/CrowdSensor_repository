@@ -17,10 +17,15 @@ from sensorFunctions import *
 #   Date: 05-03-2024
 #
 
+connwifi = None
+lock_acquired = acquire_script_lock(COMM_AVAILABLE_LOCK_FILE, "BOOT")
+if not lock_acquired:
+    exit(0)
+
 #Check if Wi-Fi and LoRa upload are available
 wifiAvailable = check_wifi_available()
 #para teste
-#wifiAvailable = False
+wifiAvailable = False
 loraAvailable = check_lora_available()                           
 print("loraAvailable:"+str(loraAvailable))
 
@@ -59,6 +64,8 @@ try:
 
     connwifi = sqlite3.connect('/home/kali/Desktop/DB/SensorConfiguration.db', timeout=30)
     cwifi = connwifi.cursor()
+    upload_tech = "none"
+    sensor_configured = False
 
     sensor_communication = cwifi.execute("""SELECT * FROM SensorCommunication""").fetchone()
 
@@ -79,6 +86,7 @@ try:
         if sensor_configuration is None:
             print("Sensor is not currently configured. No more actions performed.")
         else:
+            sensor_configured = True
 
             sensor_uuid = sensor_configuration[0]
             current_upload_tech = sensor_configuration[12]
@@ -124,9 +132,34 @@ try:
 
                     write_crontab_file(status, detection_interface, uploadPeriodicity, rebootPeriodicity, rebootTime)
 
+            gps_position = try_get_boot_gps_position(max_wait_sec=120, warmup_sec=5, min_good_samples=4, eph_max=12.0)
+            if gps_position is not None:
+                gps_lat, gps_lon, gps_quality = gps_position
+                cwifi.execute(
+                    """UPDATE SensorConfiguration SET Latitude=?, Longitude=?, Last_Update=CURRENT_TIMESTAMP""",
+                    (gps_lat, gps_lon)
+                )
+                print(f"[GPS] Updated SensorConfiguration location from GPS ({gps_quality}).")
+            else:
+                print("[GPS] Keeping current DB location (fallback).")
+
 
     #Commit changes
     connwifi.commit()
+
+    try:
+        with open(BOOT_COMPLETE_FILE, "w") as f:
+            f.write("1")
+    except Exception:
+        pass
+
+    if sensor_configured and upload_tech != "none":
+        print("[BOOT] Sending sensor location after startup checks...")
+        try:
+            subprocess.run(["/usr/bin/python3", SENSOR_SEND_LOCATION_FILEPATH], check=False)
+        except Exception as e:
+            print(f"[BOOT] Failed to send sensor location: {e}")
+
     cwifi.close()
 
 except sqlite3.Error as error:
@@ -135,6 +168,8 @@ except sqlite3.Error as error:
 finally:
     if connwifi:
         connwifi.close()
+
+    release_script_lock(COMM_AVAILABLE_LOCK_FILE)
 
 #mudei
 #if loraAvailable == True:

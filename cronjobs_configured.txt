@@ -7,6 +7,7 @@
 @reboot sleep 15 && /usr/bin/python3 /home/kali/Desktop/sensorCommunicationAvailable.py
 # Periodic check of communication technologies and interfaces
 */5 * * * * /usr/bin/python3 /home/kali/Desktop/sensorCommunicationCheck.py
+* * * * * /usr/bin/python3 /home/kali/Desktop/bat_powerbank.py
 # Wi-Fi detection of devices
 @reboot sleep 90 && sudo /usr/bin/python3 /home/kali/Desktop/sensorStartup.py
 # Periodic upload of crowding data to the Cloud Server

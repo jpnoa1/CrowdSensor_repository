@@ -1,7 +1,6 @@
 import sqlite3
 import datetime as dt
 import matplotlib.pyplot as plt; plt.rcdefaults()
-import os
 import pytz
 import time
 
@@ -18,7 +17,20 @@ def dprint(msg):
     if DEBUG_COMM:
         print(f"[COMM-DEBUG] {msg}")
 
+if not os.path.exists(BOOT_COMPLETE_FILE):
+    dprint("Boot initialization not complete yet. Exiting.")
+    exit(0)
+
 time.sleep(5)  # Initial delay to allow other processes to start and populate DBs
+waited_for_comm_available, available_released = wait_for_script_lock(
+    COMM_AVAILABLE_LOCK_FILE,
+    max_wait_sec=90,
+    poll_sec=2,
+    log_prefix="[COMM-DEBUG]"
+)
+if not available_released:
+    dprint("Lock still active after timeout; continuing carefully.")
+dprint(f"waited_for_comm_available={waited_for_comm_available}s")
 # Read sensor configuration from database
 try:
     connwifi = sqlite3.connect('/home/kali/Desktop/DB/SensorConfiguration.db', timeout=30)
@@ -179,8 +191,11 @@ if upload_technology == "lora":
     else:
         print(f"[UPLOAD] Successfully sent via {active_lora_network}")
 
-        print(f"[UPLOAD] Listening for downlinks for {upload_periodicity} min...")
-        t_end = time.time() + (upload_periodicity * 60) - 25
+        downlink_seconds = (upload_periodicity * 60) - 25 - waited_for_comm_available
+        if downlink_seconds < 0:
+            downlink_seconds = 0
+        print(f"[UPLOAD] Listening for downlinks for {downlink_seconds:.0f}s (adjusted for wait={waited_for_comm_available}s)...")
+        t_end = time.time() + downlink_seconds
 
         try:
             while time.time() < t_end:

@@ -4,9 +4,22 @@ import pytz
 import matplotlib.pyplot as plt; plt.rcdefaults()
 import os
 import json
+import sys
 
 from sensorFunctions import *
 
+if not os.path.exists(BOOT_COMPLETE_FILE):
+    print("[LOCATION] Boot initialization not complete yet. Exiting.")
+    sys.exit(0)
+
+_, available_released = wait_for_script_lock(
+    COMM_AVAILABLE_LOCK_FILE,
+    max_wait_sec=90,
+    poll_sec=2,
+    log_prefix="[LOCATION]"
+)
+if not available_released:
+    print("[LOCATION] sensorCommunicationAvailable.py still running. Proceeding carefully.")
 
 # Read sensor configuration from database
 

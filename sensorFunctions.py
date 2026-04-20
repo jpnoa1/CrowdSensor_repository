@@ -71,6 +71,127 @@ rpi_oui = ["dc:a6:32", "b8:27:eb", "28:cd:c1", "2c:cf:67", "3a:35:41", "d8:3a:dd
 
 #Lora
 LORA_SERIAL_PORT = "/dev/ttyAMA0"
+COMM_AVAILABLE_LOCK_FILE = "/tmp/sensorCommunicationAvailable.lock"
+BOOT_COMPLETE_FILE = "/tmp/sensor_boot_complete"
+
+
+
+def acquire_script_lock(lock_file=COMM_AVAILABLE_LOCK_FILE, script_name="script"):
+    if os.path.exists(lock_file):
+        try:
+            with open(lock_file, "r") as f:
+                old_pid = int((f.read() or "0").strip())
+            os.kill(old_pid, 0)
+            print(f"[{script_name}] Lock active (pid={old_pid}). Exiting.")
+            return False
+        except Exception:
+            # stale/corrupt lock
+            try:
+                os.remove(lock_file)
+            except Exception:
+                pass
+
+    with open(lock_file, "w") as f:
+        f.write(str(os.getpid()))
+    return True
+
+
+def release_script_lock(lock_file=COMM_AVAILABLE_LOCK_FILE):
+    try:
+        if os.path.exists(lock_file):
+            os.remove(lock_file)
+    except Exception:
+        pass
+
+
+def wait_for_script_lock(lock_file=COMM_AVAILABLE_LOCK_FILE, max_wait_sec=90, poll_sec=2, log_prefix="[WAIT]"):
+    waited = 0
+    while os.path.exists(lock_file) and waited < max_wait_sec:
+        print(f"{log_prefix} Waiting for lock '{lock_file}'... ({waited}s)")
+        time.sleep(poll_sec)
+        waited += poll_sec
+
+    released = not os.path.exists(lock_file)
+    return waited, released
+
+
+def _median(values):
+    vals = sorted(values)
+    if not vals:
+        return None
+    n = len(vals)
+    mid = n // 2
+    if n % 2:
+        return vals[mid]
+    return (vals[mid - 1] + vals[mid]) / 2.0
+
+
+def try_get_boot_gps_position(max_wait_sec=120, warmup_sec=5, min_good_samples=4, eph_max=12.0):
+    """Try to get a robust GPS position; return (lat, lon, quality) or None."""
+    try:
+        import gps
+    except Exception as e:
+        print(f"[GPS] gps module unavailable ({e}). Using DB location fallback.")
+        return None
+
+    try:
+        session = gps.gps(mode=gps.WATCH_ENABLE | gps.WATCH_NEWSTYLE)
+    except Exception as e:
+        print(f"[GPS] Failed to connect to gpsd ({e}). Using DB location fallback.")
+        return None
+
+    print(f"[GPS] Warm-up for {warmup_sec}s...")
+    warmup_end = time.time() + warmup_sec
+    while time.time() < warmup_end:
+        try:
+            session.next()
+        except Exception:
+            pass
+        time.sleep(0.2)
+
+    print(f"[GPS] Collecting samples (timeout={max_wait_sec}s)...")
+    all_samples = []
+    good_samples = []
+    end_time = time.time() + max_wait_sec
+
+    while time.time() < end_time:
+        try:
+            report = session.next()
+            if report.get("class") != "TPV":
+                continue
+
+            mode = getattr(report, "mode", 0)
+            lat = getattr(report, "lat", None)
+            lon = getattr(report, "lon", None)
+            eph = getattr(report, "eph", None)
+
+            if mode < 2 or lat is None or lon is None:
+                continue
+
+            all_samples.append((float(lat), float(lon), eph))
+
+            if eph is not None and float(eph) <= eph_max:
+                good_samples.append((float(lat), float(lon), eph))
+
+            if len(good_samples) >= min_good_samples:
+                break
+
+        except Exception:
+            pass
+
+        time.sleep(0.25)
+
+    chosen = good_samples if len(good_samples) >= min_good_samples else all_samples
+    if not chosen:
+        print("[GPS] No valid GPS fix acquired in time. Using DB location fallback.")
+        return None
+
+    lat = _median([s[0] for s in chosen])
+    lon = _median([s[1] for s in chosen])
+    quality = "GOOD" if chosen is good_samples else "FALLBACK"
+
+    print(f"[GPS] Position acquired ({quality}): lat={lat:.7f}, lon={lon:.7f}")
+    return lat, lon, quality
 
 #Auxiliary functions
 
@@ -447,7 +568,7 @@ def write_crontab_file(status, detection_if, upload_periodicity, reboot_periodic
     f.write("# Periodic check of communication technologies and interfaces\n")
     f.write("*/5 * * * * /usr/bin/python3 /home/kali/Desktop/sensorCommunicationCheck.py\n")
     #f.write("# Monitor battery powerbank\n")
-    #f.write("* * * * * /usr/bin/python3 /home/kali/Desktop/bat_powerbank.py\n")
+    f.write("* * * * * /usr/bin/python3 /home/kali/Desktop/bat_powerbank.py\n")
     
     if status == "Active":
         f.write("# Wi-Fi detection of devices\n")
