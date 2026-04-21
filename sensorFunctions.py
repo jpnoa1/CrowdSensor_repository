@@ -1508,3 +1508,46 @@ def publish_sensor_networks(cfg, mqtt_host, mqtt_port=1883):
     client.disconnect()
     print(f"[OK][NET] Published {len(networks)} network(s)")
 
+def enable_gps():
+    print("[GPS] Re-enabling GPS USB device and services...")
+
+    try:
+        usb_path = "1-1"
+        subprocess.run(
+            ["bash", "-c", f"echo '{usb_path}' | sudo tee /sys/bus/usb/drivers/usb/bind"],
+            check=False
+        )
+
+        subprocess.run(["sudo", "systemctl", "start", "gpsd.socket"], check=False)
+        subprocess.run(["sudo", "systemctl", "start", "gpsd.service"], check=False)
+
+        print("[GPS] GPS re-enabled.")
+
+    except Exception as e:
+        print(f"[GPS] Failed to enable GPS: {e}")
+
+import subprocess
+import os
+
+def disable_gps():
+    print("[GPS] Disabling GPS services and unbinding USB device...")
+
+    try:
+        # 1) Stop gpsd
+        subprocess.run(["sudo", "systemctl", "stop", "gpsd.socket"], check=False)
+        subprocess.run(["sudo", "systemctl", "stop", "gpsd.service"], check=False)
+
+        # 2) Kill any process still using ttyACM0
+        subprocess.run(["sudo", "fuser", "-k", "/dev/ttyACM0"], check=False)
+
+        # 3) Unbind GPS USB device
+        usb_path = "1-1"
+        subprocess.run(
+            ["bash", "-c", f"echo '{usb_path}' | sudo tee /sys/bus/usb/drivers/usb/unbind"],
+            check=False
+        )
+
+        print("[GPS] GPS stopped and USB device unbound.")
+
+    except Exception as e:
+        print(f"[GPS] Failed to disable GPS: {e}")
