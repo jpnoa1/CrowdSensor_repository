@@ -132,7 +132,7 @@ try:
 
                     write_crontab_file(status, detection_interface, uploadPeriodicity, rebootPeriodicity, rebootTime)
 
-            gps_position = try_get_boot_gps_position(max_wait_sec=120, warmup_sec=5, min_good_samples=4, eph_max=12.0)
+            gps_position = try_get_boot_gps_position(max_wait_sec=60, warmup_sec=5, min_good_samples=4, eph_max=12.0)
             if gps_position is not None:
                 gps_lat, gps_lon, gps_quality = gps_position
                 cwifi.execute(
@@ -142,6 +142,9 @@ try:
                 print(f"[GPS] Updated SensorConfiguration location from GPS ({gps_quality}).")
             else:
                 print("[GPS] Keeping current DB location (fallback).")
+
+            
+        
 
 
     #Commit changes
@@ -161,6 +164,7 @@ try:
             print(f"[BOOT] Failed to send sensor location: {e}")
 
     cwifi.close()
+    disable_gps()
 
 except sqlite3.Error as error:
     print("Failed to save communication technologies in local database.", error)
