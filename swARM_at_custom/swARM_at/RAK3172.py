@@ -210,6 +210,8 @@ class RAK3172:
         # Desliga auto-join permanentemente para evitar spam de fundo e pára pedidos antigos
         self.send_command("AT+JOIN=0:0\r\n")
         time.sleep(0.5)
+        self.set_network_mode(True)      # LoRaWAN
+        time.sleep(0.5) 
         
         command = f"AT+JOIN={join}:{auto_join}:{reattempt_interval}:{join_attempts}\r\n"
         print(f"Sending: {command.strip()}")

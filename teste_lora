@@ -1,137 +1,20 @@
-#!/usr/bin/env python3
+import serial
 import time
-import sys
 
-from swARM_at_custom.swARM_at.RAK3172 import RAK3172
+ports = ["/dev/ttyAMA0", "/dev/ttyS0"]
+bauds = [115200, 9600]
 
-PORT = "/dev/ttyAMA0"
-BAUD = 115200
-
-# Preenche com os valores reais da tua rede
-DEV_EUI = "AC1F09FFFE15A753"
-APP_EUI = "AC1F09FFF8683172"
-APP_KEY = "AC1F09FFFE15A753AC1F09FFF8683172"
-
-
-
-
-def read_for(serial_connection, seconds: int = 5) -> str:
-    """Read raw asynchronous lines for a few seconds."""
-    end = time.time() + seconds
-    lines = []
-
-    while time.time() < end:
+for port in ports:
+    for baud in bauds:
+        print(f"\n[TEST] {port} @ {baud}")
         try:
-            if serial_connection.in_waiting:
-                line = serial_connection.readline().decode(errors="ignore").strip()
-                if line:
-                    print(f"ASYNC -> {line}")
-                    lines.append(line)
-            else:
-                time.sleep(0.05)
-        except Exception as exc:
-            print(f"[ERRO] Falha ao ler resposta assíncrona: {exc}")
-            break
-
-    return "\n".join(lines)
-
-
-def main() -> int:
-    if "COLOCA_AQUI" in APP_EUI or "COLOCA_AQUI" in APP_KEY:
-        print("Erro: preenche APP_EUI e APP_KEY antes de correr o teste.")
-        return 1
-
-    rak = RAK3172(PORT, BAUD)
-
-    try:
-        print(f"[INFO] A ligar ao módulo em {PORT} @ {BAUD}...")
-        rak.connect()
-
-        if rak.serial_connection is None:
-            print("[ERRO] Não foi possível abrir a porta série.")
-            return 1
-
-        print("[INFO] Teste básico AT...")
-        resp = rak.send_command("AT\r\n")
-        print(f"AT -> {resp}")
-
-
-        print("[INFO] A configurar credenciais OTAA...")
-        ok_dev = rak.set_dev_eui(DEV_EUI)
-        ok_app_eui = rak.set_app_eui(APP_EUI)
-        ok_app_key = rak.set_app_key(APP_KEY)
-
-        if not (ok_dev and ok_app_eui and ok_app_key):
-            print("[ERRO] Falha a configurar as credenciais.")
-            return 1
-
-        print("[INFO] A confirmar configuração...")
-        print("DEVEUI:", rak.send_command("AT+DEVEUI=?\r\n"))
-        print("APPEUI:", rak.send_command("AT+APPEUI=?\r\n"))
-        print("APPKEY:", rak.send_command("AT+APPKEY=?\r\n"))
-        print("NWM:", rak.send_command("AT+NWM=?\r\n"))
-        print("NJM:", rak.send_command("AT+NJM=?\r\n"))
-        print("BAND:", rak.send_command("AT+BAND=?\r\n"))
-
-        print("[INFO] A limpar buffer antes do join...")
-        rak.serial_connection.reset_input_buffer()
-
-        print("[INFO] A iniciar join OTAA...")
-        rak.serial_connection.write(b"AT+JOIN=1:0:8:3\r\n")
-
-        start = time.time()
-        joined = False
-        failed = False
-
-        while time.time() - start < 60:
-            if rak.serial_connection.in_waiting:
-                line = rak.serial_connection.readline().decode(errors="ignore").strip()
-                if not line:
-                    continue
-
-                print(f"JOIN -> {line}")
-
-                if "+EVT:JOINED" in line or "+CJOIN:OK" in line:
-                    joined = True
-                    break
-
-                if (
-                    "+EVT:JOIN FAILED" in line
-                    or "+EVT:JOIN_FAILED_RX_TIMEOUT" in line
-                    or "+CJOIN:FAIL" in line
-                ):
-                    failed = True
-                    break
-            else:
-                time.sleep(0.1)
-
-        if joined:
-            print("[SUCESSO] Join OTAA concluído com sucesso.")
-            return 0
-
-        if failed:
-            print("[FALHA] O módulo respondeu com falha de join.")
-            print("[INFO] A ler mais 5 segundos por respostas assíncronas...")
-            read_for(rak.serial_connection, seconds=5)
-            return 2
-
-        print("[TIMEOUT] Não apareceu nem sucesso nem falha dentro de 60 segundos.")
-        print("[INFO] A ler mais 10 segundos por respostas assíncronas tardias...")
-        read_for(rak.serial_connection, seconds=10)
-        return 3
-
-    except KeyboardInterrupt:
-        print("\n[INFO] Interrompido pelo utilizador.")
-        return 130
-    except Exception as exc:
-        print(f"[ERRO] Exceção durante o teste: {exc}")
-        return 1
-    finally:
-        try:
-            rak.disconnect()
-        except Exception:
-            pass
-
-
-if __name__ == "__main__":
-    sys.exit(main())
+            ser = serial.Serial(port, baud, timeout=2)
+            time.sleep(2)
+            ser.reset_input_buffer()
+            ser.write(b"AT+NWM=?\r\n")
+            time.sleep(1)
+            response = ser.read_all().decode(errors='ignore')
+            print(f"[RX] {response if response else 'no response'}")
+            ser.close()
+        except Exception as e:
+            print(f"[ERROR] {e}")
