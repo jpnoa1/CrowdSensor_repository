@@ -26,7 +26,13 @@ if not lock_acquired:
 wifiAvailable = check_wifi_available()
 #para teste
 wifiAvailable = False
-loraAvailable = check_lora_available()                           
+loraAvailable = False
+
+set_lora_available(False)
+set_lora_connected(False)
+
+
+#loraAvailable = check_lora_available()                           
 print("loraAvailable:"+str(loraAvailable))
 
 #Check Wi-Fi and LoRa upload connections
@@ -37,10 +43,9 @@ else:
     wifiConnected = False
 
 
-#set_lora_available(False)
-#set_lora_connected(False)
-      #Upload via LoRa can take too long (minutes in some cases), only checking LoRa connection after updating database
-
+set_lora_available(False)
+set_lora_connected(False)
+      
 #If LoRa available, get dev_eui from LoRa board
 if loraAvailable:
     dev_eui = get_dev_eui()

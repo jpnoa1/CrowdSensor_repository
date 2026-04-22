@@ -99,7 +99,7 @@ def apply_config_from_toml(toml_path: str):
 
     cursor.execute("SELECT COUNT(*) FROM SensorCommunication")
     comm_exists = cursor.fetchone()[0] > 0
-
+   
     if not comm_exists:
         cursor.execute("""
             INSERT INTO SensorCommunication

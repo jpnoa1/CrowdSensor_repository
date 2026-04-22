@@ -3,7 +3,7 @@ import time
 import subprocess
 import lgpio
 
-PIN = 26       # Button GPIO
+PIN = 12       # Button GPIO
 CHIP = 4       # gpiochip4 on Raspberry Pi 5
 HOLD_TIME = 5         # Must press 5 seconds continuously
 WINDOW_TIME = 40       # Only active during first 40 seconds of boot

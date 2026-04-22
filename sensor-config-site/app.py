@@ -89,8 +89,6 @@ def _is_host_or_ip(s: str) -> bool:
     return False
 
 
-
-
 def load_all() -> Tuple[Dict[str, str], List[dict]]:
     """Load sensor section and connectivity list; merge defaults for missing keys."""
     if not os.path.exists(CONFIG_PATH):
@@ -106,66 +104,63 @@ def save_all(sensor_cfg: Dict[str, str], connectivity: List[dict]) -> None:
     with open(CONFIG_PATH, "w", encoding="utf-8") as f:
         toml.dump(payload, f)
 
+
 def parse_connectivity(form) -> tuple[list[dict], list[str]]:
     """
-    Build [[Connectivity]] from repeated inputs.
-    Each repeated name (e.g., WiFi SSID) is received as a list (DOM order).
+    Build [[Connectivity]] from form inputs.
+    Wi-Fi: supports multiple (repeated form fields).
+    TTN / Helium: single entry each, gated by enable toggles.
     """
     errs = []
     conn = []
 
-    # --- Wi-Fi ---
-    ssids  = [s.strip() for s in form.getlist("WiFi SSID")]
-    pwds   = [s.strip() for s in form.getlist("WiFi Password")]
-    clouds = [s.strip() for s in form.getlist("WiFi Cloud Address")]
+    # --- Wi-Fi (multiple) ---
+    ssids      = [s.strip() for s in form.getlist("WiFi SSID")]
+    pwds       = [s.strip() for s in form.getlist("WiFi Password")]
+    mqtt_addrs = [s.strip() for s in form.getlist("WiFi MQTT Address")]
     mqtt_ports = [s.strip() for s in form.getlist("MQTT Port")]
 
-    for ssid, pwd, addr, port in zip(ssids, pwds, clouds, mqtt_ports):
+    for ssid, pwd, addr, port in zip(ssids, pwds, mqtt_addrs, mqtt_ports):
         if ssid or pwd or addr:
             conn.append({
                 "type": "wifi",
                 "ssid": ssid,
                 "password": pwd,
-                "cloud_address": addr,
+                "mqtt_address": addr,
                 "mqtt_port": port if port else "1883"
             })
         else:
-            errs.append("Wi-Fi entries must include SSID, Password and Cloud Address.")
+            errs.append("Wi-Fi entries must include SSID, Password and MQTT Address.")
 
-    # --- TTN ---
-    app_euis = [s.strip() for s in form.getlist("TTN App EUI")]
-    app_keys = [s.strip() for s in form.getlist("TTN App Key")]
-    dev_euis = [s.strip() for s in form.getlist("TTN Dev EUI")]
+    # --- TTN (single, gated by toggle) ---
+    if form.get("ttn_enabled") == "1":
+        app_eui   = (form.get("TTN App EUI", "") or "").strip()
+        app_key   = (form.get("TTN App Key", "") or "").strip()
+        dev_eui   = (form.get("TTN Dev EUI", "") or "").strip()
+        device_id = (form.get("TTN Device ID", "") or "").strip()
+        conn.append({
+            "type": "lorattn",
+            "device_id": device_id,
+            "app_eui": app_eui,
+            "app_key": app_key,
+            "dev_eui": dev_eui
+        })
 
-    for a, k, d in zip(app_euis, app_keys, dev_euis):
-        if a or k or d:
-            conn.append({
-                "type": "lorattn",
-                "app_eui": a,
-                "app_key": k,
-                "dev_eui": d
-            })
+    # --- Helium (single, gated by toggle) ---
+    if form.get("helium_enabled") == "1":
+        dev_id  = (form.get("Helium Device ID", "") or "").strip()
+        app_eui = (form.get("Helium App EUI", "") or "").strip()
+        app_key = (form.get("Helium App Key", "") or "").strip()
+        dev_eui = (form.get("Helium Dev EUI", "") or "").strip()
+        conn.append({
+            "type": "lorahelium",
+            "device_id": dev_id,
+            "app_eui": app_eui,
+            "app_key": app_key,
+            "dev_eui": dev_eui,
+        })
 
-    # --- Helium ---
-
-    helium_dev_ids  = [s.strip() for s in form.getlist("Helium Device ID")]
-    helium_app_euis = [s.strip() for s in form.getlist("Helium App EUI")]
-    helium_app_keys = [s.strip() for s in form.getlist("Helium App Key")]
-    helium_dev_euis = [s.strip() for s in form.getlist("Helium Dev EUI")]
-
-    for dev_id, a, k, d in zip(helium_dev_ids, helium_app_euis, helium_app_keys, helium_dev_euis):
-        if dev_id or a or k or d:
-            conn.append({
-                "type": "lorahelium",
-                "device_id": dev_id,
-                "app_eui": a,
-                "app_key": k,
-                "dev_eui": d,
-            })
-
-    # Return *both* the list of connections and the list of errors
     return conn, errs
-
 
 
 # --- Validation -----------------------------------------------------------------
@@ -203,7 +198,6 @@ def validate_sensor(cfg: Dict[str, str]) -> List[str]:
     if _to_float(cfg.get("Power Filtration", "")) is None:
         errors.append("Power Filtration must be a numeric value (dB).")
 
-
     # Upload windows
     if (_to_int(cfg.get("Upload Periodicity", "")) or 0) <= 0:
         errors.append("Upload Periodicity must be a positive integer (minutes).")
@@ -223,9 +217,9 @@ def validate_connectivity(conn):
     """
     Validate all connectivity entries:
     - At least one network
-    - Wi-Fi: SSID, password, cloud_address (hostname/IP)
+    - Wi-Fi: SSID, password, mqtt_address (hostname/IP)
     - TTN: AppEUI, AppKey, DevEUI (hex formats)
-    - Helium: org + API key
+    - Helium: DeviceID + AppEUI, AppKey, DevEUI
     """
 
     errors = []
@@ -239,23 +233,22 @@ def validate_connectivity(conn):
 
         # --- Wi-Fi ---------------------------------------------------------
         if t == "wifi":
-            ssid  = c.get("ssid", "")
-            pwd   = c.get("password", "")
-            cloud = c.get("cloud_address", "")
-            mqtt_port = c.get("mqtt_port", "1883")
+            ssid       = c.get("ssid", "")
+            pwd        = c.get("password", "")
+            mqtt_addr  = c.get("mqtt_address", "")
+            mqtt_port  = c.get("mqtt_port", "1883")
 
             if not ssid:
                 errors.append(f"Wi-Fi #{i}: SSID is required.")
             if not pwd:
                 errors.append(f"Wi-Fi #{i}: Password is required.")
-            if not cloud:
-                errors.append(f"Wi-Fi #{i}: Cloud Address is required.")
-            elif not _is_host_or_ip(cloud):
+            if not mqtt_addr:
+                errors.append(f"Wi-Fi #{i}: MQTT Address is required.")
+            elif not _is_host_or_ip(mqtt_addr):
                 errors.append(
-                    f"Wi-Fi #{i}: Cloud Address must be a valid hostname or IP."
+                    f"Wi-Fi #{i}: MQTT Address must be a valid hostname or IP."
                 )
-            
-            # Validate MQTT Port
+
             port_int = _to_int(mqtt_port)
             if port_int is None or not (1 <= port_int <= 65535):
                 errors.append(f"Wi-Fi #{i}: MQTT Port must be a number between 1 and 65535.")
@@ -266,18 +259,15 @@ def validate_connectivity(conn):
             k = c.get("app_key", "")
             d = c.get("dev_eui", "")
 
-            # Formats:
-            # EUI = 16 hex chars
-            # Key = 32 hex chars
             hex16 = re.compile(r"^[A-Fa-f0-9]{16}$")
             hex32 = re.compile(r"^[A-Fa-f0-9]{32}$")
 
             if not hex16.match(a):
-                errors.append(f"TTN #{i}: App EUI must be 16 hex characters.")
+                errors.append("TTN: App EUI must be 16 hex characters.")
             if not hex32.match(k):
-                errors.append(f"TTN #{i}: App Key must be 32 hex characters.")
+                errors.append("TTN: App Key must be 32 hex characters.")
             if not hex16.match(d):
-                errors.append(f"TTN #{i}: Dev EUI must be 16 hex characters.")
+                errors.append("TTN: Dev EUI must be 16 hex characters.")
 
         # --- Helium ---------------------------------------------------------
         elif t == "lorahelium":
@@ -287,9 +277,9 @@ def validate_connectivity(conn):
             dev_eui = (c.get("dev_eui")   or "").strip()
 
             if not dev_id:
-                errors.append("LoRa Helium entries must include a Device ID.")
+                errors.append("LoRa Helium: Device ID is required.")
             if not (app_eui and app_key and dev_eui):
-                errors.append("LoRa Helium entries must include App EUI, App Key and Dev EUI.")
+                errors.append("LoRa Helium: App EUI, App Key and Dev EUI are all required.")
 
     return errors
 
@@ -334,7 +324,7 @@ def save():
     # 3) Validate
     errors = parse_errs + validate_sensor(sensor_cfg) + validate_connectivity(connectivity)
     if errors:
-        return render_template("index.html", cfg=sensor_cfg, errors=errors), 400
+        return render_template("index.html", cfg=sensor_cfg, connectivity=connectivity, errors=errors), 400
 
     # 4) Persist
     save_all(sensor_cfg, connectivity)
@@ -345,8 +335,6 @@ def save():
 @app.route("/success")
 def success():
     sensor_cfg, connectivity = load_all()
-
-
 
     @after_this_request
     def _post_send(response):

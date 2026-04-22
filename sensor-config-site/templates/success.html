@@ -2,14 +2,144 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Configuration saved</title>
+  <title>MoniCrowd — Configuration Saved</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;max-width:800px;margin:24px auto;padding:0 12px}</style>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family:'Segoe UI',system-ui,Roboto,Arial,sans-serif;
+      background:#f0f2f5;color:#1e293b;
+      min-height:100vh;
+      display:flex;flex-direction:column;align-items:center;
+      padding:60px 16px 40px;
+    }
+
+    .success-card{
+      background:#fff;border-radius:16px;
+      box-shadow:0 4px 24px rgba(0,0,0,.08);
+      max-width:540px;width:100%;
+      text-align:center;overflow:hidden;
+    }
+
+    .success-banner{
+      background:linear-gradient(135deg,#059669 0%,#10b981 100%);
+      padding:32px 24px 28px;
+    }
+    .success-banner .checkmark{
+      width:64px;height:64px;border-radius:50%;
+      background:rgba(255,255,255,.2);
+      display:inline-flex;align-items:center;justify-content:center;
+      margin-bottom:14px;
+    }
+    .success-banner .checkmark svg{width:36px;height:36px;fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+    .success-banner h1{color:#fff;font-size:1.4rem;font-weight:700;margin-bottom:4px}
+    .success-banner p{color:rgba(255,255,255,.85);font-size:.88rem}
+
+    .success-body{padding:24px 28px 28px}
+    .success-body .info-row{
+      display:flex;justify-content:space-between;align-items:center;
+      padding:10px 0;border-bottom:1px solid #f1f5f9;
+      font-size:.85rem;
+    }
+    .success-body .info-row:last-of-type{border:none}
+    .info-row .label{color:#64748b;font-weight:500}
+    .info-row .value{color:#1e293b;font-weight:600;text-align:right;word-break:break-all}
+
+    .status-steps{
+      margin:18px 0 8px;text-align:left;
+    }
+    .step{
+      display:flex;align-items:flex-start;gap:12px;
+      padding:8px 0;font-size:.84rem;color:#475569;
+    }
+    .step .dot{
+      width:24px;height:24px;border-radius:50%;flex-shrink:0;
+      display:flex;align-items:center;justify-content:center;
+      font-size:.7rem;font-weight:700;color:#fff;
+    }
+    .dot--done{background:#10b981}
+    .dot--pending{background:#f59e0b;animation:pulse 1.2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+    .spinner{
+      display:inline-block;width:14px;height:14px;
+      border:2px solid #cbd5e1;border-top-color:#f59e0b;
+      border-radius:50%;animation:spin .8s linear infinite;
+      margin-left:6px;vertical-align:middle;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .back-link{
+      display:inline-block;margin-top:18px;
+      padding:10px 24px;border-radius:8px;
+      background:#f1f5f9;color:#334155;text-decoration:none;
+      font-size:.88rem;font-weight:500;transition:background .15s;
+    }
+    .back-link:hover{background:#e2e8f0}
+
+    .note{
+      margin-top:16px;font-size:.78rem;color:#94a3b8;
+      line-height:1.5;
+    }
+  </style>
 </head>
+
 <body>
-  <h1>Configuration saved</h1>
-  <p>File path: <code>{{ path }}</code></p>
-  <pre>{{ cfg | tojson(indent=2) }}</pre>
-  <p><a href="{{ url_for('index') }}">Back</a></p>
+
+  <div class="success-card">
+
+    <div class="success-banner">
+      <div class="checkmark">
+        <svg viewBox="0 0 24 24"><polyline points="5 13 10 18 20 6"/></svg>
+      </div>
+      <h1>Configuration Saved</h1>
+      <p>Settings written to device storage</p>
+    </div>
+
+    <div class="success-body">
+
+      <div class="info-row">
+        <span class="label">Sensor</span>
+        <span class="value">{{ cfg.get('Sensor Name', '—') }}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Status</span>
+        <span class="value">{{ cfg.get('Status', '—') }}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Location</span>
+        <span class="value">{{ cfg.get('Latitude', '—') }}, {{ cfg.get('Longitude', '—') }}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Config File</span>
+        <span class="value" style="font-size:.78rem">{{ path }}</span>
+      </div>
+
+      <div class="status-steps">
+        <div class="step">
+          <span class="dot dot--done">&#10003;</span>
+          <span>Configuration saved to disk</span>
+        </div>
+        <div class="step">
+          <span class="dot dot--pending">2</span>
+          <span>Applying settings &amp; connecting… <span class="spinner"></span></span>
+        </div>
+        <div class="step">
+          <span class="dot dot--pending">3</span>
+          <span>Device will reboot automatically</span>
+        </div>
+      </div>
+
+      <p class="note">
+        The device is now applying your configuration.
+        If a Wi-Fi network was configured, it will attempt to connect.
+        The device will reboot shortly — please wait.
+      </p>
+
+      <a class="back-link" href="{{ url_for('index') }}">&larr; Back to Configuration</a>
+
+    </div>
+  </div>
+
 </body>
 </html>

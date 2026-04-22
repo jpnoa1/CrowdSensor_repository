@@ -2,372 +2,534 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Sensor Configuration</title>
+  <title>MoniCrowd — Sensor Configuration</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <!-- Minimal, self-contained styles -->
   <style>
-    /* Layout & typography */
-    body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;max-width:980px;margin:24px auto;padding:0 12px}
-    h1{margin-bottom:16px}
-    fieldset{border:1px solid #ddd;border-radius:10px;padding:12px;margin-bottom:12px}
-    legend{font-weight:600}
-    label{display:block;margin:8px 0}
-    input,select,button{padding:8px;font-size:15px;border:1px solid #ccc;border-radius:8px;width:100%;box-sizing:border-box}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .actions{margin-top:8px}
-    .errors{background:#fde8e8;border:1px solid #f5a6a6;border-radius:10px;padding:10px;margin:12px 0}
-    .errors li{margin-left:18px}
+    /* ── Reset & base ───────────────────────────────────────────── */
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family:'Segoe UI',system-ui,Roboto,Arial,sans-serif;
+      background:#f0f2f5;
+      color:#1e293b;
+      min-height:100vh;
+    }
 
-    /* Connectivity blocks */
-    .network-box{border:1px solid #ddd;padding:10px;margin-top:10px;border-radius:10px}
-    .network-box h4{margin:0 0 8px 0}
-    .remove-network{background:#f5f5f5;border:1px solid #ccc;padding:4px 8px;border-radius:6px;margin-top:6px;width:auto}
+    /* ── Header ─────────────────────────────────────────────────── */
+    .page-header{
+      background:linear-gradient(135deg,#1a2e4a 0%,#1e3a5f 60%,#234b6e 100%);
+      padding:20px 0;
+      margin-bottom:28px;
+      box-shadow:0 2px 12px rgba(0,0,0,.15);
+    }
+    .header-inner{
+      max-width:720px;margin:0 auto;padding:0 16px;
+      display:flex;align-items:center;gap:18px;
+    }
+    .header-inner img{height:48px;width:auto;filter:drop-shadow(0 1px 3px rgba(0,0,0,.3))}
+    .header-inner h1{color:#fff;font-size:1.35rem;font-weight:600;letter-spacing:.3px}
+    .header-inner h1 span{display:block;font-size:.78rem;font-weight:400;color:#94b8d8;margin-top:2px}
 
-    /* Modal (no external deps) */
-    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);justify-content:center;align-items:center;z-index:10}
-    .modal-content{background:#fff;border-radius:12px;padding:20px;width:300px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.2)}
-    .btn-row{display:flex;flex-direction:column;gap:10px;margin:15px 0}
-    .btn-row button{border:none;padding:10px;border-radius:8px;color:#fff;font-size:15px;cursor:pointer;transition:filter .15s}
-    .btn-row button:hover{filter:brightness(.95)}
-    .wifi-btn{background:#0078d7}
-    .ttn-btn{background:#28a745}
-    .helium-btn{background:#f4b400;color:#222}
-    .cancel-btn{background:#ccc;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;width:auto}
+    /* ── Container ──────────────────────────────────────────────── */
+    .container{max-width:720px;margin:0 auto;padding:0 16px 40px}
+
+    /* ── Cards (sections) ───────────────────────────────────────── */
+    .card{
+      background:#fff;
+      border-radius:12px;
+      box-shadow:0 1px 4px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.04);
+      margin-bottom:20px;
+      border-left:4px solid #cbd5e1;
+      overflow:hidden;
+    }
+    .card-header{
+      padding:14px 20px 10px;
+      border-bottom:1px solid #f1f5f9;
+      display:flex;align-items:center;gap:10px;
+    }
+    .card-header .icon{
+      width:32px;height:32px;border-radius:8px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:16px;color:#fff;flex-shrink:0;
+    }
+    .card-header h2{font-size:1.05rem;font-weight:600;color:#1e293b}
+    .card-header h2 small{display:block;font-size:.75rem;font-weight:400;color:#64748b;margin-top:1px}
+    .card-body{padding:16px 20px 20px}
+
+    /* Section accent colours */
+    .card--device{border-left-color:#3b82f6}
+    .card--device .icon{background:#3b82f6}
+    .card--data{border-left-color:#10b981}
+    .card--data .icon{background:#10b981}
+    .card--conn{border-left-color:#f59e0b}
+    .card--conn .icon{background:#f59e0b}
+
+    /* ── Form elements ──────────────────────────────────────────── */
+    label{display:block;margin-bottom:14px;font-size:.85rem;font-weight:500;color:#475569}
+    label span.lbl{display:block;margin-bottom:4px}
+    input,select{
+      width:100%;padding:9px 12px;font-size:.9rem;
+      border:1px solid #cbd5e1;border-radius:8px;
+      background:#f8fafc;color:#1e293b;
+      transition:border-color .15s,box-shadow .15s;
+    }
+    input:focus,select:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px}
+    small.hint{display:block;font-size:.75rem;color:#94a3b8;margin-top:-8px;margin-bottom:12px}
+
+    /* ── Errors ──────────────────────────────────────────────────── */
+    .errors{
+      background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;
+      padding:14px 18px;margin-bottom:20px;
+    }
+    .errors strong{color:#b91c1c;font-size:.9rem}
+    .errors ul{margin:8px 0 0 20px;font-size:.85rem;color:#991b1b}
+    .errors li{margin-bottom:2px}
+
+    /* ── Network blocks ─────────────────────────────────────────── */
+    .net-block{
+      background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;
+      padding:14px 16px;margin-bottom:14px;
+    }
+    .net-block h4{
+      font-size:.9rem;font-weight:600;color:#334155;margin-bottom:10px;
+      display:flex;align-items:center;gap:8px;
+    }
+    .net-block h4 .badge{
+      font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+      padding:2px 8px;border-radius:4px;color:#fff;
+    }
+    .badge--wifi{background:#3b82f6}
+    .badge--ttn{background:#10b981}
+    .badge--helium{background:#f59e0b;color:#1e293b}
+
+    .remove-btn{
+      background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;
+      padding:6px 14px;border-radius:6px;font-size:.8rem;
+      cursor:pointer;width:auto;margin-top:8px;transition:background .15s;
+    }
+    .remove-btn:hover{background:#fecaca}
+
+    /* Toggle switches for TTN / Helium */
+    .toggle-row{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:10px 0;border-bottom:1px solid #f1f5f9;margin-bottom:12px;
+    }
+    .toggle-row:last-of-type{border-bottom:none}
+    .toggle-row label{margin:0;font-weight:600;font-size:.88rem;color:#334155}
+    .toggle-switch{position:relative;width:44px;height:24px;flex-shrink:0}
+    .toggle-switch input{opacity:0;width:0;height:0}
+    .toggle-slider{
+      position:absolute;inset:0;cursor:pointer;border-radius:24px;
+      background:#cbd5e1;transition:background .2s;
+    }
+    .toggle-slider::before{
+      content:'';position:absolute;left:3px;top:3px;
+      width:18px;height:18px;border-radius:50%;background:#fff;
+      transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.15);
+    }
+    .toggle-switch input:checked+.toggle-slider{background:#10b981}
+    .toggle-switch input:checked+.toggle-slider::before{transform:translateX(20px)}
+
+    .toggle-content{
+      max-height:0;overflow:hidden;transition:max-height .3s ease;
+    }
+    .toggle-content.open{max-height:600px}
+
+    /* ── Add Wi-Fi button ───────────────────────────────────────── */
+    .add-btn{
+      background:#eff6ff;color:#2563eb;border:1px dashed #93c5fd;
+      padding:10px;border-radius:8px;font-size:.88rem;font-weight:500;
+      cursor:pointer;width:100%;transition:background .15s;
+    }
+    .add-btn:hover{background:#dbeafe}
+
+    /* ── Submit ──────────────────────────────────────────────────── */
+    .submit-btn{
+      display:block;width:100%;padding:14px;border:none;border-radius:10px;
+      background:linear-gradient(135deg,#1e3a5f,#2b5c8a);
+      color:#fff;font-size:1rem;font-weight:600;cursor:pointer;
+      box-shadow:0 2px 8px rgba(30,58,95,.25);transition:filter .15s;
+      margin-top:8px;
+    }
+    .submit-btn:hover{filter:brightness(1.08)}
+
+    /* ── Checkbox inline ────────────────────────────────────────── */
+    .check-label{
+      display:flex;align-items:center;gap:8px;
+      font-size:.82rem;color:#475569;margin:8px 0 4px;
+    }
+    .check-label input[type=checkbox]{width:auto;accent-color:#3b82f6}
+
+    /* ── Responsive ─────────────────────────────────────────────── */
+    @media(max-width:540px){
+      .grid2,.grid4{grid-template-columns:1fr}
+      .header-inner h1{font-size:1.1rem}
+    }
   </style>
 </head>
 
 <body>
-  <h1>Sensor Configuration</h1>
 
-  <!-- Server-side validation feedback -->
-  {% if errors and errors|length %}
-    <div class="errors">
-      <strong>Please fix the following errors:</strong>
-      <ul>
-        {% for e in errors %}<li>{{ e }}</li>{% endfor %}
-      </ul>
+  <!-- ═══ HEADER ═══ -->
+  <header class="page-header">
+    <div class="header-inner">
+      <img src="{{ url_for('static', filename='monicrowd_logo.png') }}" alt="MoniCrowd" onerror="this.style.display='none'">
+      <h1>Sensor Configuration<span>MoniCrowd Provisioning</span></h1>
     </div>
-  {% endif %}
+  </header>
 
-  <!-- Main form -->
-  <form method="post" action="{{ url_for('save') }}">
+  <div class="container">
 
-    <!-- Connectivity (multi-RAN) -->
-    <fieldset id="connectivity-section">
-      <legend>Connectivity</legend>
-      <div id="network-list"></div>
-      <button type="button" id="add-network">+ Add Network</button>
-    </fieldset>
-
-    <!-- Device -->
-    <fieldset>
-      <legend>Device</legend>
-      <label>Sensor Name
-        <input name="Sensor Name" type="text" maxlength="100"
-               value="{{ cfg.get('Sensor Name', '') }}" required>
-      </label>
-      <div class="grid">
-        <label>Latitude
-          <input name="Latitude" type="number" step="any" min="-90" max="90"
-                 value="{{ cfg['Latitude'] }}" required>
-        </label>
-        <label>Longitude
-          <input name="Longitude" type="number" step="any" min="-180" max="180"
-                 value="{{ cfg['Longitude'] }}" required>
-        </label>
+    <!-- Server-side validation feedback -->
+    {% if errors and errors|length %}
+      <div class="errors">
+        <strong>Please fix the following errors:</strong>
+        <ul>
+          {% for e in errors %}<li>{{ e }}</li>{% endfor %}
+        </ul>
       </div>
-      <label>Status
-        <select name="Status" required>
-          <option value="Active"   {{ "selected" if cfg['Status']=="Active" else "" }}>Active</option>
-          <option value="Disabled" {{ "selected" if cfg['Status']=="Disabled" else "" }}>Disabled</option>
-        </select>
-      </label>
-      <small>Active: device is performing detection. Disabled: device is not counting.</small>
-    </fieldset>
+    {% endif %}
 
-    <!-- Sensibility -->
-    <fieldset>
-      <legend>Sensibility</legend>
-      <label>Power Filtration (dBm)
-        <input name="Power Filtration" type="number" step="any"
-               value="{{ cfg['Power Filtration'] }}" required>
-      </label>
-    </fieldset>
+    <form method="post" action="{{ url_for('save') }}">
 
-    <!-- Server / InfluxDB -->
-    <fieldset>
-      <legend>Server / InfluxDB</legend>
-      <div class="grid">
-        <label>InfluxDB Organization
-          <input name="InfluxDB Organization" value="{{ cfg['InfluxDB Organization'] }}" required>
-        </label>
-        <label>InfluxDB Bucket
-          <input name="InfluxDB Bucket" value="{{ cfg['InfluxDB Bucket'] }}" required>
-        </label>
+      <!-- ═══════════════════════ DEVICE ═══════════════════════ -->
+      <div class="card card--device">
+        <div class="card-header">
+          <div class="icon">&#9881;</div>
+          <h2>Device<small>Identification, location &amp; reboot schedule</small></h2>
+        </div>
+        <div class="card-body">
+
+          <label>
+            <span class="lbl">Sensor Name</span>
+            <input name="Sensor Name" type="text" maxlength="100"
+                   value="{{ cfg.get('Sensor Name', '') }}" required placeholder="e.g. Lora_sensor_01">
+          </label>
+
+          <div class="grid2">
+            <label>
+              <span class="lbl">Latitude</span>
+              <input name="Latitude" type="number" step="any" min="-90" max="90"
+                     value="{{ cfg['Latitude'] }}" required>
+            </label>
+            <label>
+              <span class="lbl">Longitude</span>
+              <input name="Longitude" type="number" step="any" min="-180" max="180"
+                     value="{{ cfg['Longitude'] }}" required>
+            </label>
+          </div>
+
+          <label>
+            <span class="lbl">Status</span>
+            <select name="Status" required>
+              <option value="Active"   {{ "selected" if cfg['Status']=="Active"   else "" }}>Active</option>
+              <option value="Disabled" {{ "selected" if cfg['Status']=="Disabled" else "" }}>Disabled</option>
+            </select>
+          </label>
+          <small class="hint">Active: device is performing detection. Disabled: device is not counting.</small>
+
+          <!-- Reboot (moved here) -->
+          <div class="grid2">
+            <label>
+              <span class="lbl">Reboot Periodicity</span>
+              <select name="Reboot Periodicity" id="reboot_periodicity" required>
+                <option value="0" {{ "selected" if cfg['Reboot Periodicity']=="0" else "" }}>0 — Daily</option>
+                <option value="1" {{ "selected" if cfg['Reboot Periodicity']=="1" else "" }}>1 — Every two days</option>
+                <option value="2" {{ "selected" if cfg['Reboot Periodicity']=="2" else "" }}>2 — Every three days</option>
+                <option value="3" {{ "selected" if cfg['Reboot Periodicity']=="3" else "" }}>3 — Weekly</option>
+                <option value="4" {{ "selected" if cfg['Reboot Periodicity']=="4" else "" }}>4 — Monthly</option>
+                <option value="5" {{ "selected" if cfg['Reboot Periodicity']=="5" else "" }}>5 — No Reboot</option>
+              </select>
+            </label>
+            <label>
+              <span class="lbl">Reboot Time (HH:MM)</span>
+              <input type="time" name="Reboot Time" id="reboot_time"
+                     value="{{ cfg['Reboot Time'] }}">
+            </label>
+          </div>
+          <small class="hint">If "No Reboot (5)" is selected, time is ignored.</small>
+
+        </div>
       </div>
-      <label>InfluxDB Auth Token
-        <input type="password" name="InfluxDB Auth Token"
-               value="{{ cfg['InfluxDB Auth Token'] }}" required>
-      </label>
-    </fieldset>
 
-    <!-- Upload & Windows -->
-    <fieldset>
-      <legend>Upload & Windows</legend>
-      <div class="grid">
-        <label>Upload Periodicity (minutes)
-          <input type="number" min="1" step="1" name="Upload Periodicity"
-                 value="{{ cfg['Upload Periodicity'] }}" required>
-        </label>
-        <label>Sliding Window (minutes)
-          <input type="number" min="1" step="1" name="Sliding Window"
-                 value="{{ cfg['Sliding Window'] }}" required>
-        </label>
+      <!-- ═══════════════════ DATA & SERVER ════════════════════ -->
+      <div class="card card--data">
+        <div class="card-header">
+          <div class="icon">&#9741;</div>
+          <h2>Data &amp; Server<small>Sensing parameters, upload timing &amp; InfluxDB</small></h2>
+        </div>
+        <div class="card-body">
+
+          <label>
+            <span class="lbl">Power Filtration (dBm)</span>
+            <input name="Power Filtration" type="number" step="any"
+                   value="{{ cfg['Power Filtration'] }}" required>
+          </label>
+
+          <div class="grid2">
+            <label>
+              <span class="lbl">Upload Periodicity (min)</span>
+              <input type="number" min="1" step="1" name="Upload Periodicity"
+                     value="{{ cfg['Upload Periodicity'] }}" required>
+            </label>
+            <label>
+              <span class="lbl">Sliding Window (min)</span>
+              <input type="number" min="1" step="1" name="Sliding Window"
+                     value="{{ cfg['Sliding Window'] }}" required>
+            </label>
+          </div>
+
+          <div class="grid2">
+            <label>
+              <span class="lbl">InfluxDB Organization</span>
+              <input name="InfluxDB Organization" value="{{ cfg['InfluxDB Organization'] }}" required>
+            </label>
+            <label>
+              <span class="lbl">InfluxDB Bucket</span>
+              <input name="InfluxDB Bucket" value="{{ cfg['InfluxDB Bucket'] }}" required>
+            </label>
+          </div>
+
+          <label>
+            <span class="lbl">InfluxDB Auth Token</span>
+            <input type="password" name="InfluxDB Auth Token"
+                   value="{{ cfg['InfluxDB Auth Token'] }}" required>
+          </label>
+
+        </div>
       </div>
-    </fieldset>
 
-    <!-- Reboot -->
-    <fieldset>
-      <legend>Reboot</legend>
-      <div class="grid">
-        <label>Reboot Periodicity
-          <select name="Reboot Periodicity" id="reboot_periodicity" required>
-            <option value="0" {{ "selected" if cfg['Reboot Periodicity']=="0" else "" }}>0 - Daily</option>
-            <option value="1" {{ "selected" if cfg['Reboot Periodicity']=="1" else "" }}>1 - Every two days</option>
-            <option value="2" {{ "selected" if cfg['Reboot Periodicity']=="2" else "" }}>2 - Every three days</option>
-            <option value="3" {{ "selected" if cfg['Reboot Periodicity']=="3" else "" }}>3 - Weekly</option>
-            <option value="4" {{ "selected" if cfg['Reboot Periodicity']=="4" else "" }}>4 - Monthly</option>
-            <option value="5" {{ "selected" if cfg['Reboot Periodicity']=="5" else "" }}>5 - No Reboot</option>
-          </select>
-        </label>
-        <label>Reboot Time (HH:MM)
-          <input type="time" name="Reboot Time" id="reboot_time"
-                 value="{{ cfg['Reboot Time'] }}">
-        </label>
+      <!-- ═══════════════════ CONNECTIVITY ═════════════════════ -->
+      <div class="card card--conn">
+        <div class="card-header">
+          <div class="icon">&#9978;</div>
+          <h2>Connectivity<small>Wi-Fi, LoRa TTN &amp; LoRa Helium</small></h2>
+        </div>
+        <div class="card-body">
+
+          <!-- Wi-Fi list (supports multiple) -->
+          <div id="wifi-list"></div>
+          <button type="button" class="add-btn" id="add-wifi">+ Add Wi-Fi Network</button>
+
+          <hr style="border:none;border-top:1px solid #e2e8f0;margin:18px 0 14px">
+
+          <!-- LoRa TTN (single, togglable) -->
+          <div class="toggle-row">
+            <label>LoRa TTN</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="ttn-toggle">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-content" id="ttn-content">
+            <div class="net-block">
+              <h4><span class="badge badge--ttn">TTN</span> LoRa TTN Configuration</h4>
+              <div class="grid2">
+                <label>
+                  <span class="lbl">TTN Device ID</span>
+                  <input name="TTN Device ID" id="ttn-device-id" placeholder="my-app-device-001">
+                </label>
+                <label>
+                  <span class="lbl">App EUI</span>
+                  <input name="TTN App EUI" id="ttn-app-eui" placeholder="70B3D57ED000XXXX">
+                </label>
+              </div>
+              <div class="grid2">
+                <label>
+                  <span class="lbl">App Key</span>
+                  <input name="TTN App Key" id="ttn-app-key" placeholder="32-char hex key">
+                </label>
+                <label>
+                  <span class="lbl">Dev EUI</span>
+                  <input name="TTN Dev EUI" id="ttn-dev-eui" placeholder="Device EUI">
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <hr style="border:none;border-top:1px solid #e2e8f0;margin:14px 0">
+
+          <!-- LoRa Helium (single, togglable) -->
+          <div class="toggle-row">
+            <label>LoRa Helium</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="helium-toggle">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-content" id="helium-content">
+            <div class="net-block">
+              <h4><span class="badge badge--helium">HELIUM</span> LoRa Helium Configuration</h4>
+              <div class="grid2">
+                <label>
+                  <span class="lbl">Helium Device ID</span>
+                  <input name="Helium Device ID" id="helium-device-id" placeholder="my-helium-device-001">
+                </label>
+                <label>
+                  <span class="lbl">Helium App EUI</span>
+                  <input name="Helium App EUI" id="helium-app-eui" placeholder="70B3D57ED000XXXX">
+                </label>
+              </div>
+              <div class="grid2">
+                <label>
+                  <span class="lbl">Helium App Key</span>
+                  <input name="Helium App Key" id="helium-app-key" placeholder="Hex key">
+                </label>
+                <label>
+                  <span class="lbl">Helium Dev EUI</span>
+                  <input name="Helium Dev EUI" id="helium-dev-eui" placeholder="Device EUI">
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hidden fields so TTN/Helium are always submitted (empty when toggled off) -->
+          <input type="hidden" name="ttn_enabled"    id="ttn-enabled-hidden"    value="0">
+          <input type="hidden" name="helium_enabled"  id="helium-enabled-hidden"  value="0">
+
+        </div>
       </div>
-      <small>If “No Reboot (5)” is selected, time is ignored.</small>
-    </fieldset>
 
-    <div class="actions">
-      <button type="submit">Save</button>
-    </div>
-  </form>
+      <button type="submit" class="submit-btn">Save Configuration</button>
 
-  <!-- Selection modal (opened by + Add Network) -->
-  <div id="networkModal" class="modal" aria-hidden="true">
-    <div class="modal-content">
-      <h3>Select network type</h3>
-      <div class="btn-row">
-        <button type="button" class="wifi-btn"   id="btn-add-wifi">Wi-Fi</button>
-        <button type="button" class="ttn-btn"    id="btn-add-ttn">LoRa TTN</button>
-        <button type="button" class="helium-btn" id="btn-add-helium">LoRa Helium</button>
-      </div>
-      <button type="button" class="cancel-btn" id="btn-cancel-modal">Cancel</button>
-    </div>
+    </form>
   </div>
 
-  <!-- Minimal, unobtrusive JS -->
+  <!-- ═══════════════════════ JAVASCRIPT ═══════════════════════ -->
   <script>
-    // --- Connectivity templates (rendered on demand) ---
-    const TPL = {
-      wifi: `
-        <div class="network-box" data-type="wifi">
-          <h4>Wi-Fi</h4>
-          <div class="grid">
-            <label>SSID
-              <input name="WiFi SSID" placeholder="Network name">
-            </label>
-            <label>Password
-              <input name="WiFi Password" type="password" placeholder="Password">
-            </label>
-          </div>
-          <label>Cloud Address
-            <input name="WiFi Cloud Address" placeholder="Hostname or IP">
-          </label>
-          <label style="margin-top:12px;">
-            <input type="checkbox" class="use-default-mqtt" checked>
-            Use Default MQTT Port (1883) - Recommended
-          </label>
-          <label class="mqtt-port-label" style="margin-top:8px;display:none;">MQTT Port
-            <input name="MQTT Port" type="number" min="1" max="65535" step="1"
-                   class="mqtt-port-input" value="1883">
-          </label>
-          <small>Only change if your MQTT broker uses a non-standard port.</small>
-          <button type="button" class="remove-network">Remove</button>
-          <hr>
+    /* ── Wi-Fi template ─────────────────────────────────────────── */
+    const WIFI_TPL = `
+      <div class="net-block" data-type="wifi">
+        <h4><span class="badge badge--wifi">WI-FI</span> Wi-Fi Network
+            <span style="flex:1"></span>
+            <button type="button" class="remove-btn" style="margin:0">Remove</button>
+        </h4>
+        <div class="grid2">
+          <label><span class="lbl">SSID</span>
+            <input name="WiFi SSID" placeholder="Network name"></label>
+          <label><span class="lbl">Password</span>
+            <input name="WiFi Password" type="password" placeholder="Password"></label>
         </div>
-      `,
-      ttn: `
-        <div class="network-box" data-type="lorattn">
-          <h4>LoRa TTN</h4>
-          <div class="grid">
-            <label>TTN Device ID
-              <input name="TTN Device ID" placeholder="my-app-device-001">
-            </label>
-            <label>App EUI
-              <input name="TTN App EUI" placeholder="70B3D57ED000XXXX">
-            </label>
-            <label>App Key
-              <input name="TTN App Key" placeholder="Hex key">
-            </label>
-            <label>Dev EUI
-              <input name="TTN Dev EUI" placeholder="Device EUI">
-            </label>
-          </div>
-          <button type="button" class="remove-network">Remove</button>
-          <hr>
+        <label><span class="lbl">MQTT Address</span>
+          <input name="WiFi MQTT Address" placeholder="Hostname or IP"></label>
+        <div class="check-label">
+          <input type="checkbox" class="use-default-mqtt" checked>
+          Use Default MQTT Port (1883) — Recommended
         </div>
-      `,
-        helium: `
-          <div class="network-box" data-type="lorahelium">
-            <h4>LoRa Helium</h4>
-            <div class="grid">
-              <label>Helium Device ID
-                <input name="Helium Device ID" placeholder="my-helium-device-001">
-              </label>
-              <label>Helium App EUI
-                <input name="Helium App EUI" placeholder="70B3D57ED000XXXX">
-              </label>
-              <label>Helium App Key
-                <input name="Helium App Key" placeholder="Hex key">
-              </label>
-              <label>Helium Dev EUI
-                <input name="Helium Dev EUI" placeholder="Device EUI">
-              </label>
-            </div>
-            <button type="button" class="remove-network">Remove</button>
-            <hr>
-          </div>
-        `,
+        <label class="mqtt-port-label" style="display:none;margin-top:6px"><span class="lbl">MQTT Port</span>
+          <input name="MQTT Port" type="number" min="1" max="65535" step="1"
+                 class="mqtt-port-input" value="1883"></label>
+        <small class="hint" style="margin-top:4px">Only change if your MQTT broker uses a non-standard port.</small>
+      </div>`;
 
-    };
+    const wifiList = document.getElementById('wifi-list');
 
-    // DOM refs
-    const list   = document.getElementById('network-list');
-    const modal  = document.getElementById('networkModal');
-    const addBtn = document.getElementById('add-network');
-
-    // Modal helpers
-    function openModal(){
-      modal.style.display = 'flex';
-      modal.setAttribute('aria-hidden','false');
-    }
-    function closeModal(){
-      modal.style.display = 'none';
-      modal.setAttribute('aria-hidden','true');
-    }
-
-    // Add network block (optionally pre-filled from TOML)
-    function addNetwork(type, data){
+    function addWifi(data) {
       const wrapper = document.createElement('div');
-      wrapper.innerHTML = TPL[type].trim();
+      wrapper.innerHTML = WIFI_TPL.trim();
       const box = wrapper.firstElementChild;
+      box.querySelector('.remove-btn').onclick = () => box.remove();
 
-      // Wire remove button
-      box.querySelector('.remove-network').onclick = () => box.remove();
-      list.appendChild(box);
+      /* MQTT port toggle */
+      const cb  = box.querySelector('.use-default-mqtt');
+      const lbl = box.querySelector('.mqtt-port-label');
+      const inp = box.querySelector('.mqtt-port-input');
+      function sync() {
+        const def = cb.checked;
+        lbl.style.display = def ? 'none' : 'block';
+        inp.disabled = def;
+        if (def) inp.value = '1883';
+      }
+      cb.addEventListener('change', sync);
 
-      // Pre-fill fields when data is provided (loaded from TOML)
-      if (data && type === 'wifi') {
-        const ssid    = box.querySelector('input[name="WiFi SSID"]');
-        const pwd     = box.querySelector('input[name="WiFi Password"]');
-        const cloud   = box.querySelector('input[name="WiFi Cloud Address"]');
-        if (ssid)  ssid.value  = data.ssid  || "";
-        if (pwd)   pwd.value   = data.password || "";
-        if (cloud) cloud.value = data.cloud_address || "";
-
-        // Setup MQTT Port toggle for this Wi-Fi block
-        const mqttCheckbox = box.querySelector('.use-default-mqtt');
-        const mqttPortLabel = box.querySelector('.mqtt-port-label');
-        const mqttPortInput = box.querySelector('.mqtt-port-input');
-
-        function toggleMqttPort() {
-          const useDefault = mqttCheckbox.checked;
-          mqttPortLabel.style.display = useDefault ? 'none' : 'block';
-          if (useDefault) {
-            mqttPortInput.value = '1883';
-            mqttPortInput.disabled = true;
-          } else {
-            mqttPortInput.disabled = false;
-          }
-        }
-
-        mqttCheckbox.addEventListener('change', toggleMqttPort);
-        
-        // Set initial state based on data
+      /* Pre-fill */
+      if (data) {
+        const s = box.querySelector('[name="WiFi SSID"]');
+        const p = box.querySelector('[name="WiFi Password"]');
+        const c = box.querySelector('[name="WiFi MQTT Address"]');
+        if (s) s.value = data.ssid || '';
+        if (p) p.value = data.password || '';
+        if (c) c.value = data.mqtt_address || data.cloud_address || '';
         if (data.mqtt_port && data.mqtt_port !== '1883') {
-          mqttPortInput.value = data.mqtt_port;
-          mqttCheckbox.checked = false;
+          inp.value = data.mqtt_port;
+          cb.checked = false;
         }
-        toggleMqttPort();
       }
-
-      if (data && type === 'ttn') {
-        const appEui = box.querySelector('input[name="TTN App EUI"]');
-        const appKey = box.querySelector('input[name="TTN App Key"]');
-        const devEui = box.querySelector('input[name="TTN Dev EUI"]');
-        if (appEui) appEui.value = data.app_eui || "";
-        if (appKey) appKey.value = data.app_key || "";
-        if (devEui) devEui.value = data.dev_eui || "";
-        // TTN Device ID (UI only, opcional)
-        const devId = box.querySelector('input[name="TTN Device ID"]');
-        if (devId && data.device_id) devId.value = data.device_id;
-      }
-
-      if (data && type === 'helium') {
-        const devId  = box.querySelector('input[name="Helium Device ID"]');
-        const appEui = box.querySelector('input[name="Helium App EUI"]');
-        const appKey = box.querySelector('input[name="Helium App Key"]');
-        const devEui = box.querySelector('input[name="Helium Dev EUI"]');
-        if (devId)  devId.value  = data.device_id || "";
-        if (appEui) appEui.value = data.app_eui   || "";
-        if (appKey) appKey.value = data.app_key   || "";
-        if (devEui) devEui.value = data.dev_eui   || "";
-      }
+      sync();
+      wifiList.appendChild(box);
     }
 
-    // Wire modal buttons
-    document.getElementById('btn-add-wifi').onclick   = () => { addNetwork('wifi');   closeModal(); };
-    document.getElementById('btn-add-ttn').onclick    = () => { addNetwork('ttn');    closeModal(); };
-    document.getElementById('btn-add-helium').onclick = () => { addNetwork('helium'); closeModal(); };
-    document.getElementById('btn-cancel-modal').onclick = closeModal;
+    document.getElementById('add-wifi').onclick = () => addWifi();
 
-    // Open modal from "+ Add Network"
-    addBtn.onclick = openModal;
+    /* ── TTN / Helium toggles ───────────────────────────────────── */
+    function wireToggle(checkboxId, contentId, hiddenId) {
+      const cb = document.getElementById(checkboxId);
+      const ct = document.getElementById(contentId);
+      const hd = document.getElementById(hiddenId);
+      cb.addEventListener('change', () => {
+        ct.classList.toggle('open', cb.checked);
+        hd.value = cb.checked ? '1' : '0';
+        /* clear fields when turning off */
+        if (!cb.checked) ct.querySelectorAll('input').forEach(i => { if (i.type !== 'hidden') i.value = ''; });
+      });
+    }
+    wireToggle('ttn-toggle',    'ttn-content',    'ttn-enabled-hidden');
+    wireToggle('helium-toggle', 'helium-content',  'helium-enabled-hidden');
 
-    // Reboot time is required only when periodicity != 5
+    /* ── Reboot time sync ───────────────────────────────────────── */
     const rp = document.getElementById('reboot_periodicity');
     const rt = document.getElementById('reboot_time');
-    function syncTime(){
-      const noReboot = rp.value === '5';
-      rt.disabled = noReboot;
-      rt.required = !noReboot;
+    function syncTime() {
+      const off = rp.value === '5';
+      rt.disabled = off;
+      rt.required = !off;
     }
     rp.addEventListener('change', syncTime);
     syncTime();
 
-    // Flask / Jinja gera um JSON em string e depois fazemos parse em JS
-    const existingNetworks = JSON.parse(
-      '{{ connectivity | default([]) | tojson | safe }}'
-    );
+    /* ── Pre-fill from server (Jinja) ───────────────────────────── */
+    const existing = JSON.parse('{{ connectivity | default([]) | tojson | safe }}');
 
     window.addEventListener('DOMContentLoaded', () => {
-      existingNetworks.forEach(n => {
-        if (n.type === 'wifi')       addNetwork('wifi',   n);
-        if (n.type === 'lorattn')    addNetwork('ttn',    n);
-        if (n.type === 'lorahelium') addNetwork('helium', n);
+      existing.forEach(n => {
+        if (n.type === 'wifi') addWifi(n);
+
+        if (n.type === 'lorattn') {
+          document.getElementById('ttn-toggle').checked = true;
+          document.getElementById('ttn-content').classList.add('open');
+          document.getElementById('ttn-enabled-hidden').value = '1';
+          const f = (id, v) => { const el = document.getElementById(id); if (el && v) el.value = v; };
+          f('ttn-device-id', n.device_id);
+          f('ttn-app-eui',   n.app_eui);
+          f('ttn-app-key',   n.app_key);
+          f('ttn-dev-eui',   n.dev_eui);
+        }
+
+        if (n.type === 'lorahelium') {
+          document.getElementById('helium-toggle').checked = true;
+          document.getElementById('helium-content').classList.add('open');
+          document.getElementById('helium-enabled-hidden').value = '1';
+          const f = (id, v) => { const el = document.getElementById(id); if (el && v) el.value = v; };
+          f('helium-device-id', n.device_id);
+          f('helium-app-eui',   n.app_eui);
+          f('helium-app-key',   n.app_key);
+          f('helium-dev-eui',   n.dev_eui);
+        }
       });
     });
 
-    // Client-side guard: at least one connectivity block is required
+    /* ── Client guard: at least 1 connectivity ──────────────────── */
     document.querySelector('form').addEventListener('submit', (e) => {
-      const hasNetworks = list.querySelectorAll('.network-box').length > 0;
-      if (!hasNetworks){
+      const hasWifi   = wifiList.querySelectorAll('.net-block').length > 0;
+      const hasTTN    = document.getElementById('ttn-toggle').checked;
+      const hasHelium = document.getElementById('helium-toggle').checked;
+      if (!hasWifi && !hasTTN && !hasHelium) {
         e.preventDefault();
         alert('Please add at least one connectivity option (Wi-Fi, LoRa TTN, or LoRa Helium).');
       }
     });
   </script>
+
 </body>
 </html>

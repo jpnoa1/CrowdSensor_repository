@@ -1431,6 +1431,36 @@ def publish_location_mqtt_message(msg_payload, topic):
         print("\nFailed to publish mqtt message.")
         return False
     
+def normalize_connectivity_mode(connectivity_list):
+    types = set()
+
+    for c in connectivity_list:
+        raw = (c.get("type") or "").strip().lower()
+
+        if raw == "wifi":
+            types.add("wifi")
+        elif "lora" in raw:
+            types.add("lora")
+
+    if "wifi" in types and "lora" in types:
+        return "wifi_lora"
+    elif "wifi" in types:
+        return "wifi"
+    elif "lora" in types:
+        return "lora"
+    else:
+        return None
+
+
+def normalize_network_type(raw_type: str) -> str:
+    t = (raw_type or "").strip().lower()
+
+    if t == "wifi":
+        return "wifi"
+    if "lora" in t:
+        return "lora"
+
+    return t
 
 def publish_sensor_state(cfg, mqtt_host, mqtt_port=1883):
     payload = {
@@ -1439,26 +1469,32 @@ def publish_sensor_state(cfg, mqtt_host, mqtt_port=1883):
         "latitude": float(cfg["sensor"]["Latitude"]),
         "longitude": float(cfg["sensor"]["Longitude"]),
         "status": cfg["sensor"]["Status"],
-        "connectivity_mode": cfg["Connectivity"][0]["type"],
+        "connectivity_mode": normalize_connectivity_mode(cfg.get("Connectivity", [])),
         "firmware_version": "1.0.0",
         "power_filtration_db": int(cfg["sensor"]["Power Filtration"]),
         "messages_periodicity_min": int(cfg["sensor"]["Upload Periodicity"]),
         "sliding_window_min": int(cfg["sensor"]["Sliding Window"]),
         "timestamp": datetime.utcnow().isoformat() + "Z"
     }
-    
-    client = mqtt_client.Client()
-    client.username_pw_set("tmmss1", "tomasantos00")
-    client.connect(mqtt_host, mqtt_port, 60)
-    client.publish(
-        topic="monicrowd/sensors/state",
-        payload=json.dumps(payload),
-        qos=1,
-        retain=True
-    )
-    client.disconnect()
 
+    try:
+        client = mqtt_client.Client()
+        client.username_pw_set("tmmss1", "tomasantos00")
+        client.connect(mqtt_host, mqtt_port, 60)
+        client.loop_start()
 
+        msg_info = client.publish(
+            topic="monicrowd/sensors/state",
+            payload=json.dumps(payload),
+            qos=1,
+            retain=True
+        )
+        msg_info.wait_for_publish(timeout=5)
+        client.loop_stop()
+        client.disconnect()
+        print("[OK] Sensor state published.")
+    except Exception as e:
+        print(f"[ERROR] Failed to publish sensor state: {e}")
 
 
 def publish_sensor_networks(cfg, mqtt_host, mqtt_port=1883):
@@ -1467,13 +1503,14 @@ def publish_sensor_networks(cfg, mqtt_host, mqtt_port=1883):
     priority = 1
 
     for c in connectivity:
-        ctype = (c.get("type") or "").strip().lower()
+        raw_type = (c.get("type") or "").strip().lower()
+        ctype = normalize_network_type(raw_type)
         if not ctype:
             continue
 
         entry = {
             "type": ctype,
-            "name": c.get("name", ctype),
+            "name": c.get("name", raw_type),
             "priority": priority,
             "available": True,
             "connected": None
@@ -1483,7 +1520,7 @@ def publish_sensor_networks(cfg, mqtt_host, mqtt_port=1883):
             entry["ssid"] = c.get("ssid")
             entry["cloud_address"] = c.get("cloud_address")
 
-        if "lora" in ctype:
+        if ctype == "lora":
             entry["dev_eui"] = c.get("dev_eui")
             entry["app_eui"] = c.get("app_eui")
 
@@ -1495,18 +1532,24 @@ def publish_sensor_networks(cfg, mqtt_host, mqtt_port=1883):
         "networks": networks
     }
 
-    client = mqtt_client.Client()
-    client.username_pw_set("tmmss1", "tomasantos00")
-    client.connect(mqtt_host, mqtt_port, 60)
+    try:
+        client = mqtt_client.Client()
+        client.username_pw_set("tmmss1", "tomasantos00")
+        client.connect(mqtt_host, mqtt_port, 60)
+        client.loop_start()
 
-    client.publish(
-        "monicrowd/sensors/networks",
-        json.dumps(payload),
-        retain=True   # keep retain
-    )
-
-    client.disconnect()
-    print(f"[OK][NET] Published {len(networks)} network(s)")
+        msg_info = client.publish(
+            "monicrowd/sensors/networks",
+            json.dumps(payload),
+            qos=1,
+            retain=True
+        )
+        msg_info.wait_for_publish(timeout=5)
+        client.loop_stop()
+        client.disconnect()
+        print(f"[OK][NET] Published {len(networks)} network(s)")
+    except Exception as e:
+        print(f"[ERROR] Failed to publish networks: {e}")
 
 def enable_gps():
     print("[GPS] Re-enabling GPS USB device and services...")
