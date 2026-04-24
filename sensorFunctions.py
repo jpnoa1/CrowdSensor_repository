@@ -130,6 +130,7 @@ def try_get_boot_gps_position(max_wait_sec=120, warmup_sec=5, min_good_samples=4
     """Try to get a robust GPS position; return (lat, lon, quality) or None."""
     try:
         import gps
+        import select
     except Exception as e:
         print(f"[GPS] gps module unavailable ({e}). Using DB location fallback.")
         return None
@@ -144,10 +145,12 @@ def try_get_boot_gps_position(max_wait_sec=120, warmup_sec=5, min_good_samples=4
     warmup_end = time.time() + warmup_sec
     while time.time() < warmup_end:
         try:
-            session.next()
+            # Check if there is data to read without blocking
+            if session.waiting(timeout=0.2):
+                session.next()
         except Exception:
             pass
-        time.sleep(0.2)
+        time.sleep(0.05)
 
     print(f"[GPS] Collecting samples (timeout={max_wait_sec}s)...")
     all_samples = []
@@ -156,38 +159,65 @@ def try_get_boot_gps_position(max_wait_sec=120, warmup_sec=5, min_good_samples=4
 
     while time.time() < end_time:
         try:
-            report = session.next()
-            if report.get("class") != "TPV":
-                continue
+            if session.waiting(timeout=0.2):
+                report = session.next()
+                if report.get("class") == "TPV":
+                    mode = getattr(report, "mode", 0)
+                    lat = getattr(report, "lat", None)
+                    lon = getattr(report, "lon", None)
+                    eph = getattr(report, "eph", None)
 
-            mode = getattr(report, "mode", 0)
-            lat = getattr(report, "lat", None)
-            lon = getattr(report, "lon", None)
-            eph = getattr(report, "eph", None)
+                    if mode >= 2 and lat is not None and lon is not None:
+                        all_samples.append((float(lat), float(lon), eph))
 
-            if mode < 2 or lat is None or lon is None:
-                continue
+                        if eph is not None and float(eph) <= eph_max:
+                            good_samples.append((float(lat), float(lon), eph))
 
-            all_samples.append((float(lat), float(lon), eph))
-
-            if eph is not None and float(eph) <= eph_max:
-                good_samples.append((float(lat), float(lon), eph))
-
-            if len(good_samples) >= min_good_samples:
-                break
-
+                        if len(good_samples) >= min_good_samples:
+                            break
         except Exception:
             pass
-
-        time.sleep(0.25)
+        
+        # Don't need extra sleep because session.waiting(0.2) already delays if no data
+        time.sleep(0.05)
 
     chosen = good_samples if len(good_samples) >= min_good_samples else all_samples
     if not chosen:
         print("[GPS] No valid GPS fix acquired in time. Using DB location fallback.")
         return None
 
-    lat = _median([s[0] for s in chosen])
-    lon = _median([s[1] for s in chosen])
+    try:
+        import numpy as np
+        import math
+        
+        lats = np.array([s[0] for s in chosen])
+        lons = np.array([s[1] for s in chosen])
+
+        lat_med = np.median(lats)
+        lon_med = np.median(lons)
+
+        # Distâncias em metros (aproximação simples)
+        dx = (lons - lon_med) * 111320 * math.cos(math.radians(lat_med))
+        dy = (lats - lat_med) * 110540
+        dist = np.sqrt(dx**2 + dy**2)
+        
+        # Median Absolute Deviation (MAD)
+        mad = np.median(np.abs(dist - np.median(dist)))
+
+        if mad > 0:
+            # Filtra pontos que estejam demasiado longe da mediana
+            mask = dist < max(5.0, 3 * mad)
+            lat = float(np.mean(lats[mask]))
+            lon = float(np.mean(lons[mask]))
+        else:
+            lat = float(lat_med)
+            lon = float(lon_med)
+            
+    except ImportError:
+        print("[GPS] Aviso: 'numpy' não encontrado. A usar cálculo por mediana simples.")
+        lat = _median([s[0] for s in chosen])
+        lon = _median([s[1] for s in chosen])
+
     quality = "GOOD" if chosen is good_samples else "FALLBACK"
 
     print(f"[GPS] Position acquired ({quality}): lat={lat:.7f}, lon={lon:.7f}")

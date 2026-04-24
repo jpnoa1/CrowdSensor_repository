@@ -25,15 +25,15 @@ if not lock_acquired:
 #Check if Wi-Fi and LoRa upload are available
 wifiAvailable = check_wifi_available()
 #para teste
-wifiAvailable = False
-loraAvailable = False
+#wifiAvailable = False
+#loraAvailable = False
 
-set_lora_available(False)
-set_lora_connected(False)
+#set_lora_available(False)
+#set_lora_connected(False)
 
 
-#loraAvailable = check_lora_available()                           
-print("loraAvailable:"+str(loraAvailable))
+loraAvailable = check_lora_available()                           
+#print("loraAvailable:"+str(loraAvailable))
 
 #Check Wi-Fi and LoRa upload connections
 if wifiAvailable:
@@ -43,8 +43,8 @@ else:
     wifiConnected = False
 
 
-set_lora_available(False)
-set_lora_connected(False)
+#set_lora_available(False)
+#set_lora_connected(False)
       
 #If LoRa available, get dev_eui from LoRa board
 if loraAvailable:
