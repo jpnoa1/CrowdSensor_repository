@@ -41,8 +41,8 @@ try:
         influx_token = sensor_configuration[0][9]
         uploadTechnology = sensor_configuration[0][12]
 
-        if uploadTechnology.lower() == "wifi":
-            ip_address = cwifi.execute("""SELECT IP_Address FROM SensorCommunication""").fetchone()[0]
+        #if uploadTechnology.lower() == "wifi":
+        #    ip_address = cwifi.execute("""SELECT IP_Address FROM SensorCommunication""").fetchone()[0]
 
 
     else:
@@ -72,7 +72,7 @@ json_location = json.dumps(location)
 # Send sensor location to InfluxDB
 if uploadTechnology.lower() == "wifi":
    
-    publish_location_mqtt_message(json_location, f"sttoolkit-test/mqtt/wifi/sensorLocation/{influx_bucket}/{ip_address}/{sensor_name}/{sensor_UUID}")
+    publish_location_mqtt_message(json_location, f"sttoolkit-test/mqtt/wifi/v2/sensorLocation/{sensor_UUID}")
     print(f"Location '({latitude},{longitude})' was sent to the cloud server for sensor '{sensor_name}'.")
 
 elif uploadTechnology.lower() == "lora":

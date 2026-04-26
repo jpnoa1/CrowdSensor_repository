@@ -25,7 +25,15 @@
       max-width:720px;margin:0 auto;padding:0 16px;
       display:flex;align-items:center;gap:18px;
     }
-    .header-inner img{height:48px;width:auto;filter:drop-shadow(0 1px 3px rgba(0,0,0,.3))}
+    .logo-wrap{
+      background:#fff;
+      border-radius:12px;
+      padding:6px 10px;
+      display:flex;align-items:center;
+      box-shadow:0 2px 8px rgba(0,0,0,.25);
+      flex-shrink:0;
+    }
+    .logo-wrap img{height:44px;width:auto;display:block}
     .header-inner h1{color:#fff;font-size:1.35rem;font-weight:600;letter-spacing:.3px}
     .header-inner h1 span{display:block;font-size:.78rem;font-weight:400;color:#94b8d8;margin-top:2px}
 
@@ -61,7 +69,8 @@
     .card--data{border-left-color:#10b981}
     .card--data .icon{background:#10b981}
     .card--conn{border-left-color:#f59e0b}
-    .card--conn .icon{background:#f59e0b}
+    .card--conn .icon{background:linear-gradient(135deg,#7c3aed,#3b82f6)}
+    .icon--conn{display:flex;align-items:center;justify-content:center;overflow:visible}
 
     /* ── Form elements ──────────────────────────────────────────── */
     label{display:block;margin-bottom:14px;font-size:.85rem;font-weight:500;color:#475569}
@@ -174,7 +183,9 @@
   <!-- ═══ HEADER ═══ -->
   <header class="page-header">
     <div class="header-inner">
-      <img src="{{ url_for('static', filename='monicrowd_logo.png') }}" alt="MoniCrowd" onerror="this.style.display='none'">
+      <div class="logo-wrap">
+        <img src="{{ url_for('static', filename='monicrowd_logo.png') }}" alt="MoniCrowd" onerror="this.style.display='none'">
+      </div>
       <h1>Sensor Configuration<span>MoniCrowd Provisioning</span></h1>
     </div>
   </header>
@@ -303,7 +314,29 @@
       <!-- ═══════════════════ CONNECTIVITY ═════════════════════ -->
       <div class="card card--conn">
         <div class="card-header">
-          <div class="icon">&#9978;</div>
+          <div class="icon icon--conn">
+            <svg viewBox="0 0 36 36" width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- Globe -->
+              <circle cx="18" cy="18" r="8" stroke="white" stroke-width="1.6" fill="none"/>
+              <ellipse cx="18" cy="18" rx="3.5" ry="8" stroke="white" stroke-width="1.2" fill="none"/>
+              <line x1="10" y1="18" x2="26" y2="18" stroke="white" stroke-width="1.2"/>
+              <line x1="11" y1="13.5" x2="25" y2="13.5" stroke="white" stroke-width="1"/>
+              <line x1="11" y1="22.5" x2="25" y2="22.5" stroke="white" stroke-width="1"/>
+              <!-- Arms with dots -->
+              <line x1="18" y1="10" x2="18" y2="5" stroke="white" stroke-width="1.4"/>
+              <circle cx="18" cy="4" r="1.4" fill="white"/>
+              <line x1="26" y1="18" x2="31" y2="15" stroke="white" stroke-width="1.4"/>
+              <circle cx="32" cy="14.3" r="1.4" fill="white"/>
+              <line x1="26" y1="18" x2="31" y2="21" stroke="white" stroke-width="1.4"/>
+              <circle cx="32" cy="21.7" r="1.4" fill="white"/>
+              <line x1="10" y1="18" x2="5" y2="15" stroke="white" stroke-width="1.4"/>
+              <circle cx="4" cy="14.3" r="1.4" fill="white"/>
+              <line x1="10" y1="18" x2="5" y2="21" stroke="white" stroke-width="1.4"/>
+              <circle cx="4" cy="21.7" r="1.4" fill="white"/>
+              <line x1="18" y1="26" x2="18" y2="31" stroke="white" stroke-width="1.4"/>
+              <circle cx="18" cy="32" r="1.4" fill="white"/>
+            </svg>
+          </div>
           <h2>Connectivity<small>Wi-Fi, LoRa TTN &amp; LoRa Helium</small></h2>
         </div>
         <div class="card-body">
@@ -394,6 +427,15 @@
       <button type="submit" class="submit-btn">Save Configuration</button>
 
     </form>
+
+    <!-- ═══ FOOTER ═══ -->
+    <div style="text-align:center;margin-top:28px;padding:16px 0 8px;border-top:1px solid #e2e8f0;">
+      <img src="{{ url_for('static', filename='monicrowd_logo.png') }}"
+           alt="MoniCrowd"
+           style="height:36px;width:auto;opacity:.75;filter:grayscale(20%)"
+           onerror="this.outerHTML='<span style=\'font-size:.82rem;color:#94a3b8;font-weight:600;letter-spacing:.5px\'>MoniCrowd</span>'">
+      <p style="font-size:.72rem;color:#94a3b8;margin-top:6px">Crowd Monitoring Platform &mdash; Sensor Provisioning</p>
+    </div>
   </div>
 
   <!-- ═══════════════════════ JAVASCRIPT ═══════════════════════ -->

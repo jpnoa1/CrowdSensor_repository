@@ -92,27 +92,27 @@ except sqlite3.Error:
     detected_devices = 0
 
 
-wifi_topic = f"sttoolkit-test/mqtt/wifi/numdetections/{influxdb_bucket}/{ip_address}/{sensorName}/{sensorUUID}"
-dprint(f"sensor={sensorName} uuid={sensorUUID}")
-dprint(f"detected_devices={detected_devices} window_min={slidingWindow}")
-dprint(f"wifi_topic={wifi_topic}")
+#wifi_topic = f"sttoolkit-test/mqtt/wifi/numdetections/{influxdb_bucket}/{ip_address}/{sensorName}/{sensorUUID}"
+wifi_topic = f"sttoolkit-test/mqtt/wifi/v2/numdetections/{sensorUUID}"
+
+
 
 manager = CommunicationManager(cwifi, wifi_topic)
 upload_technology, selected_lora_network = manager.load_cached_uplink()
-dprint(f"cached_uplink -> upload_technology={upload_technology}, selected_lora_network={selected_lora_network}")
+
 
 # Keep backward compatibility with legacy LoRa flow using selected network.
 if selected_lora_network:
     active_lora_network = selected_lora_network
 
 dataAtual_unix = int(dataAtual.timestamp())
-dprint(f"current_measurement ts={dataAtual_unix} devices={detected_devices}")
+
 
 # Keep LoRa send path unchanged for now; manager handles Wi-Fi and no-connectivity cases.
 sent_over_wifi = False
 if upload_technology != "lora":
     sent_over_wifi = manager.send_current_measurement(dataAtual_unix, int(detected_devices))
-    dprint(f"send_current_measurement -> sent_over_wifi={sent_over_wifi}")
+    
 else:
     dprint("Skipping manager send because upload_technology=lora (legacy LoRa flow)")
 
@@ -123,6 +123,7 @@ else:
     dprint("No replay executed (current send failed or uplink not wifi)")
 
 print(f"[INFO] Current upload technology: {upload_technology}")
+
 # Upload via LoRa (legacy flow kept, gated by manager decision)
 if upload_technology == "lora":
     dprint(f"Entering LoRa block with network={active_lora_network}")
@@ -160,8 +161,7 @@ if upload_technology == "lora":
     rak.set_app_key(app_key)
 
     joined = check_lora_network_status(active_lora_network)
-    dprint(f"LoRa joined={joined}")
-    print(f"[UPLOAD] Join status check: {'joined' if joined else 'not joined'}")
+    
 
     if not joined:
         print(f"[UPLOAD] Not joined to {active_lora_network}, marking as failed")
@@ -175,7 +175,7 @@ if upload_technology == "lora":
 
     print(f"[UPLOAD] Sending payload: {message} (hex: {payload_hex})")
     sent = rak.send_lorawan_data(2, payload_hex)
-    dprint(f"LoRa send result={sent}")
+    
 
     if not sent:
         print(f"[UPLOAD] Failed to send via {active_lora_network}")
@@ -201,7 +201,6 @@ if upload_technology == "lora":
             while time.time() < t_end:
                 port, payload = rak.receive_data_C()
                 if port and payload:
-                    dprint(f"LoRa downlink raw port={port} payload={payload}")
                     downlink_cb("C", port, len(payload), payload)
                 time.sleep(1)
 
