@@ -25,7 +25,7 @@ if not lock_acquired:
 #Check if Wi-Fi and LoRa upload are available
 wifiAvailable = check_wifi_available()
 #para teste
-#wifiAvailable = False
+wifiAvailable = False
 #loraAvailable = False
 
 #set_lora_available(False)
@@ -162,6 +162,7 @@ try:
         pass
 
     if sensor_configured and upload_tech != "none":
+        
         print("[BOOT] Sending sensor location after startup checks...")
         try:
             subprocess.run(["/usr/bin/python3", SENSOR_SEND_LOCATION_FILEPATH], check=False)
@@ -177,8 +178,8 @@ except sqlite3.Error as error:
 finally:
     if connwifi:
         connwifi.close()
-
     release_script_lock(COMM_AVAILABLE_LOCK_FILE)
+    
 
 #mudei
 #if loraAvailable == True:

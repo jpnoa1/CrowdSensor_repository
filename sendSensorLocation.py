@@ -14,7 +14,7 @@ if not os.path.exists(BOOT_COMPLETE_FILE):
 
 _, available_released = wait_for_script_lock(
     COMM_AVAILABLE_LOCK_FILE,
-    max_wait_sec=90,
+    max_wait_sec=60,
     poll_sec=2,
     log_prefix="[LOCATION]"
 )

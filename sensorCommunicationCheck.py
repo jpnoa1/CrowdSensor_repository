@@ -77,7 +77,7 @@ except sqlite3.Error as error:
 #cwifi.execute("UPDATE SensorConfiguration SET Upload_Technology='wifi', Active_LoRa_Network=NULL")
 #connwifi.commit()
 #sys.exit(0) # Termina o script aqui para impedir que ele faça as verificações de hardware e reverta para lora/wifi
-#wifiAvailable= False
+wifiAvailable= False
 #Check Wi-Fi connection
 if wifiAvailable:
     wifiConnected = check_wifi_connection()

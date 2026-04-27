@@ -31,7 +31,7 @@ SENSOR_UUID = str(getnode())
 CMD_TOPIC = f"monicrowd/sensors/cmd/{SENSOR_UUID}"
 ACK_TOPIC = f"monicrowd/sensors/ack/{SENSOR_UUID}"
 
-TOML_PATH = "/home/kali/Desktop/sensor-config-site/data/sensor_config.toml"  # <-- CHANGE THIS
+TOML_PATH = "/home/kali/Desktop/sensor-config-site/data/sensor_config.toml"  
 LOCK_PATH = "/tmp/sensor_config.lock"
 
 
