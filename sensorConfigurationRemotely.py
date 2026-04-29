@@ -28,9 +28,10 @@ def apply_config_from_toml(toml_path: str):
     # Get cloud address from first Wi-Fi connectivity entry (if any)
     wifi_cloud_address = None
     for c in connectivity:
-        if c.get("type") == "wifi" and c.get("cloud_address"):
-            wifi_cloud_address = c["cloud_address"]
-            break
+        if c.get("type") == "wifi":
+            wifi_cloud_address = c.get("cloud_address") or c.get("mqtt_address")
+            if wifi_cloud_address:
+                break
 
 
 

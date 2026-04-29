@@ -745,6 +745,7 @@ def publish_mqtt_message(msg_payload, topic):
         return False
 
 def publish_detections_mqtt_message(unix_timestamp, devices_detected: int, topic):
+    
     client = connect_mqtt()
 
     msg_payload = {
@@ -1493,17 +1494,33 @@ def normalize_network_type(raw_type: str) -> str:
     return t
 
 def publish_sensor_state(cfg, mqtt_host, mqtt_port=1883):
+    connectivity = cfg.get("Connectivity", []) or cfg.get("connectivity", [])
+
+    device_id_ttn = ""
+    device_name_helium = ""
+    for c in connectivity:
+        ctype = (c.get("type") or "").strip().lower()
+        device_id = (c.get("device_id") or "").strip()
+
+        if "ttn" in ctype and device_id and not device_id_ttn:
+            device_id_ttn = device_id
+        elif "helium" in ctype and device_id and not device_name_helium:
+            device_name_helium = device_id
+
     payload = {
         "uuid": str(uuid.getnode()),
         "sensor_name": cfg["sensor"]["Sensor Name"],
         "latitude": float(cfg["sensor"]["Latitude"]),
         "longitude": float(cfg["sensor"]["Longitude"]),
         "status": cfg["sensor"]["Status"],
-        "connectivity_mode": normalize_connectivity_mode(cfg.get("Connectivity", [])),
+        "connectivity_mode": normalize_connectivity_mode(connectivity),
         "firmware_version": "1.0.0",
         "power_filtration_db": int(cfg["sensor"]["Power Filtration"]),
         "messages_periodicity_min": int(cfg["sensor"]["Upload Periodicity"]),
         "sliding_window_min": int(cfg["sensor"]["Sliding Window"]),
+        "influxdb_bucket": cfg["sensor"].get("InfluxDB Bucket", ""),
+        "device_id_ttn": device_id_ttn,
+        "device_name_helium": device_name_helium,
         "timestamp": datetime.utcnow().isoformat() + "Z"
     }
 
@@ -1548,11 +1565,12 @@ def publish_sensor_networks(cfg, mqtt_host, mqtt_port=1883):
 
         if ctype == "wifi":
             entry["ssid"] = c.get("ssid")
-            entry["cloud_address"] = c.get("cloud_address")
+            entry["cloud_address"] = c.get("cloud_address") or c.get("mqtt_address")
 
         if ctype == "lora":
             entry["dev_eui"] = c.get("dev_eui")
             entry["app_eui"] = c.get("app_eui")
+            entry["device_id"] = c.get("device_id")
 
         networks.append(entry)
         priority += 1

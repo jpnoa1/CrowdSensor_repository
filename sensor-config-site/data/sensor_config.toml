@@ -1,9 +1,16 @@
 [[Connectivity]]
+type = "wifi"
+ssid = "Managment_Network"
+password = "kalikali"
+mqtt_address = "194.210.100.102"
+mqtt_port = "1883"
+
+[[Connectivity]]
 type = "lorattn"
-device_id = ""
-app_eui = "AC1F09FFF8683172"
-app_key = "AC1F09FFFE15A753AC1F09FFF8683172"
-dev_eui = "AC1F09FFFE15A753"
+device_id = "sensor-lisbon-10"
+app_eui = "AC1F09FFF8683180"
+app_key = "BA9C0749487FC47EF64B888BFA2EB6F0"
+dev_eui = "70B3D57ED00772D2"
 
 [sensor]
 "Sensor Name" = "Sensor10"

@@ -480,7 +480,7 @@
       function sync() {
         const def = cb.checked;
         lbl.style.display = def ? 'none' : 'block';
-        inp.disabled = def;
+        inp.readOnly = def;
         if (def) inp.value = '1883';
       }
       cb.addEventListener('change', sync);
