@@ -1,4 +1,5 @@
 import sqlite3
+import os
 import subprocess
 import netifaces as ni
 import time 
@@ -18,6 +19,9 @@ from sensorFunctions import *
 #
 
 connwifi = None
+PENDING_SYNC_FILE = "/home/kali/Desktop/.pending_cloud_sync"
+SENSOR_CONFIG_REMOTE = "/home/kali/Desktop/sensorConfigurationRemotely.py"
+
 lock_acquired = acquire_script_lock(COMM_AVAILABLE_LOCK_FILE, "BOOT")
 if not lock_acquired:
     exit(0)
@@ -62,6 +66,35 @@ upload_interface, detection_interface = check_upload_detection_interfaces(True)
 print(wifiConnected)
 if wifiConnected:
     ip_address = ni.ifaddresses(upload_interface)[ni.AF_INET][0]['addr']
+
+    if os.path.exists(PENDING_SYNC_FILE):
+        print("[SYNC] Pending cloud sync found. Running --sync-only...")
+
+    try:
+        result = subprocess.run(
+            ["/usr/bin/python3", SENSOR_CONFIG_REMOTE, "--sync-only"],
+            text=True,
+            capture_output=True,
+            timeout=10,
+            check=False
+        )
+
+        print("[SYNC] stdout:")
+        print(result.stdout)
+
+        print("[SYNC] stderr:")
+        print(result.stderr)
+
+        if result.returncode == 0:
+            print("[SYNC] sync-only completed.")
+        else:
+            print(f"[SYNC][ERROR] sync-only failed with code {result.returncode}.")
+
+    except subprocess.TimeoutExpired:
+        print("[SYNC][ERROR] sync-only timed out.")
+
+    except Exception as e:
+        print(f"[SYNC][ERROR] Failed to run sync-only: {e}")
 else:#mudei
     ip_address = "nd"
 #Check previous communication technologies available on the local database
