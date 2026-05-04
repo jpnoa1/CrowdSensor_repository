@@ -47,7 +47,7 @@ Each sensor node consists of:
 
 ## 🟢 1. Powering On the Sensor
 
-> The sensor is powered by a **powerbank**. When completely off (no power supply), the powerbank may enter a protection mode and not provide current automatically — it must be woken up first.
+> The sensor is powered internally by a **powerbank**. When completely off (no power supply), the powerbank may enter a protection mode and not provide current automatically — it must be woken up first.
 
 **Procedure:**
 
