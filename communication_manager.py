@@ -5,6 +5,8 @@ from sensorFunctions import (
     remove_1st_pending_measurement,
 )
 
+from event_logger import log_event
+
 
 class CommunicationManager:
     def __init__(self, config_cursor, wifi_topic):
@@ -21,6 +23,7 @@ class CommunicationManager:
         if row is None:
             self.current_uplink = "none"
             self.active_lora_network = None
+
         else:
             self.current_uplink = (row[0] or "none").lower()
             self.active_lora_network = row[1]
@@ -29,10 +32,28 @@ class CommunicationManager:
 
     def send_current_measurement(self, unix_ts, detected_devices):
         """Send the latest measurement or store it when Wi-Fi is unavailable/fails."""
+
         if self.current_uplink == "wifi":
-            mqtt_confirmation = publish_detections_mqtt_message(unix_ts, int(detected_devices), self.wifi_topic)
+            mqtt_confirmation = publish_detections_mqtt_message(
+                unix_ts,
+                int(detected_devices),
+                self.wifi_topic
+            )
+
             if mqtt_confirmation:
+                log_event(
+                    "mqtt_publish_ok",
+                    topic=self.wifi_topic,
+                    unix_ts=unix_ts
+                )
+
                 return True
+
+            log_event(
+                "mqtt_publish_fail",
+                topic=self.wifi_topic,
+                unix_ts=unix_ts
+            )
 
             store_pending_measurement(unix_ts, int(detected_devices))
             return False
@@ -43,22 +64,35 @@ class CommunicationManager:
 
     def replay_pending_wifi(self, max_items=100):
         """Replay pending measurements in chronological order while Wi-Fi sends succeed."""
+
         if self.current_uplink != "wifi":
             return 0
 
         replayed = 0
+
         while replayed < max_items:
             pending_row = get_1st_pending_measurement()
+
             if pending_row is None:
                 break
 
             unix_ts, devices_detected = pending_row
+
             mqtt_pend_confirmation = publish_detections_mqtt_message(
-                unix_ts, devices_detected, self.wifi_topic
+                unix_ts,
+                devices_detected,
+                self.wifi_topic
             )
 
             if mqtt_pend_confirmation:
                 remove_1st_pending_measurement()
+
+                log_event(
+                    "replay_sent",
+                    unix_ts=unix_ts,
+                    devices=devices_detected
+                )
+
                 replayed += 1
                 continue
 

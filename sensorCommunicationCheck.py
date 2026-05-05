@@ -2,15 +2,19 @@ import sqlite3
 import subprocess
 import netifaces as ni
 import sys
+import os
+import time as _time
 
 from sensorFunctions import *
+from event_logger import log_event
+from uart_lock import is_uart_locked
 
 #                   sensorCommunicationCheck.py
 #
 #   This script is responsible for checking the available upload
 #   technologies and if they have connection.
 #
-#   It is aimed to run periodically to check if the network connection 
+#   It is aimed to run periodically to check if the network connection
 #   was lost or not.
 #
 #
@@ -33,29 +37,28 @@ if not available_released:
     print("[CHECK] sensorCommunicationAvailable.py still running. Skipping this cycle to avoid serial contention.")
     sys.exit(0)
 
-#Get Lora upload available and current upload technology
+# Get Lora upload available and current upload technology
 try:
-
     connwifi = sqlite3.connect('/home/kali/Desktop/DB/SensorConfiguration.db', timeout=30)
     cwifi = connwifi.cursor()
 
     sensor_configuration = cwifi.execute("""SELECT * FROM SensorConfiguration""").fetchone()
 
-    if sensor_configuration is not None:
+    current_upload_technology = "none"
+    current_lora_network = None
 
+    if sensor_configuration is not None:
         sensor_uuid = sensor_configuration[0]
         current_upload_technology = sensor_configuration[12]
-        
-        current_lora_network = None
+
         if len(sensor_configuration) > 16:
             current_lora_network = sensor_configuration[16]
-        
+
         print(f"[CHECK] Current technology: '{current_upload_technology}', LoRa network: {current_lora_network}")
 
     sensor_communication = cwifi.execute("""SELECT * FROM SensorCommunication""").fetchone()
 
     if sensor_communication is None:
-
         # Run 'sensorCommunicationAvailable.py' script
         subprocess.run(['/usr/bin/python3', '/home/kali/Desktop/sensorCommunicationAvailable.py'])
 
@@ -67,26 +70,36 @@ try:
     curr_ip_address = sensor_communication[4]
     curr_upload_if = sensor_communication[5]
     curr_detect_if = sensor_communication[6]
-        
-    
+
 except sqlite3.Error as error:
     print("Failed to read upload technologies from database.", error)
+    sys.exit(1)
 
 
-#debug 
-#cwifi.execute("UPDATE SensorConfiguration SET Upload_Technology='wifi', Active_LoRa_Network=NULL")
-#connwifi.commit()
-#sys.exit(0) # Termina o script aqui para impedir que ele faça as verificações de hardware e reverta para lora/wifi
-#wifiAvailable= False
-#Check Wi-Fi connection
+# debug
+# cwifi.execute("UPDATE SensorConfiguration SET Upload_Technology='wifi', Active_LoRa_Network=NULL")
+# connwifi.commit()
+# sys.exit(0)
+#wifiAvailable = False
+#wifiConnected = False
+
+# Check Wi-Fi connection
 if wifiAvailable:
     wifiConnected = check_wifi_connection()
 else:
     set_wifi_connected(False)
     wifiConnected = False
 
-    
-#Check LoRa upload connection
+#set_wifi_connected(False)
+#wifiConnected = False
+#loraAvailable = False
+#set_lora_connected(False)
+#set_lora_available(False)
+
+log_event("connectivity_check", link="wifi", connected=wifiConnected)
+
+
+# Check LoRa upload connection
 if sensor_configuration is not None and current_upload_technology == "lora":
     if loraAvailable:
         if current_lora_network:
@@ -99,27 +112,41 @@ if sensor_configuration is not None and current_upload_technology == "lora":
         set_lora_connected(False)
         loraConnected = False
 
+    log_event(
+        "connectivity_check",
+        link="lora",
+        connected=loraConnected,
+        network=current_lora_network
+    )
 
 
-#Check upload and detection interfaces
+# Check upload and detection interfaces
 upload_interface, detection_interface = check_upload_detection_interfaces(False)
 
 if curr_upload_if != upload_interface:
-    cwifi.execute("""UPDATE SensorCommunication SET Upload_Interface=?, Last_Update=CURRENT_TIMESTAMP""", (upload_interface,))
+    cwifi.execute(
+        """UPDATE SensorCommunication SET Upload_Interface=?, Last_Update=CURRENT_TIMESTAMP""",
+        (upload_interface,)
+    )
 
-    
-    
-if wifiConnected: 
+
+if wifiConnected:
     ip_addr = ni.ifaddresses(upload_interface)[ni.AF_INET][0]['addr']
 
     if str(curr_ip_address) != str(ip_addr):
-        cwifi.execute("""UPDATE SensorCommunication SET IP_Address=?, Last_Update=CURRENT_TIMESTAMP""", (ip_addr,))
+        cwifi.execute(
+            """UPDATE SensorCommunication SET IP_Address=?, Last_Update=CURRENT_TIMESTAMP""",
+            (ip_addr,)
+        )
 
 if curr_detect_if != detection_interface:
-    cwifi.execute("""UPDATE SensorCommunication SET Detection_Interface=?, Last_Update=CURRENT_TIMESTAMP""", (detection_interface,))
+    cwifi.execute(
+        """UPDATE SensorCommunication SET Detection_Interface=?, Last_Update=CURRENT_TIMESTAMP""",
+        (detection_interface,)
+    )
     print("Detection interfaces are different!")
 
-    #Rewrite crontab tasks file
+    # Rewrite crontab tasks file
     if sensor_configuration is not None:
         status = sensor_configuration[4]
         uploadPeriodicity = sensor_configuration[10]
@@ -134,6 +161,7 @@ if current_upload_technology == "wifi":
     if not wifiConnected:
         needs_handover = True
         print("[CHECK] WiFi connection lost, triggering handover")
+
 elif current_upload_technology == "lora":
     if wifiConnected:
         needs_handover = True
@@ -145,33 +173,56 @@ elif current_upload_technology == "lora":
             print(f"[CHECK] LoRa network {current_lora_network} failed, triggering handover cascade")
         else:
             print("[CHECK] LoRa connection lost, triggering handover")
+
 elif current_upload_technology == "none":
     needs_handover = True
     print("[CHECK] No active technology, attempting handover cascade")
 
 if needs_handover:
-    new_tech, new_network = decide_upload_technology(cursor=cwifi)
-    
-    print(f"[CHECK] Handover completed - New technology: {new_tech}")
-    if new_network:
-        print(f"[CHECK] Active LoRa network: {new_network}")
-    elif new_tech == 'none':
-        print("[CHECK] Handover failed - no connectivity available")
-    
-    lora_connected_flag = (new_tech == 'lora')
-    cwifi.execute(
-        """UPDATE SensorCommunication SET LoRaConnected=?, Last_Update=CURRENT_TIMESTAMP""",
-        (lora_connected_flag,)
+    _t0_handover = _time.monotonic()
+
+    log_event(
+        "handover_triggered",
+        from_link=current_upload_technology,
+        reason="wifi_lost" if current_upload_technology == "wifi" and not wifiConnected
+        else "wifi_available" if current_upload_technology == "lora" and wifiConnected
+        else "lora_lost" if current_upload_technology == "lora" and not loraConnected
+        else "no_active_tech"
     )
+
+    if is_uart_locked():
+        log_event("handover_deferred", reason="uart_locked_by_sendCrowdingData")
+        print("[CHECK] UART locked by sendCrowdingData, deferring handover to next cycle")
+
+    else:
+        new_tech, new_network = decide_upload_technology(cursor=cwifi)
+        _elapsed_ms = round((_time.monotonic() - _t0_handover) * 1000, 2)
+
+        log_event(
+            "handover_complete",
+            to_link=new_tech,
+            to_network=new_network,
+            duration_ms=_elapsed_ms
+        )
+
+        print(f"[CHECK] Handover completed - New technology: {new_tech}")
+
+        if new_network:
+            print(f"[CHECK] Active LoRa network: {new_network}")
+        elif new_tech == 'none':
+            print("[CHECK] Handover failed - no connectivity available")
+
+        lora_connected_flag = (new_tech == 'lora')
+        cwifi.execute(
+            """UPDATE SensorCommunication SET LoRaConnected=?, Last_Update=CURRENT_TIMESTAMP""",
+            (lora_connected_flag,)
+        )
+
 else:
+    log_event("connectivity_ok", link=current_upload_technology)
     print(f"[CHECK] Current technology '{current_upload_technology}' operational, no handover needed")
 
-#Commit changes
+# Commit changes
 connwifi.commit()
 cwifi.close()
 connwifi.close()
-
-
-
-
-

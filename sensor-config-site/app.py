@@ -71,8 +71,10 @@ DEFAULTS: Dict[str, str] = {
     "InfluxDB Auth Token": "token",
     "Upload Periodicity": "5",
     "Sliding Window": "60",
+    "Location Send Mode": "boot",
     "Reboot Periodicity": "5",
     "Reboot Time": "03:00",
+    
 }
 
 
@@ -244,6 +246,9 @@ def validate_sensor(cfg: Dict[str, str]) -> List[str]:
 
     if (_to_int(cfg.get("Sliding Window", "")) or 0) <= 0:
         errors.append("Sliding Window must be a positive integer (minutes).")
+
+    if cfg.get("Location Send Mode") not in ("boot", "periodic_5min"):
+        errors.append("Location Send Mode must be 'boot' or 'periodic_5min'.")
 
     rp = cfg.get("Reboot Periodicity", "")
 

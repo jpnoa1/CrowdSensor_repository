@@ -11,6 +11,8 @@
 @reboot sleep 90 && sudo /usr/bin/python3 /home/kali/Desktop/sensorStartup.py
 # Periodic upload of crowding data to the Cloud Server
 */5 * * * * /usr/bin/python3 /home/kali/Desktop/sendCrowdingData.py 
+# Periodic upload of sensor location
+*/5 * * * *  /usr/bin/python3 /home/kali/Desktop/sendSensorLocation.py
 # Periodic delete of outdated and unnecessary data from local database
 0 * * * * /usr/bin/python3 /home/kali/Desktop/dataRetentionManager.py 30
 # Periodic upload of OUI list

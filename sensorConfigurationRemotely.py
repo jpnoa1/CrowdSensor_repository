@@ -3,7 +3,6 @@ import time
 import socket
 import sqlite3
 import argparse
-import subprocess
 
 from uuid import getnode
 from datetime import datetime
@@ -121,6 +120,12 @@ def publish_config_to_cloud(cfg: dict) -> bool:
 
 
 def normalize_reboot_periodicity(value):
+    """
+    Converts the value received from the web form/TOML into the format expected
+    by write_crontab_file().
+    """
+    value = str(value).strip() if value is not None else "5"
+
     if value == "0":
         return "daily"
     if value == "1":
@@ -134,7 +139,55 @@ def normalize_reboot_periodicity(value):
     if value == "5":
         return "noreboot"
 
-    return value
+    # If the value is already normalized, keep it.
+    if value in ("daily", "everytwodays", "everythreedays", "weekly", "monthly", "noreboot"):
+        return value
+
+    return "noreboot"
+
+
+def normalize_reboot_time(value):
+    """
+    Converts reboot time to an hour suitable for cron.
+    Accepts:
+      - ""
+      - None
+      - "03:00"
+      - "3"
+      - 3
+    """
+    if value is None or value == "":
+        return 0
+
+    value = str(value).strip()
+
+    if ":" in value:
+        hour = value.split(":")[0]
+        try:
+            return int(hour)
+        except ValueError:
+            return 0
+
+    try:
+        return int(value)
+    except ValueError:
+        return 0
+
+
+def normalize_location_send_mode(value):
+    """
+    Normalizes the location reporting mode.
+    Valid values:
+      - boot
+      - periodic_5min
+    """
+    value = str(value).strip() if value is not None else "boot"
+
+    if value in ("boot", "periodic_5min"):
+        return value
+
+    print(f"[Config][WARN] Invalid Location Send Mode '{value}'. Falling back to 'boot'.")
+    return "boot"
 
 
 def apply_config_from_toml(toml_path: str, publish_cloud: bool = True):
@@ -149,19 +202,23 @@ def apply_config_from_toml(toml_path: str, publish_cloud: bool = True):
     mqtt_host, _ = get_mqtt_target(cfg)
     wifi_cloud_address = mqtt_host
 
+    reboot_periodicity = normalize_reboot_periodicity(
+        sensor.get("Reboot Periodicity", "5")
+    )
+
+    reboot_time = normalize_reboot_time(
+        sensor.get("Reboot Time", "")
+    )
+
+    location_send_mode = normalize_location_send_mode(
+        sensor.get("Location Send Mode", "boot")
+    )
+
     conn = sqlite3.connect(DB_PATH, timeout=30)
     cursor = conn.cursor()
 
     try:
-        reboot_periodicity = normalize_reboot_periodicity(
-            sensor.get("Reboot Periodicity")
-        )
-
-        reboot_time = sensor.get("Reboot Time")
-
-        if reboot_time == "" or reboot_time is None:
-            reboot_time = 0
-
+        # --- SensorConfiguration ----------------------------------------------
         cursor.execute("SELECT COUNT(*) FROM SensorConfiguration")
         exists = cursor.fetchone()[0] > 0
 
@@ -184,14 +241,15 @@ def apply_config_from_toml(toml_path: str, publish_cloud: bool = True):
                     Sliding_Window,
                     Reboot_Periodicity,
                     Reboot_Time,
+                    Location_Send_Mode,
                     Last_Update
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             """, (
                 getnode(),
                 sensor.get("Sensor Name"),
                 sensor.get("Latitude"),
                 sensor.get("Longitude"),
-                sensor.get("Status", "enabled"),
+                sensor.get("Status", "Active"),
                 sensor.get("Power Filtration"),
                 wifi_cloud_address,
                 sensor.get("InfluxDB Organization"),
@@ -201,6 +259,7 @@ def apply_config_from_toml(toml_path: str, publish_cloud: bool = True):
                 sensor.get("Sliding Window"),
                 reboot_periodicity,
                 reboot_time,
+                location_send_mode,
             ))
 
             conn.commit()
@@ -224,13 +283,14 @@ def apply_config_from_toml(toml_path: str, publish_cloud: bool = True):
                     Sliding_Window=?,
                     Reboot_Periodicity=?,
                     Reboot_Time=?,
+                    Location_Send_Mode=?,
                     Last_Update=CURRENT_TIMESTAMP
             """, (
                 getnode(),
                 sensor.get("Sensor Name"),
                 sensor.get("Latitude"),
                 sensor.get("Longitude"),
-                sensor.get("Status", "enabled"),
+                sensor.get("Status", "Active"),
                 sensor.get("Power Filtration"),
                 wifi_cloud_address,
                 sensor.get("InfluxDB Organization"),
@@ -240,11 +300,12 @@ def apply_config_from_toml(toml_path: str, publish_cloud: bool = True):
                 sensor.get("Sliding Window"),
                 reboot_periodicity,
                 reboot_time,
+                location_send_mode,
             ))
 
             conn.commit()
 
-        # --- Update SensorCommunication ----------------------------------------
+        # --- SensorCommunication ----------------------------------------------
         wifi_available = any(c.get("type") == "wifi" for c in connectivity)
         lora_available = any("lora" in c.get("type", "") for c in connectivity)
 
@@ -293,7 +354,7 @@ def apply_config_from_toml(toml_path: str, publish_cloud: bool = True):
 
         conn.commit()
 
-        # --- Update LoRaNetworks ------------------------------------------------
+        # --- LoRaNetworks ------------------------------------------------------
         print("[Config] Updating LoRaNetworks...")
 
         cursor.execute("""
@@ -345,16 +406,17 @@ def apply_config_from_toml(toml_path: str, publish_cloud: bool = True):
 
         conn.commit()
 
-        # --- Power filtration ---------------------------------------------------
+        # --- Power filtration --------------------------------------------------
         power_fil = sensor.get("Power Filtration")
 
-        if power_fil:
-            change_power_filtration(int(power_fil))
+        if power_fil not in (None, ""):
+            try:
+                change_power_filtration(int(float(power_fil)))
+            except ValueError:
+                print(f"[Config][WARN] Invalid Power Filtration value: {power_fil}")
 
-        # --- Cronjobs -----------------------------------------------------------
-        status = sensor.get("Status", "enabled")
-        reboot_per = sensor.get("Reboot Periodicity")
-        reboot_time = sensor.get("Reboot Time", "")
+        # --- Cronjobs ----------------------------------------------------------
+        status = sensor.get("Status", "Active")
         upload_period = sensor.get("Upload Periodicity")
 
         _, detection_interface = check_upload_detection_interfaces(False)
@@ -363,47 +425,24 @@ def apply_config_from_toml(toml_path: str, publish_cloud: bool = True):
             status,
             detection_interface,
             upload_period,
-            reboot_per,
+            reboot_periodicity,
             reboot_time,
+            location_send_mode,
         )
 
-        # --- Location upload ----------------------------------------------------
-        if publish_cloud and (int(wifi_available) == 1 or int(lora_available) == 1):
-            print("[Upload] Sending Sensor Location...")
-
-            try:
-                subprocess.run(
-                    ["pkill", "-f", "sendCrowdingData.py"],
-                    check=False,
-                )
-
-                subprocess.run(
-                    ["python3", SENSOR_COMMUNICATION_AVAILABLE_FILEPATH],
-                    check=False,
-                )
-
-                time.sleep(3)
-
-                if os.path.exists("/tmp/rak_njs"):
-                    subprocess.run(
-                        ["python3", SENSOR_SEND_LOCATION_FILEPATH],
-                        check=False,
-                    )
-                else:
-                    print("[Upload] /tmp/rak_njs not found, skipping sensor location upload.")
-
-            except Exception as e:
-                print(f"[ERROR] Failed to send Location Data {e}")
-
-        else:
-            print("[Upload] Skipping network upload during local-only setup.")
+        # --- Location upload ---------------------------------------------------
+        # Do not send location here.
+        # Location is sent:
+        #   1) once at boot by sensorCommunicationAvailable.py, if Status == Active;
+        #   2) periodically by cron if Location_Send_Mode == periodic_5min.
+        print(f"[Config] Location Send Mode: {location_send_mode}")
 
         print(f"[OK] Successful Local configuration ({datetime.now().strftime('%H:%M:%S')})")
 
     finally:
         conn.close()
 
-    # --- Cloud publication ------------------------------------------------------
+    # --- Cloud publication -----------------------------------------------------
     if publish_cloud:
         publish_config_to_cloud(cfg)
     else:

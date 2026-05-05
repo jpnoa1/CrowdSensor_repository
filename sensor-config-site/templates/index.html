@@ -289,6 +289,20 @@
               <input type="number" min="1" step="1" name="Sliding Window"
                      value="{{ cfg['Sliding Window'] }}" required>
             </label>
+            <label>
+              <span class="lbl">Location Reporting</span>
+              <select name="Location Send Mode" required>
+                <option value="boot" {{ "selected" if cfg.get('Location Send Mode', 'boot')=="boot" else "" }}>
+                  Send only on boot
+                </option>
+                <option value="periodic_5min" {{ "selected" if cfg.get('Location Send Mode', 'boot')=="periodic_5min" else "" }}>
+                  Send every 5 minutes
+                </option>
+              </select>
+            </label>
+            <small class="hint">
+              Defines whether the sensor location is sent only after startup or periodically every 5 minutes.
+            </small>
           </div>
 
           <div class="grid2">

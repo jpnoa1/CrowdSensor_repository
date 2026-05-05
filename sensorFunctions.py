@@ -579,7 +579,7 @@ def config_tasks():
 
 
 #Custom-made functions
-def write_crontab_file(status, detection_if, upload_periodicity, reboot_periodicity, reboot_time):
+def write_crontab_file(status, detection_if, upload_periodicity, reboot_periodicity, reboot_time, location_send_mode="boot"):
     # Write tasks configuration file        
     print("Creating new tasks configuration file...")
     f = open(CONFIGURED_CRONJOBS_FILEPATH, 'w')
@@ -587,6 +587,9 @@ def write_crontab_file(status, detection_if, upload_periodicity, reboot_periodic
     print("")
 
     print("Writing tasks to configuration file...")
+
+    if location_send_mode not in ("boot", "periodic_5min"):
+        location_send_mode = "boot"
 
     f.write("# This file allows users to configure the sensor tasks to be run\n")
     f.write("# automatically on pre-determined time-shedules.\n")
@@ -604,22 +607,40 @@ def write_crontab_file(status, detection_if, upload_periodicity, reboot_periodic
         f.write("# Wi-Fi detection of devices\n")
         #f.write("*/10 * * * * timeout -k 1 590s sudo airodump-ng --background 1 " + str(detection_if + "\n"))
         #f.write("*/10 * * * * sleep 595 && sudo pkill airodump-ng\n")
+
         f.write("@reboot sleep 90 && sudo /usr/bin/python3 /home/kali/Desktop/sensorStartup.py\n")
+
         f.write("# Periodic upload of crowding data to the Cloud Server\n")
         f.write("*/" + str(upload_periodicity) + " * * * * /usr/bin/python3 /home/kali/Desktop/sendCrowdingData.py \n")
+
+        f.write("# Periodic upload of sensor location\n")
+        if location_send_mode == "periodic_5min":
+            f.write("*/5 * * * *  /usr/bin/python3 /home/kali/Desktop/sendSensorLocation.py\n")
+        else:
+            f.write("#*/5 * * * * /usr/bin/python3 /home/kali/Desktop/sendSensorLocation.py\n")
+
         f.write("# Periodic delete of outdated and unnecessary data from local database\n")
         f.write("0 * * * * /usr/bin/python3 /home/kali/Desktop/dataRetentionManager.py 30\n")
+
     elif status == "Disabled":
         f.write("# Wi-Fi detection of devices\n")
         #f.write("#*/10 * * * * timeout -k 1 590s sudo airodump-ng --background 1 " + str(detection_if + "\n"))
+
         f.write("#@reboot sleep 90 && sudo /usr/bin/python3 /home/kali/Desktop/sensorStartup.py\n")
         #f.write("#*/10 * * * * sleep 595 && sudo pkill airodump-ng\n")
+
         f.write("# Periodic upload of crowding data to the Cloud Server\n")
         f.write("#*/" + str(upload_periodicity) + " * * * * /usr/bin/python3 /home/kali/Desktop/sendCrowdingData.py \n")
+
+        f.write("# Periodic upload of sensor location\n")
+        f.write("#*/5 * * * * sleep 40 && /usr/bin/python3 /home/kali/Desktop/sendSensorLocation.py\n")
+
         f.write("# Periodic delete of outdated and unnecessary data from local database\n")
         f.write("#0 * * * * /usr/bin/python3 /home/kali/Desktop/dataRetentionManager.py 30\n")
+
     f.write("# Periodic upload of OUI list\n")
     f.write("0 0 * * 0 /usr/bin/python3 /home/kali/Desktop/macOUIupdater.py\n")
+
     f.write("# Reboot\n")
     if reboot_periodicity == "daily":
         f.write("0 " + str(reboot_time) + " * * * sudo reboot\n")
@@ -638,11 +659,8 @@ def write_crontab_file(status, detection_if, upload_periodicity, reboot_periodic
 
     print("Tasks configuration file sucessfully writen.")
 
-
     # Load tasks configuration file to crontab
-
     cmd = "crontab -u kali " + CONFIGURED_CRONJOBS_FILEPATH
-    #print(cmd)
     os.system(cmd)
 
     print("Configuration saved sucessfully.")
