@@ -20,7 +20,7 @@ def dprint(msg):
     if DEBUG_COMM:
         print(f"[COMM-DEBUG] {msg}")
 
-def wait_for_lora_uart_lock(caller, max_wait_sec=10, poll_sec=1):
+def wait_for_lora_uart_lock(caller, max_wait_sec=15, poll_sec=1):
     waited = 0
 
     while waited <= max_wait_sec:

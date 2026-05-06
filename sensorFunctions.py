@@ -56,8 +56,6 @@ CONFIGURED_CRONJOBS_FILEPATH = "/home/kali/Desktop/cronjobs_configured.txt"
 
 #MQTT Paramenters
 MQTT_PORT = 1883
-MQTT_USERNAME = 'tmmss1'
-MQTT_PASSWORD = 'tomasantos00'
 TOPIC_NETWORKS = "monicrowd/sensors/networks"
 
 #Number of configuration parameters (uuid, name, etc...)
@@ -287,31 +285,38 @@ def validate_IP_address(ipAddress):
     
     return valid_IP
 
-def heliumNodeSetup():
-    #for your first session after boot, you will need to do a hard-reset instead of a reset lora command to activate the module
-    #cmd = "sudo rak811 hard-reset"
-    #os.system(cmd)
+def get_mqtt_credentials_from_db():
+    try:
+        conn = sqlite3.connect('/home/kali/Desktop/DB/SensorConfiguration.db', timeout=10)
+        cursor = conn.cursor()
 
-    cmd = "sudo rak811 -v reset lora"
-    os.system(cmd)
+        row = cursor.execute("""
+            SELECT MQTT_Username, MQTT_Password
+            FROM SensorConfiguration
+            LIMIT 1
+        """).fetchone()
 
-    cmd = "sudo rak811 -v set-config app_eui=190E110342012981 app_key=CBDF9117D3E1A7F9AA11166ED97BF8F6"
-    os.system(cmd)
+        cursor.close()
+        conn.close()
 
-    cmd = "sudo rak811 -v dr 2"
-    os.system(cmd)
+        if not row:
+            print("[MQTT][ERROR] No SensorConfiguration row found.")
+            return None, None
 
-    cmd = "sudo rak811 -v join-otaa"
-    output = subprocess.check_output(cmd, shell=True)
+        username, password = row
 
-    if "Joined in OTAA mode" in str(output):
-        print("Connected to Helium network.")
-        set_lora_connected(True)
-        return True
-    else:
-        print("Not connected to Helium network.")
-        set_lora_connected(False)
-        return False
+        username = str(username).strip() if username is not None else ""
+        password = str(password).strip() if password is not None else ""
+
+        if not username or not password:
+            print("[MQTT][ERROR] MQTT credentials are empty in database.")
+            return None, None
+
+        return username, password
+
+    except sqlite3.Error as error:
+        print(f"[MQTT][ERROR] Failed to read MQTT credentials from database: {error}")
+        return None, None
     
 def connect_mqtt():
     client_id = f'python-mqtt-{random.randint(0, 1000)}'
@@ -338,7 +343,12 @@ def connect_mqtt():
             
     # Set Connecting Client ID
     client = mqtt_client.Client(client_id=client_id, callback_api_version=mqtt_client.CallbackAPIVersion.VERSION2)
-    client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
+    mqtt_username, mqtt_password = get_mqtt_credentials_from_db()
+
+    if not mqtt_username or not mqtt_password:
+        raise RuntimeError("MQTT credentials are not configured in the database.")
+
+    client.username_pw_set(mqtt_username, mqtt_password)
     client.on_connect = on_connect
     client.connect(cloud_ip_addr, MQTT_PORT) 
     return client
@@ -991,21 +1001,50 @@ def check_wifi_available():
         set_wifi_available(False)
         return False
     
-def check_wifi_connection():        
-    wifiConnected = False
-    interfaces = ni.interfaces()
+def get_cloud_host_from_db():
+    try:
+        conn = sqlite3.connect('/home/kali/Desktop/DB/SensorConfiguration.db', timeout=10)
+        cursor = conn.cursor()
 
-    for iface in interfaces:
-        if iface != 'lo' and len(ni.ifaddresses(iface)) > 2:
-            wifiConnected = True
-            break
+        row = cursor.execute("""
+            SELECT Cloud_IP_Address
+            FROM SensorConfiguration
+            LIMIT 1
+        """).fetchone()
 
-    if wifiConnected:
-        set_wifi_connected(True)
-        return True
-    else:
+        conn.close()
+
+        if row and row[0]:
+            return str(row[0]).strip()
+
+        return None
+
+    except Exception:
+        return None
+
+
+def check_wifi_connection():
+    host = get_cloud_host_from_db()
+
+    if not host:
         set_wifi_connected(False)
         return False
+
+    try:
+        result = subprocess.run(
+            ["nc", "-z", "-w", "3", host, str(MQTT_PORT)],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=5,
+        )
+
+        wifi_connected = result.returncode == 0
+
+    except Exception:
+        wifi_connected = False
+
+    set_wifi_connected(wifi_connected)
+    return wifi_connected
      
 def get_dev_eui():
     rak = RAK3172(LORA_SERIAL_PORT, 115200)
@@ -1543,8 +1582,13 @@ def publish_sensor_state(cfg, mqtt_host, mqtt_port=1883):
     }
 
     try:
+        mqtt_username, mqtt_password = get_mqtt_credentials_from_db()
+
+        if not mqtt_username or not mqtt_password:
+            raise RuntimeError("MQTT credentials are not configured in the database.")
+
         client = mqtt_client.Client()
-        client.username_pw_set("tmmss1", "tomasantos00")
+        client.username_pw_set(mqtt_username, mqtt_password)
         client.connect(mqtt_host, mqtt_port, 60)
         client.loop_start()
 
@@ -1558,6 +1602,7 @@ def publish_sensor_state(cfg, mqtt_host, mqtt_port=1883):
         client.loop_stop()
         client.disconnect()
         print("[OK] Sensor state published.")
+
     except Exception as e:
         print(f"[ERROR] Failed to publish sensor state: {e}")
 
@@ -1599,8 +1644,13 @@ def publish_sensor_networks(cfg, mqtt_host, mqtt_port=1883):
     }
 
     try:
+        mqtt_username, mqtt_password = get_mqtt_credentials_from_db()
+
+        if not mqtt_username or not mqtt_password:
+            raise RuntimeError("MQTT credentials are not configured in the database.")
+
         client = mqtt_client.Client()
-        client.username_pw_set("tmmss1", "tomasantos00")
+        client.username_pw_set(mqtt_username, mqtt_password)
         client.connect(mqtt_host, mqtt_port, 60)
         client.loop_start()
 

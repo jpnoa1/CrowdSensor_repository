@@ -213,6 +213,8 @@ def apply_config_from_toml(toml_path: str, publish_cloud: bool = True):
     location_send_mode = normalize_location_send_mode(
         sensor.get("Location Send Mode", "boot")
     )
+    mqtt_username = sensor.get("MQTT Username", "")
+    mqtt_password = sensor.get("MQTT Password", "")
 
     conn = sqlite3.connect(DB_PATH, timeout=30)
     cursor = conn.cursor()
@@ -237,13 +239,15 @@ def apply_config_from_toml(toml_path: str, publish_cloud: bool = True):
                     InfluxDB_Org,
                     InfluxDB_Bucket,
                     Authorization_Token,
+                    MQTT_Username,
+                    MQTT_Password,
                     Upload_Periodicity,
                     Sliding_Window,
                     Reboot_Periodicity,
                     Reboot_Time,
                     Location_Send_Mode,
                     Last_Update
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             """, (
                 getnode(),
                 sensor.get("Sensor Name"),
@@ -255,13 +259,14 @@ def apply_config_from_toml(toml_path: str, publish_cloud: bool = True):
                 sensor.get("InfluxDB Organization"),
                 sensor.get("InfluxDB Bucket"),
                 sensor.get("InfluxDB Auth Token"),
+                mqtt_username,
+                mqtt_password,
                 sensor.get("Upload Periodicity"),
                 sensor.get("Sliding Window"),
                 reboot_periodicity,
                 reboot_time,
                 location_send_mode,
             ))
-
             conn.commit()
 
         else:
@@ -279,6 +284,8 @@ def apply_config_from_toml(toml_path: str, publish_cloud: bool = True):
                     InfluxDB_Org=?,
                     InfluxDB_Bucket=?,
                     Authorization_Token=?,
+                    MQTT_Username=?,
+                    MQTT_Password=?,
                     Upload_Periodicity=?,
                     Sliding_Window=?,
                     Reboot_Periodicity=?,
@@ -296,13 +303,14 @@ def apply_config_from_toml(toml_path: str, publish_cloud: bool = True):
                 sensor.get("InfluxDB Organization"),
                 sensor.get("InfluxDB Bucket"),
                 sensor.get("InfluxDB Auth Token"),
+                mqtt_username,
+                mqtt_password,
                 sensor.get("Upload Periodicity"),
                 sensor.get("Sliding Window"),
                 reboot_periodicity,
                 reboot_time,
                 location_send_mode,
             ))
-
             conn.commit()
 
         # --- SensorCommunication ----------------------------------------------

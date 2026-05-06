@@ -83,6 +83,7 @@ except sqlite3.Error as error:
 #wifiAvailable = False
 #wifiConnected = False
 
+
 # Check Wi-Fi connection
 if wifiAvailable:
     wifiConnected = check_wifi_connection()

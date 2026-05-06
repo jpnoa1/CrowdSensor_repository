@@ -18,6 +18,7 @@ import socket
 import threading
 import ipaddress
 import subprocess
+from uuid import getnode
 from time import sleep
 from typing import Dict, List, Tuple
 
@@ -69,11 +70,14 @@ DEFAULTS: Dict[str, str] = {
     "InfluxDB Organization": "my-org",
     "InfluxDB Bucket": "my-bucket",
     "InfluxDB Auth Token": "token",
+    "MQTT Username": "",
+    "MQTT Password": "",
     "Upload Periodicity": "5",
     "Sliding Window": "60",
     "Location Send Mode": "boot",
     "Reboot Periodicity": "5",
     "Reboot Time": "03:00",
+    
     
 }
 
@@ -635,6 +639,7 @@ def index():
         cfg=sensor,
         connectivity=connectivity,
         errors=[],
+        sensor_uuid=str(getnode()),
     )
 
 
@@ -656,6 +661,7 @@ def save():
             cfg=sensor_cfg,
             connectivity=connectivity,
             errors=errors,
+            sensor_uuid=str(getnode()),
         ), 400
 
     save_all(sensor_cfg, connectivity)

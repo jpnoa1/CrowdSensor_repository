@@ -13,6 +13,17 @@
       color:#1e293b;
       min-height:100vh;
     }
+    .readonly-field{
+      width:100%;
+      padding:9px 12px;
+      font-size:.9rem;
+      border:1px solid #cbd5e1;
+      border-radius:8px;
+      background:#e2e8f0;
+      color:#475569;
+      font-family:monospace;
+      user-select:text;
+    }
 
     /* ── Header ─────────────────────────────────────────────────── */
     .page-header{
@@ -212,10 +223,17 @@
         </div>
         <div class="card-body">
 
+
+          <label>
+            <span class="lbl">Sensor UUID</span>
+            <div class="readonly-field">{{ sensor_uuid }}</div>
+          </label>
+          <small class="hint">Unique identifier generated from the device hardware.</small>
+
           <label>
             <span class="lbl">Sensor Name</span>
             <input name="Sensor Name" type="text" maxlength="100"
-                   value="{{ cfg.get('Sensor Name', '') }}" required placeholder="e.g. Lora_sensor_01">
+                  value="{{ cfg.get('Sensor Name', '') }}" required placeholder="e.g. Lora_sensor_01">
           </label>
 
           <div class="grid2">
@@ -322,6 +340,24 @@
                    value="{{ cfg['InfluxDB Auth Token'] }}" required>
           </label>
 
+          
+          <div class="grid2">
+            <label>
+              <span class="lbl">MQTT Username</span>
+              <input name="MQTT Username"
+                    value="{{ cfg.get('MQTT Username', '') }}"
+                    required>
+            </label>
+
+            <label>
+              <span class="lbl">MQTT Password</span>
+              <input type="password"
+                    name="MQTT Password"
+                    value="{{ cfg.get('MQTT Password', '') }}"
+                    required>
+            </label>
+          </div>
+          <small class="hint">Credentials used by the sensor to authenticate with the MQTT broker.</small>
         </div>
       </div>
 

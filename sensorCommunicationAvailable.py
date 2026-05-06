@@ -34,7 +34,7 @@ if not lock_acquired:
 wifiAvailable = check_wifi_available()
 
 # para teste
-wifiAvailable = False
+#wifiAvailable = False
 # loraAvailable = False
 
 # set_lora_available(False)
