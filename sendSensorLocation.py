@@ -9,9 +9,34 @@ import time
 
 from sensorFunctions import *
 from uart_lock import acquire_uart_lock, release_uart_lock, get_uart_lock_info
+from event_logger import log_event
 
 
-def wait_for_lora_uart_lock(caller, max_wait_sec=15, poll_sec=2):
+COMM_CHECK_LOCK_FILE = "/tmp/sensor_communication_check.lock"
+COMM_CHECK_LOCK_MAX_AGE_SEC = 180
+
+def wait_for_comm_check_lock(max_wait_sec=120, poll_sec=2):
+    waited = 0
+
+    while os.path.exists(COMM_CHECK_LOCK_FILE) and waited <= max_wait_sec:
+        try:
+            lock_age = time.time() - os.path.getmtime(COMM_CHECK_LOCK_FILE)
+
+            if lock_age > COMM_CHECK_LOCK_MAX_AGE_SEC:
+                print("[LOCATION] Removing stale sensorCommunicationCheck.py lock.")
+                os.remove(COMM_CHECK_LOCK_FILE)
+                break
+
+        except Exception:
+            pass
+
+        print(f"[LOCATION] Waiting for sensorCommunicationCheck.py to finish... waited={waited}s")
+        time.sleep(poll_sec)
+        waited += poll_sec
+
+    return not os.path.exists(COMM_CHECK_LOCK_FILE), waited
+
+def wait_for_lora_uart_lock(caller, max_wait_sec=60, poll_sec=3):
     waited = 0
 
     while waited <= max_wait_sec:
@@ -29,6 +54,15 @@ def wait_for_lora_uart_lock(caller, max_wait_sec=15, poll_sec=2):
 
 if not os.path.exists(BOOT_COMPLETE_FILE):
     print("[LOCATION] Boot initialization not complete yet. Exiting.")
+    sys.exit(0)
+
+check_released, waited_for_check = wait_for_comm_check_lock(
+    max_wait_sec=90,
+    poll_sec=2
+)
+
+if not check_released:
+    print("[LOCATION] sensorCommunicationCheck.py still running after timeout. Exiting to avoid stale DB state.")
     sys.exit(0)
 
 
@@ -189,6 +223,7 @@ json_location = json.dumps(location)
 # Send sensor location to InfluxDB / MQTT
 if uploadTechnology == "wifi":
 
+    
     publish_location_mqtt_message(
         json_location,
         f"sttoolkit-test/mqtt/wifi/v2/sensorLocation/{sensor_UUID}"
@@ -225,6 +260,12 @@ elif uploadTechnology == "lora":
         print(f"A enviar via LoRa: {payload}")
 
         payload_hex = payload.encode().hex()
+        log_event(
+            "sending_location",
+            link="lora",
+            latitude=latitude,
+            longitude=longitude
+        )
         sent = rak.send_lorawan_data(2, payload_hex)
 
         if sent:

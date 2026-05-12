@@ -414,6 +414,50 @@ def apply_config_from_toml(toml_path: str, publish_cloud: bool = True):
 
         conn.commit()
 
+        # --- WiFiNetworks ------------------------------------------------------
+        #   Mirrors LoRaNetworks for visibility and logging.
+        #   Actual profile activation is handled by NetworkManager
+        #   (sensor-wifi-* profiles), but this table lets the backend
+        #   and Grafana show which Wi-Fi networks are configured.
+        print("[Config] Updating WiFiNetworks...")
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS WiFiNetworks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ssid TEXT,
+                profile_name TEXT,
+                mqtt_address TEXT,
+                mqtt_port INTEGER DEFAULT 1883,
+                priority INTEGER DEFAULT 0,
+                last_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+
+        cursor.execute("DELETE FROM WiFiNetworks")
+
+        wifi_networks = [
+            c for c in connectivity
+            if c.get("type") == "wifi" and c.get("ssid")
+        ]
+
+        for i, net in enumerate(wifi_networks, start=1):
+            import re
+            ssid = net.get("ssid", "wifi")
+            safe_ssid = re.sub(r"[^a-zA-Z0-9_.-]+", "_", ssid).strip("_")[:40] or "wifi"
+            profile_name = f"sensor-wifi-{i}-{safe_ssid}"
+            mqtt_addr = net.get("mqtt_address") or net.get("cloud_address") or DEFAULT_MQTT_HOST
+            mqtt_port = net.get("mqtt_port") or DEFAULT_MQTT_PORT
+
+            cursor.execute("""
+                INSERT INTO WiFiNetworks
+                (ssid, profile_name, mqtt_address, mqtt_port, priority, last_update)
+                VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            """, (ssid, profile_name, mqtt_addr, int(mqtt_port), i))
+
+            print(f"   - {ssid} → {profile_name}  (priority={i})")
+
+        conn.commit()
+
         # --- Power filtration --------------------------------------------------
         power_fil = sensor.get("Power Filtration")
 

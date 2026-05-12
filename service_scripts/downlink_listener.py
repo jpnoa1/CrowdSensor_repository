@@ -212,6 +212,7 @@ def handle_snapshot(mqttc, data: dict):
 
 
 def do_reboot():
+    print("[REBOOT] A executar reboot agora...")
     subprocess.Popen(["sudo", "reboot"])
 
 

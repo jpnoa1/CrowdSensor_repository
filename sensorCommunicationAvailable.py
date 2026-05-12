@@ -23,6 +23,7 @@ from event_logger import log_event
 connwifi = None
 PENDING_SYNC_FILE = "/home/kali/Desktop/.pending_cloud_sync"
 SENSOR_CONFIG_REMOTE = "/home/kali/Desktop/sensorConfigurationRemotely.py"
+log_event("boot_comm_available_start")
 
 lock_acquired = acquire_script_lock(COMM_AVAILABLE_LOCK_FILE, "BOOT")
 
@@ -35,6 +36,7 @@ wifiAvailable = check_wifi_available()
 
 # para teste
 #wifiAvailable = False
+
 # loraAvailable = False
 
 # set_lora_available(False)
@@ -164,7 +166,7 @@ try:
         # Check if sensor has already a configuration
         if sensor_configuration is None:
             print("Sensor is not currently configured. No more actions performed.")
-
+            log_event("boot_config_missing")
         else:
             sensor_configured = True
 
@@ -191,7 +193,13 @@ try:
             print(f"[BOOT] Current configuration - Technology: {current_upload_tech}, LoRa Network: {current_lora_network}")
 
             upload_tech, active_lora_network = decide_upload_technology(cursor=cwifi)
-
+            log_event(
+                "boot_config_valid",
+                sensor_uuid=sensor_configuration[0],
+                sensor_status=sensor_configuration[4],
+                upload_periodicity=sensor_configuration[10],
+                upload_technology=sensor_configuration[12]
+            )
             log_event(
                 "boot_handover_complete",
                 upload_tech=upload_tech,

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import os
+import sys
 import time
 import subprocess
 import lgpio
@@ -10,6 +12,10 @@ WINDOW_TIME = 40       # Only active during first 40 seconds of boot
 
 HOTSPOT_SSID = "CrowdSensor-Setup"
 HOTSPOT_PASSWORD = "kalikali"
+
+sys.path.append("/home/kali/Desktop/")
+from event_logger import log_event
+
 
 def wait_for_network_manager(timeout=60):
     """Wait for NetworkManager to be ready, return True if ready within timeout"""
@@ -76,6 +82,7 @@ try:
                 ], check=False)
 
                 print("[SetupButton] Hotspot active.")
+                log_event("hotspot_active")
                 print("[SetupButton] Launching configuration app...")
                 time.sleep(3)
                 # Start Flask app (non-blocking)
@@ -84,7 +91,7 @@ try:
                     "python3",
                     "/home/kali/Desktop/sensor-config-site/app.py"
                 ])
-
+                log_event("config_app_starting")
                 print("[SetupButton] Web UI running on 10.42.0.1:5000")
                 
                 break

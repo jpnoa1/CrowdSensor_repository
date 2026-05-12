@@ -12,6 +12,33 @@ from communication_manager import CommunicationManager
 from event_logger import log_event
 from uart_lock import acquire_uart_lock, release_uart_lock, get_uart_lock_info
 
+COMM_CHECK_LOCK_FILE = "/tmp/sensor_communication_check.lock"
+COMM_CHECK_LOCK_MAX_AGE_SEC = 70
+
+def wait_for_comm_check_lock(max_wait_sec=120, poll_sec=2):
+    waited = 0
+
+    while os.path.exists(COMM_CHECK_LOCK_FILE) and waited <= max_wait_sec:
+        try:
+            lock_age = time.time() - os.path.getmtime(COMM_CHECK_LOCK_FILE)
+
+            if lock_age > COMM_CHECK_LOCK_MAX_AGE_SEC:
+                print("[UPLOAD] Removing stale sensorCommunicationCheck.py lock.")
+                os.remove(COMM_CHECK_LOCK_FILE)
+                break
+
+        except Exception:
+            pass
+
+        print(f"[UPLOAD] Waiting for sensorCommunicationCheck.py to finish... waited={waited}s")
+        time.sleep(poll_sec)
+        waited += poll_sec
+
+    return not os.path.exists(COMM_CHECK_LOCK_FILE), waited
+
+
+_t0_send_cycle = time.monotonic()
+log_event("send_cycle_start")
 
 # Debug switch: set to False to silence debug prints
 DEBUG_COMM = True
@@ -20,7 +47,8 @@ def dprint(msg):
     if DEBUG_COMM:
         print(f"[COMM-DEBUG] {msg}")
 
-def wait_for_lora_uart_lock(caller, max_wait_sec=15, poll_sec=1):
+def wait_for_lora_uart_lock(caller, max_wait_sec=60, poll_sec=3
+):
     waited = 0
 
     while waited <= max_wait_sec:
@@ -38,6 +66,16 @@ def wait_for_lora_uart_lock(caller, max_wait_sec=15, poll_sec=1):
 if not os.path.exists(BOOT_COMPLETE_FILE):
     dprint("Boot initialization not complete yet. Exiting.")
     exit(0)
+
+check_released, waited_for_check = wait_for_comm_check_lock(
+    max_wait_sec=120,
+    poll_sec=2
+)
+
+if not check_released:
+    print("[UPLOAD] sensorCommunicationCheck.py still running after timeout. Exiting to avoid stale DB state.")
+    exit(0)
+
 
 
 time.sleep(5)  # Initial delay to allow other processes to start and populate DBs
@@ -132,6 +170,13 @@ wifi_topic = f"sttoolkit-test/mqtt/wifi/v2/numdetections/{sensorUUID}"
 manager = CommunicationManager(cwifi, wifi_topic)
 upload_technology, selected_lora_network = manager.load_cached_uplink()
 
+log_event(
+    "send_selected_technology",
+    upload_technology=upload_technology,
+    selected_lora_network=selected_lora_network,
+    active_lora_network=active_lora_network,
+    devices=int(detected_devices)
+)
 
 # Keep backward compatibility with legacy LoRa flow using selected network.
 if selected_lora_network:
@@ -145,7 +190,7 @@ sent_over_wifi = False
 
 if upload_technology != "lora":
     sent_over_wifi = manager.send_current_measurement(dataAtual_unix, int(detected_devices))
-
+    
     if sent_over_wifi:
         log_event(
             "message_sent",
@@ -305,6 +350,7 @@ if upload_technology == "lora":
                     downlink_seconds = (
                         (int(upload_periodicity) * 60)
                         - 25
+                        - waited_for_check
                         - waited_for_comm_available
                         - waited_for_uart_lock
                     )
@@ -362,7 +408,7 @@ if upload_technology == "lora":
                     pass
 
             release_uart_lock()
-    rak.disconnect()
+    
 
 
 elif upload_technology == "none":
@@ -374,3 +420,8 @@ elif upload_technology == "none":
 
 cwifi.close()
 connwifi.close()
+
+log_event(
+    "send_cycle_complete",
+    cycle_ms=round((time.monotonic() - _t0_send_cycle) * 1000, 2)
+)

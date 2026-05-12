@@ -71,8 +71,8 @@ rpi_oui = ["dc:a6:32", "b8:27:eb", "28:cd:c1", "2c:cf:67", "3a:35:41", "d8:3a:dd
 LORA_SERIAL_PORT = "/dev/ttyAMA0"
 COMM_AVAILABLE_LOCK_FILE = "/tmp/sensorCommunicationAvailable.lock"
 BOOT_COMPLETE_FILE = "/tmp/sensor_boot_complete"
-
-
+NMCLI_BIN = "/usr/bin/nmcli"
+WLAN_UPLOAD_IFACE = "wlan0"
 
 def acquire_script_lock(lock_file=COMM_AVAILABLE_LOCK_FILE, script_name="script"):
     if os.path.exists(lock_file):
@@ -1482,8 +1482,413 @@ def decide_upload_technology(cursor=None):
             connwifi.close()
 
 
+# ── Wi-Fi intra-RAN failover ─────────────────────────────────────────────────
+#
+#   When the active Wi-Fi AP fails, these functions try other configured
+#   sensor-wifi-* profiles (created by sensor-config-site/app.py) in
+#   priority order BEFORE falling back to LoRaWAN.
+#
+#   Flow:
+#     Wi-Fi current AP fails
+#       → get_sensor_wifi_profiles() returns all sensor-wifi-* profiles
+#       → get_visible_wifi_ssids() scans visible SSIDs on wlan0
+#       → for each configured profile in priority order:
+#           if profile SSID is not visible → skip immediately
+#           if profile SSID is visible → activate via nmcli
+#           then verify MQTT reachability with check_wifi_connection()
+#       → if one succeeds: stay on Wi-Fi
+#       → if all fail: proceed to LoRa handover as before
+#
 
 
+
+
+def get_sensor_wifi_profiles():
+    """
+    Return configured sensor-wifi-* NetworkManager profiles sorted by priority.
+
+    Returns:
+        list of (profile_name: str, priority_index: int)
+    """
+    try:
+        result = subprocess.run(
+            [NMCLI_BIN, "-t", "-f", "NAME", "connection", "show"],
+            text=True, capture_output=True, check=False, timeout=10,
+        )
+    except Exception as e:
+        logger.error(f"[WIFI-FAILOVER] nmcli error: {e}")
+        return []
+
+    profiles = []
+
+    for name in result.stdout.splitlines():
+        name = name.strip()
+
+        if not name.startswith("sensor-wifi-"):
+            continue
+
+        parts = name.split("-", 3)
+
+        try:
+            idx = int(parts[2])
+        except (IndexError, ValueError):
+            idx = 999
+
+        profiles.append((name, idx))
+
+    profiles.sort(key=lambda p: p[1])
+    return profiles
+
+
+def get_active_wifi_profile():
+    """Return the name of the currently active Wi-Fi profile on wlan0, or None."""
+    try:
+        result = subprocess.run(
+            [NMCLI_BIN, "-t", "-f", "NAME,DEVICE", "connection", "show", "--active"],
+            text=True, capture_output=True, check=False, timeout=10,
+        )
+    except Exception:
+        return None
+
+    for line in result.stdout.splitlines():
+        parts = line.strip().split(":")
+
+        if len(parts) >= 2 and parts[1] == WLAN_UPLOAD_IFACE:
+            return parts[0]
+
+    return None
+
+
+def get_wifi_profile_ssid(profile_name):
+    """
+    Return the SSID associated with a NetworkManager Wi-Fi profile.
+
+    Falls back to parsing profile names such as:
+        sensor-wifi-1-Management_Network
+    """
+    try:
+        result = subprocess.run(
+            [
+                NMCLI_BIN,
+                "-g", "802-11-wireless.ssid",
+                "connection", "show", "id", profile_name,
+            ],
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=5,
+        )
+
+        ssid = result.stdout.strip()
+
+        if ssid:
+            return ssid
+
+    except Exception:
+        pass
+
+    parts = profile_name.split("-", 3)
+
+    if len(parts) == 4:
+        return parts[3]
+
+    return None
+
+
+def get_visible_wifi_ssids(rescan=True):
+    """
+    Return the set of SSIDs currently visible on wlan0.
+    """
+    try:
+        cmd = [
+            NMCLI_BIN,
+            "-t",
+            "-f", "SSID",
+            "dev", "wifi", "list",
+            "ifname", WLAN_UPLOAD_IFACE,
+        ]
+
+        if rescan:
+            cmd.extend(["--rescan", "yes"])
+
+        result = subprocess.run(
+            cmd,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=8,
+        )
+
+        ssids = set()
+
+        for line in result.stdout.splitlines():
+            ssid = line.strip()
+
+            if not ssid:
+                continue
+
+            ssids.add(ssid)
+
+        return ssids
+
+    except Exception as e:
+        logger.error(f"[WIFI-FAILOVER] Wi-Fi scan error: {e}")
+        return set()
+
+
+def try_activate_wifi_profile(profile_name, timeout_sec=15):
+    """
+    Activate a specific NetworkManager Wi-Fi profile on wlan0.
+
+    Returns:
+        bool: True if nmcli reports successful activation
+    """
+    from event_logger import log_event
+
+    try:
+        result = subprocess.run(
+            [
+                "sudo", "-n", NMCLI_BIN,
+                "--wait", str(timeout_sec),
+                "connection", "up", "id", profile_name,
+                "ifname", WLAN_UPLOAD_IFACE,
+            ],
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=timeout_sec + 2,
+        )
+
+        ok = result.returncode == 0
+
+        log_event(
+            "wifi_profile_activate_result",
+            profile=profile_name,
+            success=ok,
+            returncode=result.returncode,
+            stdout=result.stdout[-300:] if result.stdout else "",
+            stderr=result.stderr[-300:] if result.stderr else "",
+        )
+
+        if not ok:
+            logger.error(
+                f"[WIFI-FAILOVER] Could not activate {profile_name}. "
+                f"returncode={result.returncode}, stderr={result.stderr.strip()}"
+            )
+
+        return ok
+
+    except Exception as e:
+        logger.error(f"[WIFI-FAILOVER] nmcli activation error for {profile_name}: {e}")
+
+        log_event(
+            "wifi_profile_activate_exception",
+            profile=profile_name,
+            error=str(e),
+        )
+
+        return False
+
+
+def try_wifi_failover(cursor=None, skip_current=False):
+    """
+    Try all configured sensor-wifi-* profiles in priority order.
+
+    For each candidate:
+        1. if already connected to Wi-Fi and the server is reachable, return immediately;
+        2. check whether the profile SSID is visible in the current Wi-Fi scan;
+        3. if the profile is already active, only verify server reachability;
+        4. activate NetworkManager profile only if visible and not already active;
+        5. verify end-to-end reachability using check_wifi_connection(),
+           which performs netcat to the Cloud_IP_Address configured in DB.
+
+    Returns:
+        (success: bool, profile_name: str | None)
+    """
+    from event_logger import log_event
+
+    profiles = get_sensor_wifi_profiles()
+
+    if not profiles:
+        logger.info("[WIFI-FAILOVER] No sensor-wifi-* profiles configured")
+        log_event("wifi_failover_no_profiles")
+        return False, None
+
+    active_profile = get_active_wifi_profile()
+
+    if active_profile and not skip_current:
+        if check_wifi_connection():
+            logger.info(f"[WIFI-FAILOVER] Already connected via {active_profile}; server reachable")
+
+            log_event(
+                "wifi_failover_already_connected",
+                profile=active_profile,
+            )
+
+            return True, active_profile
+
+    visible_ssids = get_visible_wifi_ssids(rescan=True)
+
+    log_event(
+        "wifi_scan_complete",
+        visible_count=len(visible_ssids),
+        visible_ssids=list(visible_ssids),
+    )
+
+    log_event(
+        "wifi_failover_start",
+        candidates=len(profiles),
+        active_profile=active_profile,
+        skip_current=skip_current,
+    )
+
+    for profile_name, priority in profiles:
+
+        profile_ssid = get_wifi_profile_ssid(profile_name)
+
+        if not profile_ssid:
+            logger.info(f"[WIFI-FAILOVER] Skipping {profile_name}: could not determine SSID")
+
+            log_event(
+                "wifi_failover_skip_no_ssid",
+                profile=profile_name,
+                priority=priority,
+            )
+
+            continue
+
+        if profile_ssid not in visible_ssids:
+            logger.info(f"[WIFI-FAILOVER] Skipping {profile_name}: SSID '{profile_ssid}' not visible")
+
+            log_event(
+                "wifi_failover_skip_not_visible",
+                profile=profile_name,
+                ssid=profile_ssid,
+                priority=priority,
+            )
+
+            continue
+
+        if skip_current and active_profile and profile_name == active_profile:
+            logger.info(f"[WIFI-FAILOVER] Skipping current profile {profile_name}")
+
+            log_event(
+                "wifi_failover_skip_current",
+                profile=profile_name,
+                ssid=profile_ssid,
+                priority=priority,
+            )
+
+            continue
+
+        logger.info(f"[WIFI-FAILOVER] Trying {profile_name} (priority={priority}, ssid={profile_ssid})")
+
+        log_event(
+            "wifi_failover_attempt",
+            profile=profile_name,
+            ssid=profile_ssid,
+            priority=priority,
+        )
+
+        if active_profile and profile_name == active_profile:
+            logger.info(f"[WIFI-FAILOVER] Profile {profile_name} already active; checking server reachability only")
+
+            log_event(
+                "wifi_failover_active_profile_check",
+                profile=profile_name,
+                ssid=profile_ssid,
+                priority=priority,
+            )
+
+            if check_wifi_connection():
+                logger.info(f"[WIFI-FAILOVER] Active profile {profile_name} has server reachability")
+
+                log_event(
+                    "wifi_failover_ok",
+                    profile=profile_name,
+                    ssid=profile_ssid,
+                    priority=priority,
+                    already_active=True,
+                )
+
+                return True, profile_name
+
+            logger.info(f"[WIFI-FAILOVER] Active profile {profile_name} is not server reachable")
+
+            log_event(
+                "wifi_failover_active_profile_unreachable",
+                profile=profile_name,
+                ssid=profile_ssid,
+                priority=priority,
+            )
+
+            continue
+
+        activated = try_activate_wifi_profile(profile_name)
+
+        if not activated:
+            logger.info(f"[WIFI-FAILOVER] Could not activate {profile_name}")
+
+            log_event(
+                "wifi_failover_activate_fail",
+                profile=profile_name,
+                ssid=profile_ssid,
+                priority=priority,
+            )
+
+            continue
+
+        reachable = False
+
+        for attempt in range(1, 4):
+            if check_wifi_connection():
+                reachable = True
+                break
+
+            log_event(
+                "wifi_failover_netcat_retry",
+                profile=profile_name,
+                ssid=profile_ssid,
+                priority=priority,
+                attempt=attempt,
+            )
+
+            time.sleep(2)
+
+        if reachable:
+            logger.info(f"[WIFI-FAILOVER] Connected and server reachable via {profile_name}")
+
+            log_event(
+                "wifi_failover_ok",
+                profile=profile_name,
+                ssid=profile_ssid,
+                priority=priority,
+                already_active=False,
+            )
+
+            return True, profile_name
+
+        logger.info(
+            f"[WIFI-FAILOVER] {profile_name} activated but configured server unreachable"
+        )
+
+        log_event(
+            "wifi_failover_netcat_fail",
+            profile=profile_name,
+            ssid=profile_ssid,
+            priority=priority,
+        )
+
+    logger.info("[WIFI-FAILOVER] All profiles exhausted")
+
+    log_event(
+        "wifi_failover_exhausted",
+        candidates=len(profiles),
+    )
+
+    return False, None
+
+    
 def downlink_cb(mType, port, length, msgHex):
     logger.info(f"[DOWNLINK RAW] type={mType} port={port} len={length} hex={msgHex}")
     try:
