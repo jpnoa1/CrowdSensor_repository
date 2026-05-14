@@ -10,6 +10,7 @@ import logging
 from swARM_at_custom.swARM_at.RAK3172 import RAK3172
 import json
 from datetime import datetime
+import ssl
 
 
 
@@ -55,7 +56,7 @@ CONFIGURED_CRONJOBS_FILEPATH = "/home/kali/Desktop/cronjobs_configured.txt"
 #AIRODUMP_FILEPATH = "/home/kali/Desktop/aircrack-ng-1.7/src/airodump-ng/airodump-ng.c"
 
 #MQTT Paramenters
-MQTT_PORT = 1883
+MQTT_PORT = 8883
 TOPIC_NETWORKS = "monicrowd/sensors/networks"
 
 #Number of configuration parameters (uuid, name, etc...)
@@ -350,6 +351,7 @@ def connect_mqtt():
 
     client.username_pw_set(mqtt_username, mqtt_password)
     client.on_connect = on_connect
+    client.tls_set(tls_version=ssl.PROTOCOL_TLS)
     client.connect(cloud_ip_addr, MQTT_PORT) 
     return client
 
@@ -598,7 +600,7 @@ def write_crontab_file(status, detection_if, upload_periodicity, reboot_periodic
 
     print("Writing tasks to configuration file...")
 
-    if location_send_mode not in ("boot", "periodic_5min"):
+    if location_send_mode not in ("boot", "periodic_5min", "periodic_upload_window"):
         location_send_mode = "boot"
 
     f.write("# This file allows users to configure the sensor tasks to be run\n")
@@ -626,6 +628,8 @@ def write_crontab_file(status, detection_if, upload_periodicity, reboot_periodic
         f.write("# Periodic upload of sensor location\n")
         if location_send_mode == "periodic_5min":
             f.write("*/5 * * * *  /usr/bin/python3 /home/kali/Desktop/sendSensorLocation.py\n")
+        elif location_send_mode == "periodic_upload_window":
+            f.write("*/" + str(upload_periodicity) + " * * * * /usr/bin/python3 /home/kali/Desktop/sendSensorLocation.py\n")
         else:
             f.write("#*/5 * * * * /usr/bin/python3 /home/kali/Desktop/sendSensorLocation.py\n")
 
@@ -1955,7 +1959,7 @@ def normalize_network_type(raw_type: str) -> str:
 
     return t
 
-def publish_sensor_state(cfg, mqtt_host, mqtt_port=1883):
+def publish_sensor_state(cfg, mqtt_host, mqtt_port=8883):
     connectivity = cfg.get("Connectivity", []) or cfg.get("connectivity", [])
 
     device_id_ttn = ""
@@ -1994,6 +1998,7 @@ def publish_sensor_state(cfg, mqtt_host, mqtt_port=1883):
 
         client = mqtt_client.Client()
         client.username_pw_set(mqtt_username, mqtt_password)
+        client.tls_set(tls_version=ssl.PROTOCOL_TLS)
         client.connect(mqtt_host, mqtt_port, 60)
         client.loop_start()
 
@@ -2012,7 +2017,7 @@ def publish_sensor_state(cfg, mqtt_host, mqtt_port=1883):
         print(f"[ERROR] Failed to publish sensor state: {e}")
 
 
-def publish_sensor_networks(cfg, mqtt_host, mqtt_port=1883):
+def publish_sensor_networks(cfg, mqtt_host, mqtt_port=8883):
     connectivity = cfg.get("Connectivity", [])
     networks = []
     priority = 1
@@ -2056,6 +2061,7 @@ def publish_sensor_networks(cfg, mqtt_host, mqtt_port=1883):
 
         client = mqtt_client.Client()
         client.username_pw_set(mqtt_username, mqtt_password)
+        client.tls_set(tls_version=ssl.PROTOCOL_TLS)
         client.connect(mqtt_host, mqtt_port, 60)
         client.loop_start()
 

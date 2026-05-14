@@ -143,7 +143,7 @@ uart_locked = False
 # If periodic location mode is active and the active upload technology is LoRa,
 # reserve the UART before trying to refresh GPS.
 # Otherwise sendCrowdingData.py may acquire the UART while this script is waiting for GPS.
-if uploadTechnology == "lora" and locationSendMode == "periodic_5min" and not called_from_boot:
+if uploadTechnology == "lora" and locationSendMode in ("periodic_5min", "periodic_upload_window") and not called_from_boot:
     uart_locked = wait_for_lora_uart_lock(
         caller="sendSensorLocation_lora_pre_gps",
         max_wait_sec=15,
@@ -157,7 +157,7 @@ if uploadTechnology == "lora" and locationSendMode == "periodic_5min" and not ca
 
 # Refresh GPS only when periodic location mode is configured and this is not the boot call.
 # During boot, sensorCommunicationAvailable.py already tries to get GPS and updates the DB.
-if locationSendMode == "periodic_5min" and not called_from_boot:
+if locationSendMode in ("periodic_5min", "periodic_upload_window") and not called_from_boot:
     print("[LOCATION] Periodic location mode active. Trying to refresh GPS position...")
 
     try:

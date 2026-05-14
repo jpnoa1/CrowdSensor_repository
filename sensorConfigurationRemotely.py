@@ -17,7 +17,7 @@ CONFIG_PATH = "/home/kali/Desktop/sensor-config-site/data/sensor_config.toml"
 PENDING_SYNC_FILE = "/home/kali/Desktop/.pending_cloud_sync"
 
 DEFAULT_MQTT_HOST = "t.monicrowd.sensinglab.eu"
-DEFAULT_MQTT_PORT = 1883
+DEFAULT_MQTT_PORT = 8883
 
 
 try:
@@ -183,7 +183,7 @@ def normalize_location_send_mode(value):
     """
     value = str(value).strip() if value is not None else "boot"
 
-    if value in ("boot", "periodic_5min"):
+    if value in ("boot", "periodic_5min", "periodic_upload_window"):
         return value
 
     print(f"[Config][WARN] Invalid Location Send Mode '{value}'. Falling back to 'boot'.")

@@ -22,6 +22,9 @@ from uuid import getnode
 from time import sleep
 from typing import Dict, List, Tuple
 
+import sys
+sys.path.insert(0, "/home/kali/Desktop")
+
 from flask import Flask, render_template, request, redirect, url_for, after_this_request
 
 
@@ -44,7 +47,7 @@ SENSOR_CONFIG_REMOTE = "/home/kali/Desktop/sensorConfigurationRemotely.py"
 PENDING_SYNC_FILE = "/home/kali/Desktop/.pending_cloud_sync"
 
 DEFAULT_MQTT_HOST = "t.monicrowd.sensinglab.eu"
-DEFAULT_MQTT_PORT = 1883
+DEFAULT_MQTT_PORT = 8883
 
 USE_REBOOT = False
 
@@ -172,7 +175,7 @@ def parse_connectivity(form) -> tuple[list[dict], list[str]]:
             "ssid": ssid,
             "password": pwd,
             "mqtt_address": addr,
-            "mqtt_port": port if port else "1883",
+            "mqtt_port": port if port else "8883",
         })
 
     # --- TTN --------------------------------------------------------------------
@@ -251,8 +254,8 @@ def validate_sensor(cfg: Dict[str, str]) -> List[str]:
     if (_to_int(cfg.get("Sliding Window", "")) or 0) <= 0:
         errors.append("Sliding Window must be a positive integer (minutes).")
 
-    if cfg.get("Location Send Mode") not in ("boot", "periodic_5min"):
-        errors.append("Location Send Mode must be 'boot' or 'periodic_5min'.")
+    if cfg.get("Location Send Mode") not in ("boot", "periodic_5min", "periodic_upload_window"):
+        errors.append("Location Send Mode must be 'boot', 'periodic_5min', or 'periodic_upload_window'.")
 
     rp = cfg.get("Reboot Periodicity", "")
 
@@ -284,7 +287,7 @@ def validate_connectivity(conn: List[dict]) -> List[str]:
             ssid = c.get("ssid", "")
             pwd = c.get("password", "")
             mqtt_addr = c.get("mqtt_address", "")
-            mqtt_port = c.get("mqtt_port", "1883")
+            mqtt_port = c.get("mqtt_port", "8883")
 
             if not ssid:
                 errors.append(f"Wi-Fi #{i}: SSID is required.")
@@ -481,8 +484,8 @@ def release_wlan_from_hotspot() -> None:
 
 def connect_wifi_if_present(conn: List[dict]) -> bool:
     """
-    Configure all Wi-Fi profiles and try to connect by priority.
-    Returns True if one Wi-Fi connection succeeds.
+    Configure all Wi-Fi profiles, release hotspot, and connect
+    using the same scan-first logic as sensorCommunicationCheck.
     """
     profile_names = configure_all_wifi_profiles(conn)
 
@@ -491,38 +494,19 @@ def connect_wifi_if_present(conn: List[dict]) -> bool:
 
     release_wlan_from_hotspot()
 
-    print("[WiFi] Rescanning networks...")
+    # Give NM time to fully release wlan0
+    sleep(3)
 
-    subprocess.run(
-        ["sudo", NMCLI_BIN, "device", "wifi", "rescan", "ifname", WLAN_IFACE],
-        check=False,
-    )
+    # Reuse the same scan-first approach as sensorCommunicationCheck
+    from sensorFunctions import try_wifi_failover, check_wifi_connection
+    
+    ok, profile = try_wifi_failover(skip_current=False)
 
-    sleep(5)
+    if ok:
+        print(f"[WiFi] Connected via {profile}")
+        return True
 
-    for profile_name in profile_names:
-        print(f"[WiFi] Trying profile: {profile_name}")
-
-        result = subprocess.run(
-            [
-                "sudo", NMCLI_BIN,
-                "--wait", "20",
-                "connection", "up", profile_name,
-                "ifname", WLAN_IFACE,
-            ],
-            text=True,
-            capture_output=True,
-            check=False,
-        )
-
-        print("[WiFi] stdout:", result.stdout)
-        print("[WiFi] stderr:", result.stderr)
-
-        if result.returncode == 0:
-            print(f"[WiFi] Connected using profile: {profile_name}")
-            return True
-
-    print("[WiFi][ERROR] Could not connect to any configured Wi-Fi network.")
+    print("[WiFi][ERROR] No visible configured network could connect.")
     return False
 
 

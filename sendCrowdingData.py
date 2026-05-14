@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt; plt.rcdefaults()
 import pytz
 import time
 import os
+import struct
 
 from swARM_at_custom.swARM_at.RAK3172 import RAK3172
 from sensorFunctions import *
@@ -11,6 +12,7 @@ from sensorFunctions import downlink_cb
 from communication_manager import CommunicationManager
 from event_logger import log_event
 from uart_lock import acquire_uart_lock, release_uart_lock, get_uart_lock_info
+
 
 COMM_CHECK_LOCK_FILE = "/tmp/sensor_communication_check.lock"
 COMM_CHECK_LOCK_MAX_AGE_SEC = 70
@@ -126,8 +128,9 @@ except sqlite3.Error:
     print("Failed to read sensor configuration from local database.")
     exit(0)
 
+dataAtual_aware = dt.datetime.now(dt.timezone.utc)
 
-dataAtual = dt.datetime.now(pytz.utc).replace(tzinfo=None)
+dataAtual = dataAtual_aware.replace(tzinfo=None)
 dataAnalizar = dataAtual - dt.timedelta(minutes=int(slidingWindow))
 
 
@@ -182,7 +185,7 @@ log_event(
 if selected_lora_network:
     active_lora_network = selected_lora_network
 
-dataAtual_unix = int(dataAtual.timestamp())
+dataAtual_unix = int(dataAtual_aware.timestamp())
 
 
 # Keep LoRa send path unchanged for now; manager handles Wi-Fi and no-connectivity cases.
@@ -212,6 +215,11 @@ else:
 
 
 if sent_over_wifi:
+    log_event(
+            "replay_started",
+            link="wifi",
+            
+        )
     replayed = manager.replay_pending_wifi(max_items=100)
 
     if replayed > 0:
@@ -306,11 +314,16 @@ if upload_technology == "lora":
                 print("[UPLOAD] Handover will be triggered on next sensorCommunicationCheck cycle")
 
             else:
-                message = f"C,{detected_devices}"
-                payload_hex = message.encode().hex()
+                count = int(detected_devices)
 
-                print(f"[UPLOAD] Sending payload: {message} (hex: {payload_hex})")
-                sent = rak.send_lorawan_data(2, payload_hex)
+                if count <= 255:
+                    payload_bytes = struct.pack(">B", count)  # 1 byte
+                else:
+                    payload_bytes = struct.pack(">H", count)  # 2 bytes
+
+                payload_hex = payload_bytes.hex()
+                print(f"[UPLOAD] Sending payload: count={count} ({len(payload_bytes)} byte(s)) (hex: {payload_hex})")
+                sent = rak.send_lorawan_data(1, payload_hex)  # Port 1 = crowding
 
                 if sent:
                     log_event(

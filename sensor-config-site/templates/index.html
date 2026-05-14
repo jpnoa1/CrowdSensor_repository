@@ -316,10 +316,15 @@
                 <option value="periodic_5min" {{ "selected" if cfg.get('Location Send Mode', 'boot')=="periodic_5min" else "" }}>
                   Send every 5 minutes
                 </option>
+                </option>
+                <option value="periodic_upload_window" {{ "selected" if cfg.get('Location Send Mode', 'boot')=="periodic_upload_window" else "" }}>
+                  Send with upload window
+                </option>
               </select>
             </label>
             <small class="hint">
-              Defines whether the sensor location is sent only after startup or periodically every 5 minutes.
+              Boot: sends location once at startup. Every 5 min: fixed 5-minute interval.
+              Upload window: location is sent at the same interval as crowding data.
             </small>
           </div>
 
@@ -507,11 +512,11 @@
           <input name="WiFi MQTT Address" placeholder="Hostname or IP"></label>
         <div class="check-label">
           <input type="checkbox" class="use-default-mqtt" checked>
-          Use Default MQTT Port (1883) — Recommended
+          Use Default MQTT Port (8883) — Recommended
         </div>
         <label class="mqtt-port-label" style="display:none;margin-top:6px"><span class="lbl">MQTT Port</span>
           <input name="MQTT Port" type="number" min="1" max="65535" step="1"
-                 class="mqtt-port-input" value="1883"></label>
+                 class="mqtt-port-input" value="8883"></label>
         <small class="hint" style="margin-top:4px">Only change if your MQTT broker uses a non-standard port.</small>
       </div>`;
 
@@ -531,7 +536,7 @@
         const def = cb.checked;
         lbl.style.display = def ? 'none' : 'block';
         inp.readOnly = def;
-        if (def) inp.value = '1883';
+        if (def) inp.value = '8883';
       }
       cb.addEventListener('change', sync);
 
@@ -543,7 +548,7 @@
         if (s) s.value = data.ssid || '';
         if (p) p.value = data.password || '';
         if (c) c.value = data.mqtt_address || data.cloud_address || '';
-        if (data.mqtt_port && data.mqtt_port !== '1883') {
+        if (data.mqtt_port && data.mqtt_port !== '8883') {
           inp.value = data.mqtt_port;
           cb.checked = false;
         }

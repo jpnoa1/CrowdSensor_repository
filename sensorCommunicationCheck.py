@@ -169,7 +169,7 @@ else:
 #wifiConnected = False
 #set_wifi_connected(False)
 #loraAvailable = False
-#set_lora_available(True)
+#set_lora_available(False)
 #set_lora_connected(False)
 
 
