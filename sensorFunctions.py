@@ -617,8 +617,6 @@ def write_crontab_file(status, detection_if, upload_periodicity, reboot_periodic
     
     if status == "Active":
         f.write("# Wi-Fi detection of devices\n")
-        #f.write("*/10 * * * * timeout -k 1 590s sudo airodump-ng --background 1 " + str(detection_if + "\n"))
-        #f.write("*/10 * * * * sleep 595 && sudo pkill airodump-ng\n")
 
         f.write("@reboot sleep 90 && sudo /usr/bin/python3 /home/kali/Desktop/sensorStartup.py\n")
 
@@ -634,14 +632,12 @@ def write_crontab_file(status, detection_if, upload_periodicity, reboot_periodic
             f.write("#*/5 * * * * /usr/bin/python3 /home/kali/Desktop/sendSensorLocation.py\n")
 
         f.write("# Periodic delete of outdated and unnecessary data from local database\n")
-        f.write("0 * * * * /usr/bin/python3 /home/kali/Desktop/dataRetentionManager.py 30\n")
+        f.write("0 * * * * /usr/bin/python3 /home/kali/Desktop/Sniffer/dataRetentionManager.py 30\n")
 
     elif status == "Disabled":
         f.write("# Wi-Fi detection of devices\n")
-        #f.write("#*/10 * * * * timeout -k 1 590s sudo airodump-ng --background 1 " + str(detection_if + "\n"))
 
         f.write("#@reboot sleep 90 && sudo /usr/bin/python3 /home/kali/Desktop/sensorStartup.py\n")
-        #f.write("#*/10 * * * * sleep 595 && sudo pkill airodump-ng\n")
 
         f.write("# Periodic upload of crowding data to the Cloud Server\n")
         f.write("#*/" + str(upload_periodicity) + " * * * * /usr/bin/python3 /home/kali/Desktop/sendCrowdingData.py \n")
@@ -650,7 +646,7 @@ def write_crontab_file(status, detection_if, upload_periodicity, reboot_periodic
         f.write("#*/5 * * * * sleep 40 && /usr/bin/python3 /home/kali/Desktop/sendSensorLocation.py\n")
 
         f.write("# Periodic delete of outdated and unnecessary data from local database\n")
-        f.write("#0 * * * * /usr/bin/python3 /home/kali/Desktop/dataRetentionManager.py 30\n")
+        f.write("#0 * * * * /usr/bin/python3 /home/kali/Desktop/Sniffer/dataRetentionManager.py 30\n")
 
     f.write("# Periodic upload of OUI list\n")
     f.write("0 0 * * 0 /usr/bin/python3 /home/kali/Desktop/macOUIupdater.py\n")

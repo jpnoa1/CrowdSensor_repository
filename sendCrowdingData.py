@@ -1,8 +1,11 @@
+import joblib
+import pandas as pd
+import numpy as np
 import sqlite3
 import datetime as dt
 import matplotlib.pyplot as plt; plt.rcdefaults()
-import pytz
 import time
+import sys
 import os
 import struct
 
@@ -13,6 +16,7 @@ from communication_manager import CommunicationManager
 from event_logger import log_event
 from uart_lock import acquire_uart_lock, release_uart_lock, get_uart_lock_info
 
+MODEL_PATH = '/home/kali/Desktop/Sniffer/crowd_rf_regressor.pkl'
 
 COMM_CHECK_LOCK_FILE = "/tmp/sensor_communication_check.lock"
 COMM_CHECK_LOCK_MAX_AGE_SEC = 70
@@ -94,6 +98,11 @@ if not available_released:
 
 dprint(f"waited_for_comm_available={waited_for_comm_available}s")
 
+try:
+    model = joblib.load(MODEL_PATH)
+except Exception as e:
+    print(f"Failed to load RF model: {e}")
+    sys.exit(1)
 
 # Read sensor configuration from database
 try:
@@ -130,42 +139,45 @@ except sqlite3.Error:
 
 dataAtual_aware = dt.datetime.now(dt.timezone.utc)
 
-dataAtual = dataAtual_aware.replace(tzinfo=None)
-dataAnalizar = dataAtual - dt.timedelta(minutes=int(slidingWindow))
-
-
-# Get number of devices detected from database
+# Get extracted information from database
 try:
-    conndev = sqlite3.connect('/home/kali/Desktop/MemoryDB/DeviceRecords.db', timeout=30)
-    cdev = conndev.cursor()
+    dr_con = sqlite3.connect('/home/kali/Desktop/MemoryDB/DeviceRecords.db', timeout=30)
 
-    # Device counting - Data packets
-    rows_data_packets = cdev.execute(
-        """SELECT COUNT(*) FROM Data_Packets 
-           WHERE ((First_Record >= ? and First_Record <= ?) 
-           or (Last_Time_Found > ? and Last_Time_Found <= ?))""",
-        (dataAnalizar, dataAtual, dataAnalizar, dataAtual)
-    ).fetchall()
+    time_window = time.time() - (slidingWindow * 60)
 
-    # Device counting - Probe Requests
-    rows_probe_requests = cdev.execute(
-        """SELECT COUNT(*) FROM Probe_Requests 
-           WHERE ((First_Record >= ? and First_Record <= ?) 
-           or (Last_Time_Found > ? and Last_Time_Found <= ?))""",
-        (dataAnalizar, dataAtual, dataAnalizar, dataAtual)
-    ).fetchall()
+    df_raw = pd.read_sql_query("SELECT * FROM Probe_Requests WHERE Timestamp >= ?", dr_con, params=(time_window,))
 
-    # Device counting - All
-    detected_devices = rows_data_packets[0][0] + rows_probe_requests[0][0]
+    if not df_raw.empty:
+        total_packets = len(df_raw)
+        unique_macs = df_raw['MAC'].nunique()
+        unique_fingerprints = df_raw['Fingerprint'].nunique()
+        
+        if unique_fingerprints == 0:
+            packets_per_fingerprint = 0
+        else:
+            packets_per_fingerprint = total_packets / unique_fingerprints
 
-    cdev.close()
-    conndev.close()
+        X_live = pd.DataFrame([{
+            'Total_Packets': total_packets,
+            'Unique_MACs': unique_macs,
+            'Unique_Fingerprints': unique_fingerprints,
+            'Packets_Per_Fingerprint': packets_per_fingerprint
+        }])
+        
+        raw_prediction = model.predict(X_live)[0]
+
+        detected_devices = max(0, int(np.round(raw_prediction)))
+
+    dr_con.close()
 
 except sqlite3.Error:
-    print("Failed to read number of devices detected from local database.")
+    print("Failed to read extracted information from local database.")
+    detected_devices = 0
+except Exception as e:
+    print(f"Error during ML prediction: {e}")
     detected_devices = 0
 
-
+print(detected_devices)
 # wifi_topic = f"sttoolkit-test/mqtt/wifi/numdetections/{influxdb_bucket}/{ip_address}/{sensorName}/{sensorUUID}"
 wifi_topic = f"sttoolkit-test/mqtt/wifi/v2/numdetections/{sensorUUID}"
 
