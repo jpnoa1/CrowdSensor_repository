@@ -11,5 +11,5 @@ sniffer.pid
 .config_version
 sensor-config-site/data/sensor_config.toml
 *.bak
-
+*.log
 logs/
