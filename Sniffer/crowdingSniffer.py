@@ -11,6 +11,10 @@ PID_FILE = "/home/kali/Desktop/Sniffer/sniffer.pid"
 CALIBRATION_MAC = "14:49:D4:88:A4:2F"
 
 commit_counter = 0
+last_commit_time = time.monotonic()
+
+COMMIT_BATCH_SIZE = 50
+COMMIT_MAX_INTERVAL = 15  # seconds
 
 dr_con = sqlite3.connect('/home/kali/Desktop/MemoryDB/DeviceRecords.db', timeout=30)
 dr_cur = dr_con.cursor()
@@ -40,7 +44,7 @@ def frame_processing(pkt):
 
     mac = pkt[Dot11].addr2.upper()
     oui = mac[:8]
-    global commit_counter
+    global commit_counter, last_commit_time
 
     if mac == CALIBRATION_MAC:
         try:
@@ -123,11 +127,14 @@ def frame_processing(pkt):
 
         dr_cur.execute("INSERT INTO Probe_Requests VALUES(?, ?, ?)", (fingerprint, pkt.addr2, current_unix_time))  
 
-        #Batch commit
+        # Batch commit por número de registos ou por tempo
         commit_counter += 1
-        if commit_counter >= 20:
+        now = time.monotonic()
+
+        if (commit_counter >= COMMIT_BATCH_SIZE or (now - last_commit_time) >= COMMIT_MAX_INTERVAL):
             dr_con.commit()
             commit_counter = 0
+            last_commit_time = now  
 
         return
 
@@ -141,7 +148,14 @@ def isMobileManufacturer(oui):
     return False
 
 def signal_term_handler(signal, frame):
+    global commit_counter
+
     open(PID_FILE, "w").close()
+
+    if commit_counter > 0:
+        dr_con.commit()
+        commit_counter = 0
+
     dr_con.close()
     sys.exit(0)
 
