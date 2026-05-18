@@ -25,17 +25,6 @@ except Exception as e:
     logging.error(f"Exception during Wi-Fi setup: {e}")
 
 try:
-    dr_con = sqlite3.connect('/home/kali/Desktop/MemoryDB/DeviceRecords.db', timeout=30)
-    dr_cur = dr_con.cursor()
-
-    dr_cur.execute("CREATE TABLE IF NOT EXISTS Probe_Requests (Fingerprint TEXT, MAC TEXT, Timestamp REAL);")
-    dr_con.commit()
-    dr_con.close()
-    logging.info("Database table checked/created successfully.")
-except Exception as e:
-    logging.error(f"Database creation failed: {e}")
-
-try:
     res = subprocess.run(["sudo", "chown", "-R", "kali:kali", "/home/kali/Desktop/MemoryDB"], capture_output=True, text=True)
     if res.returncode != 0:
         logging.error(f"Chown failed: {res.stderr}")
@@ -52,6 +41,17 @@ try:
         logging.info("Read/write access updated for MemoryDB.")
 except Exception as e:
     logging.error(f"Exception during chown: {e}")
+
+try:
+    dr_con = sqlite3.connect('/home/kali/Desktop/MemoryDB/DeviceRecords.db', timeout=30)
+    dr_cur = dr_con.cursor()
+
+    dr_cur.execute("CREATE TABLE IF NOT EXISTS Probe_Requests (Fingerprint TEXT, MAC TEXT, Timestamp REAL);")
+    dr_con.commit()
+    dr_con.close()
+    logging.info("Database table checked/created successfully.")
+except Exception as e:
+    logging.error(f"Database creation failed: {e}")
 
 try:
     logging.info("Starting crowdingSniffer.py...")

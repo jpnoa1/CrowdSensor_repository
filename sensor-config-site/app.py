@@ -49,7 +49,7 @@ PENDING_SYNC_FILE = "/home/kali/Desktop/.pending_cloud_sync"
 DEFAULT_MQTT_HOST = "t.monicrowd.sensinglab.eu"
 DEFAULT_MQTT_PORT = 8883
 
-USE_REBOOT = False
+USE_REBOOT = True
 
 os.makedirs(DATA_DIR, exist_ok=True)
 

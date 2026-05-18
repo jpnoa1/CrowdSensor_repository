@@ -139,6 +139,8 @@ except sqlite3.Error:
 
 dataAtual_aware = dt.datetime.now(dt.timezone.utc)
 
+detected_devices = 0
+
 # Get extracted information from database
 try:
     dr_con = sqlite3.connect('/home/kali/Desktop/MemoryDB/DeviceRecords.db', timeout=30)
@@ -172,12 +174,9 @@ try:
 
 except sqlite3.Error:
     print("Failed to read extracted information from local database.")
-    detected_devices = 0
 except Exception as e:
     print(f"Error during ML prediction: {e}")
-    detected_devices = 0
 
-print(detected_devices)
 # wifi_topic = f"sttoolkit-test/mqtt/wifi/numdetections/{influxdb_bucket}/{ip_address}/{sensorName}/{sensorUUID}"
 wifi_topic = f"sttoolkit-test/mqtt/wifi/v2/numdetections/{sensorUUID}"
 

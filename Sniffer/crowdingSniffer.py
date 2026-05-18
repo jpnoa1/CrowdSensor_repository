@@ -22,7 +22,6 @@ sc_con = sqlite3.connect('/home/kali/Desktop/DB/SensorConfiguration.db', timeout
 sc_cur = sc_con.cursor()
 
 PACKET_POWER_FILTRATION = sc_cur.execute("Select Power_Filtration from SensorConfiguration;").fetchone()[0]
-# SLIDING_WINDOW = sc_cur.execute("""SELECT Sliding_Window FROM SensorConfiguration""").fetchone()[0]
 
 #For sensor calibration info
 sensor_info = sc_cur.execute("SELECT Sensor_UUID, Sensor_Name FROM SensorConfiguration;").fetchone()

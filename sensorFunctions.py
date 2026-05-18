@@ -63,7 +63,7 @@ TOPIC_NETWORKS = "monicrowd/sensors/networks"
 SENSOR_CONFIG_PARAMETERS_NUMB = 15
 DEFAULT_CONFIG_PARAMETERS_NUMB = 12
 
-PID_FILE = "/home/kali/Desktop/sniffer.pid"
+PID_FILE = "/home/kali/Desktop/Sniffer/sniffer.pid"
 
 #Raspberry Pi OUIs List
 rpi_oui = ["dc:a6:32", "b8:27:eb", "28:cd:c1", "2c:cf:67", "3a:35:41", "d8:3a:dd", "e4:5f:01"]
@@ -1958,8 +1958,8 @@ def normalize_network_type(raw_type: str) -> str:
 def publish_sensor_state(cfg, mqtt_host, mqtt_port=8883):
     connectivity = cfg.get("Connectivity", []) or cfg.get("connectivity", [])
 
-    device_id_ttn = ""
-    device_name_helium = ""
+    device_id_ttn = None
+    device_name_helium = None
     for c in connectivity:
         ctype = (c.get("type") or "").strip().lower()
         device_id = (c.get("device_id") or "").strip()
