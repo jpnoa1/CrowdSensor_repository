@@ -74,6 +74,8 @@ COMM_AVAILABLE_LOCK_FILE = "/tmp/sensorCommunicationAvailable.lock"
 BOOT_COMPLETE_FILE = "/tmp/sensor_boot_complete"
 NMCLI_BIN = "/usr/bin/nmcli"
 WLAN_UPLOAD_IFACE = "wlan0"
+LORA_SEQ_FILE = "/home/kali/Desktop/DB/lora_seq.txt"
+
 
 def acquire_script_lock(lock_file=COMM_AVAILABLE_LOCK_FILE, script_name="script"):
     if os.path.exists(lock_file):
@@ -2117,3 +2119,54 @@ def disable_gps():
 
     except Exception as e:
         print(f"[GPS] Failed to disable GPS: {e}")
+
+
+# ── LoRa Replay helpers ──────────────────────────────────────────
+
+
+
+
+def get_and_increment_lora_seq():
+    try:
+        with open(LORA_SEQ_FILE, "r") as f:
+            seq = int(f.read().strip()) % 256
+    except (FileNotFoundError, ValueError):
+        seq = 0
+
+    with open(LORA_SEQ_FILE, "w") as f:
+        f.write(str((seq + 1) % 256))
+
+    return seq
+
+
+def get_n_pending_measurements(n):
+    conn = sqlite3.connect('/home/kali/Desktop/DB/StoredMeasurements.db', timeout=30)
+    cursor = conn.cursor()
+
+    rows = cursor.execute(
+        """SELECT Timestamp, DevicesDetected FROM PendingMeasurements
+           ORDER BY Timestamp ASC LIMIT ?""",
+        (n,)
+    ).fetchall()
+
+    cursor.close()
+    conn.close()
+    return rows
+
+
+def remove_n_pending_measurements(n):
+    conn = sqlite3.connect('/home/kali/Desktop/DB/StoredMeasurements.db', timeout=30)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        DELETE FROM PendingMeasurements
+        WHERE rowid IN (
+            SELECT rowid FROM PendingMeasurements
+            ORDER BY Timestamp ASC LIMIT ?
+        )
+    """, (n,))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+    print(f"[PENDING] Removed {n} oldest pending measurements.")

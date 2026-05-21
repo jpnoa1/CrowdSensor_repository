@@ -309,6 +309,8 @@ if upload_technology == "lora":
             rak.set_app_eui(app_eui)
             rak.set_app_key(app_key)
 
+            lora_seq = get_and_increment_lora_seq()
+            log_event("lora_seq_assigned", seq=lora_seq, network=active_lora_network)
             joined = check_lora_network_status(active_lora_network)
 
             if not joined:
@@ -369,7 +371,47 @@ if upload_technology == "lora":
 
                 else:
                     print(f"[UPLOAD] Successfully sent via {active_lora_network}")
+                    LORA_REPLAY_MAX = 10
+                    pending_batch = get_n_pending_measurements(LORA_REPLAY_MAX)
 
+                    if pending_batch:
+                        batch_size = len(pending_batch)
+                        seq_oldest = (lora_seq - batch_size) % 256
+
+                        replay_payload = struct.pack(">B", seq_oldest)
+                        for (_, devices) in pending_batch:
+                            replay_payload += struct.pack(">H", min(int(devices), 65535))
+
+                        replay_hex = replay_payload.hex()
+                        print(
+                            f"[UPLOAD][REPLAY] batch={batch_size} "
+                            f"SEQ_oldest={seq_oldest} hex={replay_hex}"
+                        )
+
+                        time.sleep(3)  # pausa entre transmissões LoRa
+
+                        sent_replay = rak.send_lorawan_data(4, replay_hex)
+
+                        if sent_replay:
+                            remove_n_pending_measurements(batch_size)
+                            log_event(
+                                "lora_replay_sent",
+                                link="lora",
+                                network=active_lora_network,
+                                batch_size=batch_size,
+                                seq_oldest=seq_oldest,
+                            )
+                            print(f"[UPLOAD][REPLAY] {batch_size} medições enviadas.")
+                        else:
+                            log_event(
+                                "lora_replay_failed",
+                                link="lora",
+                                network=active_lora_network,
+                                batch_size=batch_size,
+                            )
+                            print("[UPLOAD][REPLAY] Falha — medições mantidas para próximo ciclo.")
+                    else:
+                        print("[UPLOAD][REPLAY] Sem medições pendentes.")
                     # Remove lock-wait and startup-lock-wait from the Class C listen window.
                     downlink_seconds = (
                         (int(upload_periodicity) * 60)
