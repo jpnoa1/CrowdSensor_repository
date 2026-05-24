@@ -613,7 +613,7 @@ def write_crontab_file(status, detection_if, upload_periodicity, reboot_periodic
     f.write("# Check available communication technologies and interfaces\n")
     f.write("@reboot sleep 15 && /usr/bin/python3 /home/kali/Desktop/sensorCommunicationAvailable.py\n")
     f.write("# Periodic check of communication technologies and interfaces\n")
-    f.write("*/5 * * * * /usr/bin/python3 /home/kali/Desktop/sensorCommunicationCheck.py\n")
+    f.write( "*/" + str(upload_periodicity) + " * * * * /usr/bin/python3 /home/kali/Desktop/sensorCommunicationCheck.py\n")
     #f.write("# Monitor battery powerbank\n")
     #f.write("* * * * * /usr/bin/python3 /home/kali/Desktop/bat_powerbank.py\n")
     
