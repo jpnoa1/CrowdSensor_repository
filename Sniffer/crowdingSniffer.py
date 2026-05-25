@@ -137,9 +137,6 @@ def frame_processing(pkt):
         now = time.monotonic()
 
         if (commit_counter >= COMMIT_BATCH_SIZE or (now - last_commit_time) >= COMMIT_MAX_INTERVAL):
-        now = time.monotonic()
-
-        if (commit_counter >= COMMIT_BATCH_SIZE or (now - last_commit_time) >= COMMIT_MAX_INTERVAL):
             dr_con.commit()
             commit_counter = 0
             last_commit_time = now  
