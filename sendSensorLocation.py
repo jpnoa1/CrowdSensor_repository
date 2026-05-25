@@ -6,7 +6,7 @@ import os
 import json
 import sys
 import time
-
+import struct
 from sensorFunctions import *
 from uart_lock import acquire_uart_lock, release_uart_lock, get_uart_lock_info
 from event_logger import log_event
@@ -254,12 +254,16 @@ elif uploadTechnology == "lora":
 
         time.sleep(0.5)
 
-        # CSV Format: "L,<lat>,<lon>"
-        payload = f"L,{float(latitude):.5f},{float(longitude):.5f}"
+        
 
-        print(f"A enviar via LoRa: {payload}")
+        lat_int = int(round(float(latitude)  * 100000))
+        lon_int = int(round(float(longitude) * 100000))
 
-        payload_hex = payload.encode().hex()
+        payload_bytes = struct.pack(">ii", lat_int, lon_int)
+        payload_hex   = payload_bytes.hex()
+
+        print(f"[LOCATION] Enviando: ({latitude}, {longitude}) → hex: {payload_hex}")
+
         log_event(
             "sending_location",
             link="lora",

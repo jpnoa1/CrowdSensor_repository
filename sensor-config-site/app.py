@@ -374,10 +374,6 @@ def delete_old_sensor_wifi_profiles() -> None:
 
 
 def configure_all_wifi_profiles(conn: List[dict]) -> List[str]:
-    """
-    Create NetworkManager profiles for all configured Wi-Fi networks.
-    The order in the form/TOML defines priority.
-    """
     wifi_networks = get_wifi_networks(conn)
 
     if not wifi_networks:
@@ -391,13 +387,12 @@ def configure_all_wifi_profiles(conn: List[dict]) -> List[str]:
     for index, wifi in enumerate(wifi_networks, start=1):
         ssid = wifi["ssid"]
         password = wifi["password"]
-
         profile_name = _safe_profile_name(index, ssid)
         priority = 100 - ((index - 1) * 10)
 
         print(f"[WiFi] Creating profile {profile_name} for SSID={ssid}, priority={priority}")
 
-        subprocess.run(
+        result = subprocess.run(
             [
                 "sudo", NMCLI_BIN,
                 "connection", "add",
@@ -405,25 +400,25 @@ def configure_all_wifi_profiles(conn: List[dict]) -> List[str]:
                 "ifname", WLAN_IFACE,
                 "con-name", profile_name,
                 "ssid", ssid,
-            ],
-            check=False,
-        )
-
-        subprocess.run(
-            [
-                "sudo", NMCLI_BIN,
-                "connection", "modify", profile_name,
-                "wifi-sec.key-mgmt", "wpa-psk",
-                "wifi-sec.psk", password,
-                "connection.autoconnect", "yes",
+                "wifi-sec.key-mgmt",             "wpa-psk",
+                "wifi-sec.psk",                  password,
+                "wifi-sec.psk-flags",            "0",
+                "connection.permissions",        "",
+                "connection.autoconnect",        "yes",
                 "connection.autoconnect-priority", str(priority),
                 "ipv4.method", "auto",
                 "ipv6.method", "auto",
             ],
             check=False,
+            capture_output=True,
+            text=True,
         )
 
-        profile_names.append(profile_name)
+        if result.returncode != 0:
+            print(f"[WiFi][ERROR] Failed to create {profile_name}: {result.stderr.strip()}")
+        else:
+            print(f"[WiFi] Profile {profile_name} created OK.")
+            profile_names.append(profile_name)
 
     return profile_names
 
