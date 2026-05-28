@@ -2076,47 +2076,95 @@ def publish_sensor_networks(cfg, mqtt_host, mqtt_port=8883):
     except Exception as e:
         print(f"[ERROR] Failed to publish networks: {e}")
 
+import subprocess
+import glob
+import time
+
+# ---------- Auto-detection helpers ----------
+
+def _find_gps_usb_path():
+    """Detecta o USB path do GPS (ex: '1-2', '1-1') via sysfs."""
+    for dev_name in ["ttyACM0", "ttyACM1", "ttyUSB0", "ttyUSB1"]:
+        sysfs = f"/sys/class/tty/{dev_name}"
+        try:
+            real = subprocess.run(
+                ["readlink", "-f", sysfs],
+                capture_output=True, text=True
+            ).stdout.strip()
+            # Ex: /sys/devices/platform/axi/1000110000.usb/usb1/1-2/1-2:1.0/tty/ttyACM0
+            # Extraímos o segmento tipo "1-2" antes do ":"
+            parts = real.split("/")
+            for p in parts:
+                if "-" in p and ":" not in p and "usb" not in p and "platform" not in p:
+                    # Confirma que existe em sysfs
+                    if subprocess.run(
+                        ["test", "-d", f"/sys/bus/usb/devices/{p}"],
+                        capture_output=True
+                    ).returncode == 0:
+                        return p
+        except Exception:
+            continue
+    return None
+
+
+def _find_gps_device():
+    """Detecta /dev/ttyACM* ou /dev/ttyUSB* do GPS."""
+    candidates = sorted(glob.glob("/dev/ttyACM*")) + sorted(glob.glob("/dev/ttyUSB*"))
+    if len(candidates) == 1:
+        return candidates[0]
+    if candidates:
+        # Prefere ttyACM (cdc_acm) > ttyUSB
+        return candidates[0]
+    return None
+
+
+# ---------- Enable / Disable GPS ----------
+
 def enable_gps():
     print("[GPS] Re-enabling GPS USB device and services...")
-
     try:
-        usb_path = "1-1"
-        subprocess.run(
-            ["bash", "-c", f"echo '{usb_path}' | sudo tee /sys/bus/usb/drivers/usb/bind"],
-            check=False
-        )
+        usb_path = _find_gps_usb_path()
+        if usb_path:
+            print(f"[GPS] Binding USB path: {usb_path}")
+            subprocess.run(
+                ["bash", "-c", f"echo '{usb_path}' | sudo tee /sys/bus/usb/drivers/usb/bind"],
+                check=False
+            )
+            time.sleep(1)  # Espera o device aparecer
+        else:
+            print("[GPS] USB path not found, skipping bind (device may already be active).")
 
         subprocess.run(["sudo", "systemctl", "start", "gpsd.socket"], check=False)
         subprocess.run(["sudo", "systemctl", "start", "gpsd.service"], check=False)
-
         print("[GPS] GPS re-enabled.")
-
     except Exception as e:
         print(f"[GPS] Failed to enable GPS: {e}")
 
-import subprocess
-import os
 
 def disable_gps():
     print("[GPS] Disabling GPS services and unbinding USB device...")
-
     try:
-        # 1) Stop gpsd
         subprocess.run(["sudo", "systemctl", "stop", "gpsd.socket"], check=False)
         subprocess.run(["sudo", "systemctl", "stop", "gpsd.service"], check=False)
 
-        # 2) Kill any process still using ttyACM0
-        subprocess.run(["sudo", "fuser", "-k", "/dev/ttyACM0"], check=False)
+        # Kill any process on the actual GPS device
+        gps_dev = _find_gps_device()
+        if gps_dev:
+            print(f"[GPS] Killing processes on {gps_dev}")
+            subprocess.run(["sudo", "fuser", "-k", gps_dev], check=False)
 
-        # 3) Unbind GPS USB device
-        usb_path = "1-1"
-        subprocess.run(
-            ["bash", "-c", f"echo '{usb_path}' | sudo tee /sys/bus/usb/drivers/usb/unbind"],
-            check=False
-        )
+        # Unbind USB
+        usb_path = _find_gps_usb_path()
+        if usb_path:
+            print(f"[GPS] Unbinding USB path: {usb_path}")
+            subprocess.run(
+                ["bash", "-c", f"echo '{usb_path}' | sudo tee /sys/bus/usb/drivers/usb/unbind"],
+                check=False
+            )
+        else:
+            print("[GPS] USB path not found, skipping unbind.")
 
         print("[GPS] GPS stopped and USB device unbound.")
-
     except Exception as e:
         print(f"[GPS] Failed to disable GPS: {e}")
 
