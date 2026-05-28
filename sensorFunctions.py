@@ -2083,7 +2083,12 @@ import time
 # ---------- Auto-detection helpers ----------
 
 def _find_gps_usb_path():
-    """Detecta o USB path do GPS (ex: '1-2', '1-1') via sysfs."""
+    """
+    Detecta o USB path do GPS de duas formas:
+    1. Via /sys/class/tty (só funciona se device já está bound)
+    2. Via vendor ID em /sys/bus/usb/devices (funciona mesmo sem device)
+    """
+    # Método 1: device já existe, extrai path do sysfs
     for dev_name in ["ttyACM0", "ttyACM1", "ttyUSB0", "ttyUSB1"]:
         sysfs = f"/sys/class/tty/{dev_name}"
         try:
@@ -2091,19 +2096,39 @@ def _find_gps_usb_path():
                 ["readlink", "-f", sysfs],
                 capture_output=True, text=True
             ).stdout.strip()
-            # Ex: /sys/devices/platform/axi/1000110000.usb/usb1/1-2/1-2:1.0/tty/ttyACM0
-            # Extraímos o segmento tipo "1-2" antes do ":"
+            if "/tty/" not in real:
+                continue
             parts = real.split("/")
             for p in parts:
                 if "-" in p and ":" not in p and "usb" not in p and "platform" not in p:
-                    # Confirma que existe em sysfs
-                    if subprocess.run(
-                        ["test", "-d", f"/sys/bus/usb/devices/{p}"],
-                        capture_output=True
-                    ).returncode == 0:
+                    if os.path.isdir(f"/sys/bus/usb/devices/{p}"):
+                        print(f"[GPS] Detected USB path (method 1): {p}")
                         return p
         except Exception:
             continue
+
+    # Método 2: device não existe ainda, procura por GPS vendor IDs conhecidos
+    # u-blox: 1546, SiRF: 0856, Prolific: 067b, FTDI: 0403, CH340: 1a86, CP210x: 10c4
+    GPS_VENDORS = {"1546", "0856", "067b", "0403", "1a86", "10c4"}
+
+    try:
+        usb_devices = [
+            d for d in os.listdir("/sys/bus/usb/devices/")
+            if "-" in d and ":" not in d and "usb" not in d
+        ]
+        for dev in sorted(usb_devices):
+            vendor_path = f"/sys/bus/usb/devices/{dev}/idVendor"
+            try:
+                with open(vendor_path) as f:
+                    vendor = f.read().strip().lower()
+                if vendor in GPS_VENDORS:
+                    print(f"[GPS] Detected USB path (method 2, vendor={vendor}): {dev}")
+                    return dev
+            except Exception:
+                continue
+    except Exception:
+        pass
+
     return None
 
 
