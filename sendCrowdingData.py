@@ -17,6 +17,7 @@ from event_logger import log_event
 from uart_lock import acquire_uart_lock, release_uart_lock, get_uart_lock_info
 
 MODEL_PATH = '/home/kali/Desktop/Sniffer/crowd_rf_regressor.pkl'
+SEND_EXTENDED_FINGERPRINTS = True
 
 COMM_CHECK_LOCK_FILE = "/tmp/sensor_communication_check.lock"
 COMM_CHECK_LOCK_MAX_AGE_SEC = 70
@@ -145,41 +146,106 @@ detected_devices = 0
 try:
     dr_con = sqlite3.connect('/home/kali/Desktop/MemoryDB/DeviceRecords.db', timeout=30)
 
-    time_window = time.time() - (slidingWindow * 60)
+    now = time.time()
+    
+    current_start = now - (slidingWindow * 60)
+    current_end = now
+    
+    previous_start = current_start - (upload_periodicity * 60)
+    previous_end = current_end - (upload_periodicity * 60)
 
-    df_raw = pd.read_sql_query("SELECT * FROM Probe_Requests WHERE Timestamp >= ?", dr_con, params=(time_window,))
+    detected_devices = 0
+    norm_new_fingerprints = 0.0
+    norm_disappeared_fingerprints = 0.0
 
-    if not df_raw.empty:
-        total_packets = len(df_raw)
-        unique_macs = df_raw['MAC'].nunique()
-        unique_fingerprints = df_raw['Fingerprint'].nunique()
+    df_all = pd.read_sql_query("SELECT * FROM Probe_Requests WHERE Timestamp >= ?", dr_con, params=(previous_start,))
+
+    if not df_all.empty:
+
+        # 1. Split data into the Current Window and Previous Window
+        df_current = df_all[
+            (df_all['Timestamp'] >= current_start) &
+            (df_all['Timestamp'] <= current_end)
+        ]
+
+        df_previous = df_all[
+            (df_all['Timestamp'] >= previous_start) &
+            (df_all['Timestamp'] < previous_end)
+        ]
+
+        total_current_packets = len(df_current)
+        total_previous_packets = len(df_previous)
+
         
-        if unique_fingerprints == 0:
-            packets_per_fingerprint = 0
+        # FEATURE 1: FREQUENCY DELTAS (New & Disappeared)
+        
+
+        # Count the occurrences of each fingerprint in both windows
+        counts_current = df_current['Fingerprint'].value_counts()
+        counts_previous = df_previous['Fingerprint'].value_counts()
+
+        # Combine them into a single table. Fill missing ones with 0.
+        df_counts = pd.DataFrame({
+            'current': counts_current,
+            'previous': counts_previous
+        }).fillna(0)
+
+        # Calculate mathematical differences.
+        # .clip(lower=0) ensures we don't get negative counts.
+        total_new = (df_counts['current'] - df_counts['previous']).clip(lower=0).sum()
+        total_disappeared = (df_counts['previous'] - df_counts['current']).clip(lower=0).sum()
+
+        # New fingerprints are normalized by the CURRENT traffic
+        if total_current_packets > 0:
+            norm_new_fingerprints = total_new / total_current_packets
         else:
-            packets_per_fingerprint = total_packets / unique_fingerprints
+            norm_new_fingerprints = 0.0
 
-        X_live = pd.DataFrame([{
-            'Total_Packets': total_packets,
-            'Unique_MACs': unique_macs,
-            'Unique_Fingerprints': unique_fingerprints,
-            'Packets_Per_Fingerprint': packets_per_fingerprint
-        }])
+        # Disappeared fingerprints are normalized by the PREVIOUS traffic
+        if total_previous_packets > 0:
+            norm_disappeared_fingerprints = total_disappeared / total_previous_packets
+        else:
+            norm_disappeared_fingerprints = 0.0
+
+        print(f"[DEBUG] total_current_packets = {total_current_packets}")
+        print(f"[DEBUG] total_previous_packets = {total_previous_packets}")
+        print(f"[DEBUG] total_new = {total_new}")
+        print(f"[DEBUG] total_disappeared = {total_disappeared}")
+        print(f"[DEBUG] norm_new_fingerprints = {norm_new_fingerprints}")
+        print(f"[DEBUG] norm_disappeared_fingerprints = {norm_disappeared_fingerprints}")
+
         
-        raw_prediction = model.predict(X_live)[0]
+        # FEATURE 2: CURRENT WINDOW FEATURES FOR ML MODEL
+        
 
-        detected_devices = max(0, int(np.round(raw_prediction)))
+        if total_current_packets > 0:
+            unique_macs = df_current['MAC'].nunique()
+            unique_fingerprints = df_current['Fingerprint'].nunique()
+
+            if unique_fingerprints == 0:
+                packets_per_fingerprint = 0
+            else:
+                packets_per_fingerprint = total_current_packets / unique_fingerprints
+
+            X_live = pd.DataFrame([{
+                'Total_Packets': total_current_packets,
+                'Unique_MACs': unique_macs,
+                'Unique_Fingerprints': unique_fingerprints,
+                'Packets_Per_Fingerprint': packets_per_fingerprint
+            }])
+
+            raw_prediction = model.predict(X_live)[0]
+            detected_devices = max(0, int(np.round(raw_prediction)))
 
     dr_con.close()
 
-except sqlite3.Error:
-    print("Failed to read extracted information from local database.")
+except sqlite3.Error as e:
+    print(f"Failed to read extracted information from local database: {e}")
 except Exception as e:
-    print(f"Error during ML prediction: {e}")
+    print(f"Error during ML prediction or data processing: {e}")
 
 # wifi_topic = f"sttoolkit-test/mqtt/wifi/numdetections/{influxdb_bucket}/{ip_address}/{sensorName}/{sensorUUID}"
 wifi_topic = f"sttoolkit-test/mqtt/wifi/v2/numdetections/{sensorUUID}"
-
 
 manager = CommunicationManager(cwifi, wifi_topic)
 upload_technology, selected_lora_network = manager.load_cached_uplink()
@@ -203,7 +269,16 @@ dataAtual_unix = int(dataAtual_aware.timestamp())
 sent_over_wifi = False
 
 if upload_technology != "lora":
-    sent_over_wifi = manager.send_current_measurement(dataAtual_unix, int(detected_devices))
+    if SEND_EXTENDED_FINGERPRINTS:
+        sent_over_wifi = manager.send_current_measurement(
+            dataAtual_unix, int(detected_devices),
+            norm_new=norm_new_fingerprints,
+            norm_disappeared=norm_disappeared_fingerprints
+        )
+    else:
+        sent_over_wifi = manager.send_current_measurement(
+            dataAtual_unix, int(detected_devices)
+        )
     
     if sent_over_wifi:
         log_event(
@@ -329,10 +404,19 @@ if upload_technology == "lora":
             else:
                 count = int(detected_devices)
 
-                if count <= 255:
-                    payload_bytes = struct.pack(">B", count)  # 1 byte
+                if SEND_EXTENDED_FINGERPRINTS:
+                    norm_new_enc = min(int(round(norm_new_fingerprints * 10000)), 65535)
+                    norm_dis_enc = min(int(round(norm_disappeared_fingerprints * 10000)), 65535)
+
+                    if count <= 255:
+                        payload_bytes = struct.pack(">BHH", count, norm_new_enc, norm_dis_enc)  # 5 bytes
+                    else:
+                        payload_bytes = struct.pack(">HHH", count, norm_new_enc, norm_dis_enc)  # 6 bytes
                 else:
-                    payload_bytes = struct.pack(">H", count)  # 2 bytes
+                    if count <= 255:
+                        payload_bytes = struct.pack(">B", count)   # 1 byte
+                    else:
+                        payload_bytes = struct.pack(">H", count)   # 2 bytes
 
                 payload_hex = payload_bytes.hex()
                 print(f"[UPLOAD] Sending payload: count={count} ({len(payload_bytes)} byte(s)) (hex: {payload_hex})")

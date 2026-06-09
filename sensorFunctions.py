@@ -11,7 +11,7 @@ from swARM_at_custom.swARM_at.RAK3172 import RAK3172
 import json
 from datetime import datetime
 import ssl
-
+from event_logger import log_event
 
 
 
@@ -774,28 +774,28 @@ def publish_mqtt_message(msg_payload, topic):
         print("\nFailed to publish mqtt message.")
         return False
 
-def publish_detections_mqtt_message(unix_timestamp, devices_detected: int, topic):
-    
-    client = connect_mqtt()
+def publish_detections_mqtt_message(unix_timestamp, devices_detected: int, topic,
+                                     norm_new=None, norm_disappeared=None):
 
+    client = connect_mqtt()
     msg_payload = {
         "timestamp": unix_timestamp,
         "devices_detected": int(devices_detected)
     }
 
+    if norm_new is not None:
+        msg_payload["norm_new_fingerprints"] = round(norm_new, 4)
+    if norm_disappeared is not None:
+        msg_payload["norm_disappeared_fingerprints"] = round(norm_disappeared, 4)
+
     json_msg_payload = json.dumps(msg_payload, separators=(",", ":"))
-
     result = client.publish(topic, json_msg_payload)
-
-    # result: [0, 1]
     status = result[0]
     if status == 0:
         print(f"Send `{msg_payload}` to topic `{topic}`.")
         return True
     else:
         print("\nFailed to publish mqtt message.")
-        # Save measurement in database
-        #store_pending_measurement(unix_timestamp, devices_detected)
         return False
 
 # Insert pending measurement in database
@@ -1372,20 +1372,528 @@ def check_lora_network_status(network_name):
         return False
 
 
+#check link quality on both networks and select the best one (if both are available) for data upload
+
+def run_link_check(ser=None, network=None, close_after=True):
+    """
+    Obtém métricas de qualidade do link LoRaWAN.
+ 
+    Estratégia:
+      1. Tentar LinkCheck (AT+LINKCHECK=1 + uplink) → métricas completas
+      2. Se LinkCheck falhar (result=1 ou timeout) → fallback com confirmed
+         uplink (AT+CFM=1) + AT+RSSI/AT+SNR → métricas parciais
+ 
+    Returns:
+        dict com result, margin, gwcnt, rssi, snr — ou None
+    """
+    import serial as _serial
+ 
+    own_serial = ser is None
+ 
+    def _send_at(s, cmd, timeout=5):
+        full_cmd = f"{cmd}\r\n"
+        try:
+            s.reset_input_buffer()
+        except Exception:
+            pass
+        s.write(full_cmd.encode())
+        logger.info(f"[LINKCHECK][AT] >> {cmd}")
+        lines = []
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            if s.in_waiting:
+                try:
+                    line = s.readline().decode("utf-8", errors="replace").strip()
+                except Exception:
+                    continue
+                if line:
+                    logger.info(f"[LINKCHECK][AT] << {line}")
+                    lines.append(line)
+                    if line in ("OK", "ERROR"):
+                        break
+            time.sleep(0.05)
+        return lines
+ 
+    def _wait_for_event(s, prefix, timeout=15):
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            if s.in_waiting:
+                try:
+                    line = s.readline().decode("utf-8", errors="replace").strip()
+                except Exception:
+                    continue
+                if line:
+                    logger.info(f"[LINKCHECK][UART] {line}")
+                    if line.startswith(prefix):
+                        return line
+            time.sleep(0.05)
+        return None
+ 
+    def _read_rssi_snr(s):
+        """Lê RSSI e SNR do último downlink recebido via AT commands."""
+        rssi = None
+        snr = None
+ 
+        rssi_lines = _send_at(s, "AT+RSSI=?", timeout=3)
+        for line in rssi_lines:
+            if "RSSI" in line.upper() and "=" in line:
+                try:
+                    rssi = int(line.split("=")[-1].strip())
+                except ValueError:
+                    pass
+ 
+        snr_lines = _send_at(s, "AT+SNR=?", timeout=3)
+        for line in snr_lines:
+            if "SNR" in line.upper() and "=" in line:
+                try:
+                    snr = int(line.split("=")[-1].strip())
+                except ValueError:
+                    pass
+ 
+        return rssi, snr
+ 
+    try:
+        if own_serial:
+            ser = _serial.Serial(port=LORA_SERIAL_PORT, baudrate=115200, timeout=1)
+ 
+        logger.info(f"[LINKCHECK] Starting link quality check" + (f" for {network}" if network else ""))
+ 
+        # ── Tentativa 1: LinkCheck MAC command ──
+        _send_at(ser, "AT+CFM=0", timeout=3)   # unconfirmed para o LinkCheck
+        _send_at(ser, "AT+LINKCHECK=1", timeout=5)
+        _send_at(ser, "AT+SEND=2:01", timeout=5)
+ 
+        event = _wait_for_event(ser, "+EVT:LINKCHECK", timeout=20)
+ 
+        if event:
+            payload = event.split("LINKCHECK:")[-1].strip().replace(" ", "")
+            sep = "," if "," in payload else ":"
+            parts = payload.split(sep)
+ 
+            if len(parts) >= 5:
+                metrics = {
+                    "result": int(parts[0]),
+                    "margin": int(parts[1]),
+                    "gwcnt":  int(parts[2]),
+                    "rssi":   int(parts[3]),
+                    "snr":    int(parts[4]),
+                }
+ 
+                # LinkCheck válido?
+                if metrics["result"] == 0 and metrics["gwcnt"] > 0:
+                    logger.info(
+                        f"[LINKCHECK] ✓ LinkCheck OK: margin={metrics['margin']}dB, "
+                        f"gwcnt={metrics['gwcnt']}, rssi={metrics['rssi']}dBm, "
+                        f"snr={metrics['snr']}dB"
+                    )
+                    try:
+                        log_event(
+                            "lora_linkcheck_result",
+                            network=network,
+                            method="linkcheck",
+                            result=metrics["result"],
+                            margin_db=metrics["margin"],
+                            gwcnt=metrics["gwcnt"],
+                            rssi_dbm=metrics["rssi"],
+                            snr_db=metrics["snr"],
+                        )
+                    except Exception:
+                        pass
+                    return metrics
+ 
+                logger.info(
+                    f"[LINKCHECK] LinkCheck returned result={metrics['result']}, "
+                    f"gwcnt={metrics['gwcnt']} — trying confirmed uplink fallback"
+                )
+ 
+        else:
+            logger.warning("[LINKCHECK] No LinkCheck response — trying confirmed uplink fallback")
+ 
+        # ── Tentativa 2: Confirmed uplink + RSSI/SNR ──
+        # Se o servidor confirmou o uplink, temos um downlink recebido
+        # e podemos ler RSSI/SNR dele
+        _send_at(ser, "AT+LINKCHECK=0", timeout=3)   # desativar LinkCheck
+        _send_at(ser, "AT+CFM=1", timeout=3)          # modo confirmado
+        _send_at(ser, "AT+SEND=2:02", timeout=5)
+ 
+        # Esperar por SEND_CONFIRMED_OK ou TX_DONE
+        confirmed = False
+        deadline = time.time() + 15
+        while time.time() < deadline:
+            if ser.in_waiting:
+                try:
+                    line = ser.readline().decode("utf-8", errors="replace").strip()
+                except Exception:
+                    continue
+                if line:
+                    logger.info(f"[LINKCHECK][UART] {line}")
+                    if "SEND_CONFIRMED_OK" in line:
+                        confirmed = True
+                        break
+                    if "SEND_CONFIRMED_FAILED" in line:
+                        logger.warning("[LINKCHECK] Confirmed uplink failed")
+                        break
+            time.sleep(0.05)
+ 
+        if confirmed:
+            rssi, snr = _read_rssi_snr(ser)
+            if rssi is not None and rssi != 0:
+                metrics = {
+                    "result": 0,        # confirmação = link OK
+                    "margin": 0,        # não disponível via este método
+                    "gwcnt":  1,        # pelo menos 1 gateway (confirmou)
+                    "rssi":   rssi,
+                    "snr":    snr if snr is not None else 0,
+                }
+                logger.info(
+                    f"[LINKCHECK] ✓ Confirmed uplink OK: rssi={rssi}dBm, snr={snr}dB"
+                )
+                try:
+                    log_event(
+                        "lora_linkcheck_result",
+                        network=network,
+                        method="confirmed_uplink",
+                        result=0,
+                        margin_db=0,
+                        gwcnt=1,
+                        rssi_dbm=rssi,
+                        snr_db=snr,
+                    )
+                except Exception:
+                    pass
+ 
+                # Voltar a unconfirmed para operação normal
+                _send_at(ser, "AT+CFM=0", timeout=3)
+                return metrics
+ 
+        # Nenhum método devolveu métricas úteis
+        _send_at(ser, "AT+CFM=0", timeout=3)
+        logger.warning("[LINKCHECK] No link quality data available")
+        return None
+ 
+    except Exception as e:
+        logger.error(f"[LINKCHECK] Error: {e}")
+        return None
+ 
+    finally:
+        if own_serial and close_after:
+            try:
+                ser.close()
+            except Exception:
+                pass
+ 
+ 
+def evaluate_lora_networks(networks):
+    """
+    Avalia redes LoRaWAN: Helium primeiro, TTN por último.
+ 
+    A ordenação é feita no código — redes com "ttn" no nome vão para o fim.
+    Independente dos IDs na tabela LoRaNetworks.
+ 
+    Se TTN ganhar: já está joined (última testada), usar diretamente.
+    Se Helium ganhar: join final ao Helium (sem rate limiting).
+    """
+    import serial as _serial
+ 
+    if not networks:
+        logger.error("[LORA-EVAL] No LoRa networks configured")
+        return None, None
+ 
+    # ── Ordenar: TTN por último ──
+    # Redes com "ttn" no nome vão para o fim da lista.
+    # Todas as outras mantêm a ordem original (por id da DB).
+    sorted_networks = sorted(networks, key=lambda n: (1 if "ttn" in n[0].lower() else 0))
+ 
+    logger.info(
+        f"[LORA-EVAL] Evaluation order: {' → '.join(n[0] for n in sorted_networks)}"
+    )
+ 
+    EVAL_JOIN_ATTEMPTS = 2
+    EVAL_JOIN_INTERVAL = 12
+    EVAL_JOIN_TIMEOUT = (EVAL_JOIN_INTERVAL * EVAL_JOIN_ATTEMPTS) + 15
+    FINAL_JOIN_ATTEMPTS = 4
+    FINAL_JOIN_INTERVAL = 12
+    FINAL_JOIN_TIMEOUT = (FINAL_JOIN_INTERVAL * FINAL_JOIN_ATTEMPTS) + 15
+ 
+    # ── Helpers AT ──
+ 
+    def _send_at(s, cmd, timeout=5):
+        full_cmd = f"{cmd}\r\n"
+        try:
+            s.reset_input_buffer()
+        except Exception:
+            pass
+        s.write(full_cmd.encode())
+        logger.info(f"[LORA-AT] >> {cmd}")
+        lines = []
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            if s.in_waiting:
+                try:
+                    line = s.readline().decode("utf-8", errors="replace").strip()
+                except Exception:
+                    continue
+                if line:
+                    logger.info(f"[LORA-AT] << {line}")
+                    lines.append(line)
+                    if line in ("OK", "ERROR"):
+                        break
+            time.sleep(0.05)
+        return lines
+ 
+    def _reset_and_wait(s):
+        """Soft reset: parar joins + limpar buffer, sem ATZ."""
+        logger.info("[LORA-EVAL] Soft reset (no ATZ)")
+        _send_at(s, "AT+JOIN=0:0", timeout=3)
+        time.sleep(1)
+        try:
+            s.reset_input_buffer()
+            s.reset_output_buffer()
+        except Exception:
+            pass
+ 
+    def _stop_joins(s):
+        _send_at(s, "AT+JOIN=0:0", timeout=3)
+        time.sleep(0.5)
+ 
+    def _configure(s, net_name, app_eui, app_key, dev_eui):
+        logger.info(f"[LORA-EVAL] Configuring {net_name}")
+        _send_at(s, "AT+CLASS=A", timeout=5)
+        _send_at(s, f"AT+DEVEUI={dev_eui}", timeout=5)
+        _send_at(s, f"AT+APPEUI={app_eui}", timeout=5)
+        _send_at(s, f"AT+APPKEY={app_key}", timeout=5)
+ 
+    def _join(s, net_name, attempts, interval, timeout):
+        logger.info(f"[LORA-EVAL] Joining {net_name} (attempts={attempts}, interval={interval}s)")
+        cmd = f"AT+JOIN=1:0:{interval}:{attempts}"
+        try:
+            s.reset_input_buffer()
+        except Exception:
+            pass
+        s.write(f"{cmd}\r\n".encode())
+        logger.info(f"[LORA-AT] >> {cmd}")
+ 
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            if s.in_waiting:
+                try:
+                    line = s.readline().decode("utf-8", errors="replace").strip()
+                except Exception:
+                    continue
+                if line:
+                    logger.info(f"[LORA-AT] << {line}")
+                    if "+EVT:JOINED" in line:
+                        logger.info(f"[LORA-EVAL] {net_name}: join OK")
+                        return True
+                    if "JOIN_FAILED" in line or "JOIN FAILED" in line:
+                        logger.warning(f"[LORA-EVAL] {net_name}: attempt failed, still waiting")
+                    if "AT_BUSY_ERROR" in line:
+                        time.sleep(2)
+            time.sleep(0.2)
+        logger.warning(f"[LORA-EVAL] {net_name}: join failed after all attempts")
+        return False
+ 
+    def _mark_final(net_name):
+        try:
+            with open("/tmp/rak_njs", "w") as f:
+                f.write("1")
+            with open(f"/tmp/rak_njs_{net_name.lower()}", "w") as f:
+                f.write("1")
+            with open("/tmp/rak_network", "w") as f:
+                f.write(net_name)
+        except Exception as e:
+            logger.warning(f"[LORA-EVAL] Could not write state files: {e}")
+ 
+    # ── Abrir porta serial ──
+    try:
+        ser = _serial.Serial(port=LORA_SERIAL_PORT, baudrate=115200, timeout=1)
+    except Exception as e:
+        logger.error(f"[LORA-EVAL] Could not open {LORA_SERIAL_PORT}: {e}")
+        return None, None
+ 
+    try:
+        _stop_joins(ser)
+        _reset_and_wait(ser)
+ 
+        results = []
+        last_joined_name = None
+ 
+        # ══════════════════════════════════════════════════════════════
+        # FASE 1: Avaliar cada rede (Helium primeiro, TTN último)
+        # ══════════════════════════════════════════════════════════════
+        for i, (net_name, app_eui, app_key, dev_eui) in enumerate(sorted_networks):
+            logger.info(f"[LORA-EVAL] ═══ Evaluating {net_name} ({i+1}/{len(sorted_networks)}) ═══")
+ 
+            if i > 0:
+                _stop_joins(ser)
+ 
+            _configure(ser, net_name, app_eui, app_key, dev_eui)
+            joined = _join(ser, net_name, EVAL_JOIN_ATTEMPTS, EVAL_JOIN_INTERVAL, EVAL_JOIN_TIMEOUT)
+ 
+            metrics = None
+            if joined:
+                last_joined_name = net_name
+                time.sleep(3)
+                metrics = run_link_check(ser=ser, network=net_name, close_after=False)
+ 
+            results.append({
+                "name":    net_name,
+                "app_eui": app_eui,
+                "app_key": app_key,
+                "dev_eui": dev_eui,
+                "joined":  joined,
+                "metrics": metrics,
+            })
+ 
+        joined_results = [r for r in results if r["joined"]]
+ 
+        if not joined_results:
+            logger.error("[LORA-EVAL] No LoRa network could be joined")
+            return None, None
+ 
+        # ══════════════════════════════════════════════════════════════
+        # FASE 2: Selecionar melhor rede
+        # ══════════════════════════════════════════════════════════════
+        # Separar redes com e sem métricas válidas
+        with_metrics = [
+            r for r in joined_results
+            if r["metrics"]
+            and r["metrics"].get("result") == 0
+            and r["metrics"].get("gwcnt", 0) > 0
+        ]
+        without_metrics = [
+            r for r in joined_results
+            if r not in with_metrics
+        ]
+
+        if len(with_metrics) >= 2:
+            # Ambas têm stats → selecionar por RSSI (mais alto = melhor),
+            # desempate por SNR (mais alto = melhor)
+            best = max(with_metrics, key=lambda r: (
+                r["metrics"]["rssi"],
+                r["metrics"]["snr"],
+            ))
+            logger.info(
+                f"[LORA-EVAL] Selected {best['name']} via link quality "
+                f"(rssi={best['metrics']['rssi']}dBm, "
+                f"snr={best['metrics']['snr']}dB)"
+            )
+        elif len(with_metrics) == 1 and len(without_metrics) >= 1:
+            # Só uma tem stats → preferir TTN se estiver joined (sem stats),
+            # senão usar a que tem stats
+            ttn_fallback = next(
+                (r for r in without_metrics if "ttn" in r["name"].lower()),
+                None,
+            )
+            if ttn_fallback:
+                best = ttn_fallback
+                logger.info(
+                    f"[LORA-EVAL] Selected {best['name']} (joined, preferred "
+                    f"over {with_metrics[0]['name']} which had stats but lower priority)"
+                )
+            else:
+                best = with_metrics[0]
+                logger.info(
+                    f"[LORA-EVAL] Selected {best['name']} via link quality "
+                    f"(rssi={best['metrics']['rssi']}dBm, "
+                    f"snr={best['metrics']['snr']}dB)"
+                )
+        else:
+            # Nenhuma tem stats → preferir TTN se joined, senão última joined
+            ttn_fallback = next(
+                (r for r in joined_results if "ttn" in r["name"].lower()),
+                None,
+            )
+            if ttn_fallback:
+                best = ttn_fallback
+            else:
+                best = joined_results[-1]
+            logger.warning(
+                f"[LORA-EVAL] No valid link quality data; using {best['name']}"
+            )
+ 
+        # Log comparação
+        for r in joined_results:
+            tag = " ← SELECTED" if r["name"] == best["name"] else ""
+            m = r["metrics"]
+            if m and m.get("gwcnt", 0) > 0:
+                log_event(
+                    "lora_network_evaluated",
+                    network=r["name"],
+                    selected=(r["name"] == best["name"]),
+                    method=m.get("method", "linkcheck"),
+                    margin_db=m.get("margin"),
+                    gwcnt=m.get("gwcnt"),
+                    rssi_dbm=m.get("rssi"),
+                    snr_db=m.get("snr"),
+                )
+                logger.info(
+                    f"[LORA-EVAL] {r['name']}: rssi={m['rssi']}dBm, "
+                    f"snr={m['snr']}dB, gw={m['gwcnt']}{tag}"
+                )
+            else:
+                logger.info(f"[LORA-EVAL] {r['name']}: joined (no link quality data){tag}")
+ 
+        # ══════════════════════════════════════════════════════════════
+        # FASE 3: Join final — só se necessário
+        # ══════════════════════════════════════════════════════════════
+        if best["name"] == last_joined_name:
+            logger.info(f"[LORA-EVAL] ✓ {best['name']} already joined — skipping final join")
+            _mark_final(best["name"])
+            _send_at(ser, "AT+CLASS=C", timeout=5)
+            return best["name"], best.get("metrics")
+ 
+        logger.info(f"[LORA-EVAL] ═══ Final join: {best['name']} ═══")
+        _stop_joins(ser)
+        _reset_and_wait(ser)
+        _configure(ser, best["name"], best["app_eui"], best["app_key"], best["dev_eui"])
+        final_ok = _join(ser, best["name"], FINAL_JOIN_ATTEMPTS, FINAL_JOIN_INTERVAL, FINAL_JOIN_TIMEOUT)
+ 
+        if not final_ok:
+            logger.error(f"[LORA-EVAL] Final join FAILED for {best['name']}")
+            if last_joined_name and last_joined_name != best["name"]:
+                alt = next((r for r in joined_results if r["name"] == last_joined_name), None)
+                if alt:
+                    logger.info(f"[LORA-EVAL] Falling back to {alt['name']}")
+                    _stop_joins(ser)
+                    _reset_and_wait(ser)
+                    _configure(ser, alt["name"], alt["app_eui"], alt["app_key"], alt["dev_eui"])
+                    final_ok = _join(ser, alt["name"], FINAL_JOIN_ATTEMPTS, FINAL_JOIN_INTERVAL, FINAL_JOIN_TIMEOUT)
+                    if final_ok:
+                        best = alt
+ 
+        if not final_ok:
+            logger.error("[LORA-EVAL] All final join attempts failed")
+            return None, None
+ 
+        _mark_final(best["name"])
+        _send_at(ser, "AT+CLASS=C", timeout=5)
+        logger.info(f"[LORA-EVAL] ✓ Ready on {best['name']}")
+        return best["name"], best.get("metrics")
+ 
+    except Exception as e:
+        logger.error(f"[LORA-EVAL] Error: {e}")
+        return None, None
+ 
+    finally:
+        try:
+            ser.close()
+        except Exception:
+            pass
+
+ 
+ 
 def decide_upload_technology(cursor=None):
     """
-    Handover cascade: WiFi (priority 1) → LoRa networks (priority 2+)
-
-    Args:
-        cursor: Reuse existing DB connection to avoid locks
-
-    Returns:
-        tuple: (upload_tech, network_name)
-               - upload_tech: 'wifi', 'lora', or 'none'
-               - network_name: Active LoRa network name or None
+    Handover cascade: WiFi (priority 1) → LoRa networks (priority 2+).
+ 
+    A avaliação LoRa (evaluate_lora_networks) só é chamada quando não há
+    nenhuma rede cached como joined nos ficheiros /tmp/rak_njs_*.
+    Isto garante que a avaliação completa só acontece uma vez — nas execuções
+    seguintes, o fast path reutiliza a rede já joined.
     """
     own_connection = (cursor is None)
-
+ 
     if cursor is None:
         try:
             connwifi = sqlite3.connect('/home/kali/Desktop/DB/SensorConfiguration.db', timeout=30)
@@ -1396,112 +1904,107 @@ def decide_upload_technology(cursor=None):
     else:
         cwifi = cursor
         connwifi = None
-
+ 
     try:
         sensor_communication = cwifi.execute(
             """SELECT WifiAvailable, LoRaAvailable, WifiConnected FROM SensorCommunication"""
         ).fetchone()
-
+ 
+        if not sensor_communication:
+            logger.error("[HANDOVER] SensorCommunication table is empty")
+            return ('none', None)
+ 
         wifiAvailable = sensor_communication[0]
         loraAvailable = sensor_communication[1]
         wifiConnected = sensor_communication[2]
-
+ 
         upload_tech = 'none'
         active_network = None
-
+ 
         if wifiAvailable and wifiConnected:
             upload_tech = 'wifi'
             logger.info("[HANDOVER] Using WiFi for uploads")
-
+ 
         elif loraAvailable:
             logger.info("[HANDOVER] WiFi unavailable, evaluating LoRa networks")
-
-            # 1) Tentar reutilizar a rede LoRa atualmente ativa, se já estiver joined
+ 
+            # Verificar se a rede ativa na DB ainda está cached como joined
             current_cfg = cwifi.execute(
                 """SELECT Active_LoRa_Network FROM SensorConfiguration"""
             ).fetchone()
-
             current_network = current_cfg[0] if current_cfg else None
-
+ 
             if current_network and check_lora_network_status(current_network):
                 upload_tech = 'lora'
                 active_network = current_network
-                logger.info(f"[HANDOVER] Reusing already-joined LoRa network: {current_network}")
-
+                logger.info(f"[HANDOVER] Reusing already-joined network: {current_network}")
             else:
-                # 2) Caso não exista rede ativa válida, ver redes por prioridade
+                # Fast path: verificar se alguma rede tem cached "joined"
                 networks = cwifi.execute(
                     """SELECT name, app_eui, app_key, dev_eui FROM LoRaNetworks ORDER BY id ASC"""
                 ).fetchall()
-
+ 
                 if not networks:
                     logger.warning("[HANDOVER] No LoRa networks configured in database")
                 else:
-                    for net_name, app_eui, app_key, dev_eui in networks:
-                        # Primeiro verificar se já existe estado cached de joined
+                    for net_name, _, _, _ in networks:
                         if check_lora_network_status(net_name):
                             upload_tech = 'lora'
                             active_network = net_name
-                            logger.info(f"[HANDOVER] Using cached joined network {net_name}")
+                            logger.info(f"[HANDOVER] Reusing cached joined network: {net_name}")
                             break
-
-                        # Só se não estiver joined é que tenta join
-                        logger.info(f"[HANDOVER] Trying join on {net_name}...")
-                        if try_join_lora_network(net_name, app_eui, app_key, dev_eui, join_attempts=3):
+                    else:
+                        # Nenhuma cached → avaliação completa (só acontece 1x)
+                        best_name, best_metrics = evaluate_lora_networks(networks)
+ 
+                        if best_name:
                             upload_tech = 'lora'
-                            active_network = net_name
-                            logger.info(f"[HANDOVER] Successfully using LoRa ({net_name})")
-                            break
+                            active_network = best_name
+ 
+                            if best_metrics:
+                                logger.info(
+                                    f"[HANDOVER] Selected {best_name} via evaluation "
+                                    f"(margin={best_metrics.get('margin')}dB, "
+                                    f"rssi={best_metrics.get('rssi')}dBm)"
+                                )
+                            else:
+                                logger.info(f"[HANDOVER] Selected {best_name} (join OK, no LinkCheck data)")
                         else:
-                            logger.info(f"[HANDOVER] {net_name} failed, trying next network")
-
+                            logger.error("[HANDOVER] LoRa evaluation failed")
+ 
+        else:
+            logger.error("[HANDOVER] No connectivity available")
+ 
+        # Atualizar DB
         if active_network:
             cwifi.execute(
-                """UPDATE SensorConfiguration SET Upload_Technology=?, Active_LoRa_Network=?, Last_Update=CURRENT_TIMESTAMP""",
+                """UPDATE SensorConfiguration
+                   SET Upload_Technology=?, Active_LoRa_Network=?, Last_Update=CURRENT_TIMESTAMP""",
                 (upload_tech, active_network)
             )
         else:
             cwifi.execute(
-                """UPDATE SensorConfiguration SET Upload_Technology=?, Active_LoRa_Network=NULL, Last_Update=CURRENT_TIMESTAMP""",
+                """UPDATE SensorConfiguration
+                   SET Upload_Technology=?, Active_LoRa_Network=NULL, Last_Update=CURRENT_TIMESTAMP""",
                 (upload_tech,)
             )
-
+ 
         if own_connection:
             connwifi.commit()
-
+ 
         if upload_tech == 'none':
             logger.error("[HANDOVER] No connectivity available - uploads disabled")
-
+ 
         return (upload_tech, active_network)
-
+ 
     except sqlite3.Error as error:
-        logger.error(f"[HANDOVER] Database error during technology selection: {error}")
+        logger.error(f"[HANDOVER] Database error: {error}")
         return ('none', None)
-
+ 
     finally:
         if own_connection and connwifi:
             cwifi.close()
             connwifi.close()
-
-
-# ── Wi-Fi intra-RAN failover ─────────────────────────────────────────────────
-#
-#   When the active Wi-Fi AP fails, these functions try other configured
-#   sensor-wifi-* profiles (created by sensor-config-site/app.py) in
-#   priority order BEFORE falling back to LoRaWAN.
-#
-#   Flow:
-#     Wi-Fi current AP fails
-#       → get_sensor_wifi_profiles() returns all sensor-wifi-* profiles
-#       → get_visible_wifi_ssids() scans visible SSIDs on wlan0
-#       → for each configured profile in priority order:
-#           if profile SSID is not visible → skip immediately
-#           if profile SSID is visible → activate via nmcli
-#           then verify MQTT reachability with check_wifi_connection()
-#       → if one succeeds: stay on Wi-Fi
-#       → if all fail: proceed to LoRa handover as before
-#
-
 
 
 

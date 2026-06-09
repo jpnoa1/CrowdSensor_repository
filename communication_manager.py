@@ -30,35 +30,30 @@ class CommunicationManager:
 
         return self.current_uplink, self.active_lora_network
 
-    def send_current_measurement(self, unix_ts, detected_devices):
+    def send_current_measurement(self, unix_ts, detected_devices,norm_new=None, norm_disappeared=None):
         """Send the latest measurement or store it when Wi-Fi is unavailable/fails."""
-
         if self.current_uplink == "wifi":
             mqtt_confirmation = publish_detections_mqtt_message(
                 unix_ts,
                 int(detected_devices),
-                self.wifi_topic
+                self.wifi_topic,
+                norm_new=norm_new,
+                norm_disappeared=norm_disappeared
             )
-
             if mqtt_confirmation:
                 log_event(
                     "mqtt_publish_ok",
                     topic=self.wifi_topic,
                     unix_ts=unix_ts
                 )
-
                 return True
-
             log_event(
                 "mqtt_publish_fail",
                 topic=self.wifi_topic,
                 unix_ts=unix_ts
             )
-
             store_pending_measurement(unix_ts, int(detected_devices))
             return False
-
-        # Keep pending storage centralized when upload path is unavailable for now.
         store_pending_measurement(unix_ts, int(detected_devices))
         return False
 
