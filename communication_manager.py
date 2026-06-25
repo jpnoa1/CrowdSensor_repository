@@ -3,7 +3,10 @@ from sensorFunctions import (
     store_pending_measurement,
     get_1st_pending_measurement,
     remove_1st_pending_measurement,
+    buffer_get_range,
 )
+
+
 
 from event_logger import log_event
 
@@ -30,32 +33,34 @@ class CommunicationManager:
 
         return self.current_uplink, self.active_lora_network
 
-    def send_current_measurement(self, unix_ts, detected_devices,norm_new=None, norm_disappeared=None):
-        """Send the latest measurement or store it when Wi-Fi is unavailable/fails."""
-        if self.current_uplink == "wifi":
-            mqtt_confirmation = publish_detections_mqtt_message(
-                unix_ts,
-                int(detected_devices),
-                self.wifi_topic,
-                norm_new=norm_new,
-                norm_disappeared=norm_disappeared
-            )
-            if mqtt_confirmation:
+    def send_current_measurement(self, unix_ts, detected_devices,
+                                    norm_new=None, norm_disappeared=None, seq=None):
+            """Send the latest measurement or store it when Wi-Fi is unavailable/fails."""
+            if self.current_uplink == "wifi":
+                mqtt_confirmation = publish_detections_mqtt_message(
+                    unix_ts,
+                    int(detected_devices),
+                    self.wifi_topic,
+                    norm_new=norm_new,
+                    norm_disappeared=norm_disappeared,
+                    seq=seq
+                )
+                if mqtt_confirmation:
+                    log_event(
+                        "mqtt_publish_ok",
+                        topic=self.wifi_topic,
+                        unix_ts=unix_ts
+                    )
+                    return True
                 log_event(
-                    "mqtt_publish_ok",
+                    "mqtt_publish_fail",
                     topic=self.wifi_topic,
                     unix_ts=unix_ts
                 )
-                return True
-            log_event(
-                "mqtt_publish_fail",
-                topic=self.wifi_topic,
-                unix_ts=unix_ts
-            )
-            store_pending_measurement(unix_ts, int(detected_devices))
+                
+                return False
+            
             return False
-        store_pending_measurement(unix_ts, int(detected_devices))
-        return False
 
     def replay_pending_wifi(self, max_items=100):
         """Replay pending measurements in chronological order while Wi-Fi sends succeed."""
@@ -92,5 +97,45 @@ class CommunicationManager:
                 continue
 
             break
+
+        return replayed
+
+    def replay_from_buffer(self, last_ack_seq, current_seq, max_items=50):
+        """Replay de medições não confirmadas do buffer via WiFi."""
+        if self.current_uplink != "wifi":
+            return 0
+
+        
+        prev_seq = (current_seq - 1) % 256
+
+        if prev_seq == last_ack_seq:
+            return 0  # No gap
+
+        measurements = buffer_get_range(last_ack_seq, prev_seq)
+
+        if not measurements:
+            return 0
+
+        measurements = measurements[:max_items]
+
+        replayed = 0
+        for (seq, unix_ts, devices_detected) in measurements:
+            mqtt_confirmation = publish_detections_mqtt_message(
+                unix_ts,
+                devices_detected,
+                self.wifi_topic,
+                seq=seq
+            )
+
+            if mqtt_confirmation:
+                log_event(
+                    "replay_sent",
+                    unix_ts=unix_ts,
+                    devices=devices_detected,
+                    seq=seq
+                )
+                replayed += 1
+            else:
+                break  
 
         return replayed

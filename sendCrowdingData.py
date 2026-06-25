@@ -17,7 +17,7 @@ from event_logger import log_event
 from uart_lock import acquire_uart_lock, release_uart_lock, get_uart_lock_info
 
 MODEL_PATH = '/home/kali/Desktop/Sniffer/crowd_rf_regressor.pkl'
-SEND_EXTENDED_FINGERPRINTS = True
+SEND_EXTENDED_FINGERPRINTS = False
 
 COMM_CHECK_LOCK_FILE = "/tmp/sensor_communication_check.lock"
 COMM_CHECK_LOCK_MAX_AGE_SEC = 70
@@ -69,6 +69,77 @@ def wait_for_lora_uart_lock(caller, max_wait_sec=60, poll_sec=3
         waited += poll_sec
 
     return False, waited
+
+def handle_gap_fill_request(rak, payload_hex, current_seq, network_name):
+    """
+    Processa um downlink FPort 5 do servidor com last_seq.
+    Lê do buffer as medições em falta e envia via FPort 4.
+    """
+    try:
+        last_seq_server = int(payload_hex[:2], 16)
+
+        # Servidor confirmou que tem tudo até last_seq_server
+        set_last_confirmed_seq(last_seq_server)
+
+        gap = (current_seq - last_seq_server) % 256
+
+        print(
+            f"[GAP-FILL] Received request: server_last_seq={last_seq_server} "
+            f"current_seq={current_seq} gap={gap}"
+        )
+
+        if gap == 0 or gap > 256:
+            print("[GAP-FILL] No gap or invalid, ignoring.")
+            return
+
+        measurements = buffer_get_range(last_seq_server, current_seq)
+
+        if not measurements:
+            print("[GAP-FILL] No measurements in buffer for requested range.")
+            return
+
+        REPLAY_MAX = 10
+        batch = measurements[:REPLAY_MAX]
+        batch_size = len(batch)
+        seq_oldest = batch[0][0]
+        ts_oldest  = batch[0][1]
+
+        replay_payload = struct.pack(">BI", seq_oldest, ts_oldest)
+        for (_, _, devices) in batch:
+            replay_payload += struct.pack(">H", min(int(devices), 65535))
+
+        replay_hex = replay_payload.hex()
+        print(
+            f"[GAP-FILL] Sending {batch_size} measurements, "
+            f"SEQ_oldest={seq_oldest} TS_oldest={ts_oldest} hex={replay_hex}"
+        )
+
+        time.sleep(2)
+
+        sent = rak.send_lorawan_data(4, replay_hex)
+
+        if sent:
+            log_event(
+                "gap_fill_sent",
+                link="lora",
+                network=network_name,
+                batch_size=batch_size,
+                seq_oldest=seq_oldest,
+                ts_oldest=ts_oldest,
+                server_last_seq=last_seq_server,
+            )
+            print(f"[GAP-FILL] {batch_size} medições enviadas com sucesso.")
+        else:
+            log_event(
+                "gap_fill_failed",
+                link="lora",
+                network=network_name,
+                batch_size=batch_size,
+            )
+            print("[GAP-FILL] Falha no envio.")
+
+    except Exception as e:
+        print(f"[GAP-FILL] Erro: {e}")
 
 if not os.path.exists(BOOT_COMPLETE_FILE):
     dprint("Boot initialization not complete yet. Exiting.")
@@ -139,6 +210,7 @@ except sqlite3.Error:
     exit(0)
 
 dataAtual_aware = dt.datetime.now(dt.timezone.utc)
+dataAtual_unix = int(dataAtual_aware.timestamp())
 
 detected_devices = 0
 
@@ -244,6 +316,21 @@ except sqlite3.Error as e:
 except Exception as e:
     print(f"Error during ML prediction or data processing: {e}")
 
+init_measurement_buffer()
+
+# Sequence number for LoRa messages, to be included in payload 
+lora_seq = get_and_increment_lora_seq()
+
+# Save to buffer for potential replay (LoRa) or later upload (Wi-Fi failure)
+buffer_insert(lora_seq, dataAtual_unix, int(detected_devices))
+
+log_event(
+    "buffer_insert",
+    seq=lora_seq,
+    unix_ts=dataAtual_unix,
+    devices=int(detected_devices)
+)
+
 # wifi_topic = f"sttoolkit-test/mqtt/wifi/numdetections/{influxdb_bucket}/{ip_address}/{sensorName}/{sensorUUID}"
 wifi_topic = f"sttoolkit-test/mqtt/wifi/v2/numdetections/{sensorUUID}"
 
@@ -262,7 +349,7 @@ log_event(
 if selected_lora_network:
     active_lora_network = selected_lora_network
 
-dataAtual_unix = int(dataAtual_aware.timestamp())
+
 
 
 # Keep LoRa send path unchanged for now; manager handles Wi-Fi and no-connectivity cases.
@@ -273,11 +360,13 @@ if upload_technology != "lora":
         sent_over_wifi = manager.send_current_measurement(
             dataAtual_unix, int(detected_devices),
             norm_new=norm_new_fingerprints,
-            norm_disappeared=norm_disappeared_fingerprints
+            norm_disappeared=norm_disappeared_fingerprints,
+            seq=lora_seq
         )
     else:
         sent_over_wifi = manager.send_current_measurement(
-            dataAtual_unix, int(detected_devices)
+            dataAtual_unix, int(detected_devices),
+            seq=lora_seq
         )
     
     if sent_over_wifi:
@@ -301,21 +390,27 @@ else:
 
 
 if sent_over_wifi:
-    log_event(
-            "replay_started",
-            link="wifi",
-            
-        )
-    replayed = manager.replay_pending_wifi(max_items=100)
+    confirmed = get_last_confirmed_seq()
+    last_ack  = get_last_ack_seq()
 
-    if replayed > 0:
-        log_event(
-            "replay_complete",
-            link="wifi",
-            replayed=replayed
-        )
+    # Usar o mais conservador: last_confirmed_seq se existir
+    replay_base = confirmed if confirmed is not None else last_ack
 
-    dprint(f"replay_pending_wifi -> replayed={replayed}")
+    if replay_base is None:
+        set_last_ack_seq(lora_seq)
+        set_last_confirmed_seq(lora_seq)
+        dprint(f"First run: initialized ack={lora_seq} confirmed={lora_seq}")
+    else:
+        log_event("replay_started", link="wifi")
+        replayed = manager.replay_from_buffer(replay_base, lora_seq)
+
+        if replayed > 0:
+            log_event("replay_complete", link="wifi", replayed=replayed)
+
+        dprint(f"replay_from_buffer(base={replay_base}, current={lora_seq}) -> {replayed}")
+
+        set_last_ack_seq(lora_seq)
+        set_last_confirmed_seq(lora_seq)
 
 else:
     dprint("No replay executed (current send failed or uplink not wifi)")
@@ -328,6 +423,37 @@ print(f"[INFO] Current upload technology: {upload_technology}")
 # Upload via LoRa - legacy flow kept, gated by manager decision
 if upload_technology == "lora":
     dprint(f"Entering LoRa block with network={active_lora_network}")
+
+    # Verificar se o módulo está em duty cycle restriction
+    duty_file = "/tmp/rak_duty_restricted"
+    if os.path.exists(duty_file):
+        try:
+            ts_restricted = int(open(duty_file).read().strip())
+            age_h = (time.time() - ts_restricted) / 3600
+            if age_h < 24:
+                print(
+                    f"[UPLOAD] Module in duty cycle restriction "
+                    f"({age_h:.1f}h ago) — measurement stored in buffer only"
+                )
+                log_event(
+                    "message_stored",
+                    unix_ts=dataAtual_unix,
+                    devices=int(detected_devices),
+                    reason="duty_cycle_active",
+                    network=active_lora_network
+                )
+                # Saltar todo o bloco LoRa
+                upload_technology = "duty_restricted"
+            else:
+                os.remove(duty_file)
+                print("[UPLOAD] Duty cycle flag expired, attempting send")
+        except Exception:
+            try:
+                os.remove(duty_file)
+            except Exception:
+                pass
+
+if upload_technology == "lora":
 
     if not active_lora_network:
         print("[UPLOAD] Upload_Technology is 'lora' but Active_LoRa_Network is NULL!")
@@ -362,7 +488,6 @@ if upload_technology == "lora":
     if not uart_locked:
         print("[UPLOAD] LoRa UART busy. Storing measurement and exiting this cycle.")
 
-        store_pending_measurement(dataAtual_unix, detected_devices)
 
         log_event(
             "message_stored",
@@ -384,8 +509,7 @@ if upload_technology == "lora":
             rak.set_app_eui(app_eui)
             rak.set_app_key(app_key)
 
-            lora_seq = get_and_increment_lora_seq()
-            log_event("lora_seq_assigned", seq=lora_seq, network=active_lora_network)
+            
             joined = check_lora_network_status(active_lora_network)
 
             if not joined:
@@ -409,93 +533,105 @@ if upload_technology == "lora":
                     norm_dis_enc = min(int(round(norm_disappeared_fingerprints * 10000)), 65535)
 
                     if count <= 255:
-                        payload_bytes = struct.pack(">BHH", count, norm_new_enc, norm_dis_enc)  # 5 bytes
+                        payload_bytes = struct.pack(">BBHH", lora_seq, count, norm_new_enc, norm_dis_enc)
                     else:
-                        payload_bytes = struct.pack(">HHH", count, norm_new_enc, norm_dis_enc)  # 6 bytes
+                        payload_bytes = struct.pack(">BHHH", lora_seq, count, norm_new_enc, norm_dis_enc)
                 else:
                     if count <= 255:
-                        payload_bytes = struct.pack(">B", count)   # 1 byte
+                        payload_bytes = struct.pack(">BB", lora_seq, count)
                     else:
-                        payload_bytes = struct.pack(">H", count)   # 2 bytes
+                        payload_bytes = struct.pack(">BH", lora_seq, count)
 
                 payload_hex = payload_bytes.hex()
                 print(f"[UPLOAD] Sending payload: count={count} ({len(payload_bytes)} byte(s)) (hex: {payload_hex})")
                 sent = rak.send_lorawan_data(1, payload_hex)  # Port 1 = crowding
 
-                if sent:
-                    log_event(
-                        "message_sent",
-                        link="lora",
-                        network=active_lora_network,
-                        unix_ts=dataAtual_unix,
-                        devices=int(detected_devices)
+                if not sent:
+                    print(
+                        f"[UPLOAD] Failed to send via {active_lora_network} "
+                        f"(duty cycle restriction — skipping until next success)"
                     )
-
-                else:
+                    try:
+                        with open("/tmp/rak_duty_restricted", "w") as f:
+                            f.write(str(int(time.time())))
+                    except Exception:
+                        pass
                     log_event(
                         "message_stored",
                         unix_ts=dataAtual_unix,
                         devices=int(detected_devices),
-                        reason="lora_send_failed",
+                        reason="lora_send_failed_duty_cycle",
                         network=active_lora_network
                     )
 
-                if not sent:
-                    print(f"[UPLOAD] Failed to send via {active_lora_network}")
-                    store_pending_measurement(dataAtual_unix, detected_devices)
-                    mark_lora_network_failed(active_lora_network)
-
-                    cwifi.execute(
-                        """UPDATE SensorCommunication SET LoRaConnected=?, Last_Update=CURRENT_TIMESTAMP""",
-                        (False,)
-                    )
-
-                    connwifi.commit()
-                    print("[UPLOAD] Network marked as failed, handover will be attempted by sensorCommunicationCheck.py")
-
                 else:
                     print(f"[UPLOAD] Successfully sent via {active_lora_network}")
-                    LORA_REPLAY_MAX = 10
-                    pending_batch = get_n_pending_measurements(LORA_REPLAY_MAX)
+                    try:
+                        if os.path.exists("/tmp/rak_duty_restricted"):
+                            os.remove("/tmp/rak_duty_restricted")
+                    except Exception:
+                        pass
+                                        # ── Replay proativo do buffer ──────────────────────
+                    last_ack = get_last_ack_seq()
 
-                    if pending_batch:
-                        batch_size = len(pending_batch)
-                        seq_oldest = (lora_seq - batch_size) % 256
+                    if last_ack is None:
+                        # Firt run 
+                        set_last_ack_seq(lora_seq)
+                        dprint(f"First LoRa run: initialized last_ack_seq={lora_seq}")
 
-                        replay_payload = struct.pack(">B", seq_oldest)
-                        for (_, devices) in pending_batch:
-                            replay_payload += struct.pack(">H", min(int(devices), 65535))
-
-                        replay_hex = replay_payload.hex()
-                        print(
-                            f"[UPLOAD][REPLAY] batch={batch_size} "
-                            f"SEQ_oldest={seq_oldest} hex={replay_hex}"
-                        )
-
-                        time.sleep(3)  # pausa entre transmissões LoRa
-
-                        sent_replay = rak.send_lorawan_data(4, replay_hex)
-
-                        if sent_replay:
-                            remove_n_pending_measurements(batch_size)
-                            log_event(
-                                "lora_replay_sent",
-                                link="lora",
-                                network=active_lora_network,
-                                batch_size=batch_size,
-                                seq_oldest=seq_oldest,
-                            )
-                            print(f"[UPLOAD][REPLAY] {batch_size} medições enviadas.")
-                        else:
-                            log_event(
-                                "lora_replay_failed",
-                                link="lora",
-                                network=active_lora_network,
-                                batch_size=batch_size,
-                            )
-                            print("[UPLOAD][REPLAY] Falha — medições mantidas para próximo ciclo.")
                     else:
-                        print("[UPLOAD][REPLAY] Sem medições pendentes.")
+                        gap = (lora_seq - last_ack) % 256
+
+                        if gap > 1:
+                            # Há medições não confirmadas entre last_ack e lora_seq
+                            # lora_seq já foi enviado no FPort 1; replay é last_ack+1 até lora_seq-1
+                            prev_seq = (lora_seq - 1) % 256
+                            pending = buffer_get_range(last_ack, prev_seq)
+
+                            if pending:
+                                # Limitar a 10 por pacote FPort 4
+                                LORA_REPLAY_MAX = 10
+                                batch = pending[:LORA_REPLAY_MAX]
+                                batch_size = len(batch)
+                                seq_oldest = batch[0][0]  # seq do primeiro
+
+                                ts_oldest = batch[0][1]
+                                replay_payload = struct.pack(">BI", seq_oldest, ts_oldest)
+                                for (_, _, devices) in batch:
+                                    replay_payload += struct.pack(">H", min(int(devices), 65535))
+
+                                replay_hex = replay_payload.hex()
+                                print(
+                                    f"[UPLOAD][REPLAY] proactive batch={batch_size} "
+                                    f"SEQ_oldest={seq_oldest} hex={replay_hex}"
+                                )
+
+                                time.sleep(3)
+
+                                sent_replay = rak.send_lorawan_data(4, replay_hex)
+
+                                if sent_replay:
+                                    log_event(
+                                        "lora_replay_sent",
+                                        link="lora",
+                                        network=active_lora_network,
+                                        batch_size=batch_size,
+                                        seq_oldest=seq_oldest,
+                                    )
+                                    print(f"[UPLOAD][REPLAY] {batch_size} medições enviadas.")
+                                else:
+                                    log_event(
+                                        "lora_replay_failed",
+                                        link="lora",
+                                        network=active_lora_network,
+                                        batch_size=batch_size,
+                                    )
+                                    print("[UPLOAD][REPLAY] Falha — servidor pedirá via downlink.")
+                            else:
+                                dprint("Buffer vazio para o range pedido.")
+
+                        # Atualizar last_ack_seq independentemente do replay
+                        set_last_ack_seq(lora_seq)
                     # Remove lock-wait and startup-lock-wait from the Class C listen window.
                     downlink_seconds = (
                         (int(upload_periodicity) * 60)
@@ -527,7 +663,13 @@ if upload_technology == "lora":
                             port, payload = rak.receive_data_C()
 
                             if port and payload:
-                                downlink_cb("C", port, len(payload), payload)
+                                if int(port) == 5:
+                                    # ── Gap fill request do servidor ──
+                                    handle_gap_fill_request(
+                                        rak, payload, lora_seq, active_lora_network
+                                    )
+                                else:
+                                    downlink_cb("C", port, len(payload), payload)
 
                                 log_event(
                                     "downlink_received",

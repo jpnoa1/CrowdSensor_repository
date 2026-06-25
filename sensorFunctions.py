@@ -775,7 +775,7 @@ def publish_mqtt_message(msg_payload, topic):
         return False
 
 def publish_detections_mqtt_message(unix_timestamp, devices_detected: int, topic,
-                                     norm_new=None, norm_disappeared=None):
+                                     norm_new=None, norm_disappeared=None, seq=None):
 
     client = connect_mqtt()
     msg_payload = {
@@ -783,6 +783,8 @@ def publish_detections_mqtt_message(unix_timestamp, devices_detected: int, topic
         "devices_detected": int(devices_detected)
     }
 
+    if seq is not None:
+        msg_payload["seq"] = int(seq)
     if norm_new is not None:
         msg_payload["norm_new_fingerprints"] = round(norm_new, 4)
     if norm_disappeared is not None:
@@ -1371,6 +1373,20 @@ def check_lora_network_status(network_name):
     except:
         return False
 
+def check_lora_network_joinable(network_name):
+    """
+    Check if a LoRa network was previously able to join (state 0 or 1).
+    Used for direct re-join decisions (Tier 2).
+    States: 1=joined+selected, 0=joined but not selected, -1=join failed
+    """
+    status_file = f"/tmp/rak_njs_{network_name.lower()}"
+    if not os.path.exists(status_file):
+        return False
+    try:
+        with open(status_file, "r") as f:
+            return f.read().strip() in ("0", "1")
+    except:
+        return False
 
 #check link quality on both networks and select the best one (if both are available) for data upload
 
@@ -1687,6 +1703,17 @@ def evaluate_lora_networks(networks):
                         return True
                     if "JOIN_FAILED" in line or "JOIN FAILED" in line:
                         logger.warning(f"[LORA-EVAL] {net_name}: attempt failed, still waiting")
+                    if "Restricted_Wait" in line:
+                        try:
+                            wait_ms = int(line.split("Restricted_Wait_")[1].split("_ms")[0])
+                            wait_h = wait_ms / 3600000
+                            logger.error(
+                                f"[LORA-EVAL] {net_name}: duty cycle restriction "
+                                f"({wait_h:.1f}h remaining)"
+                            )
+                        except (IndexError, ValueError):
+                            logger.error(f"[LORA-EVAL] {net_name}: duty cycle restriction")
+                        return "restricted"
                     if "AT_BUSY_ERROR" in line:
                         time.sleep(2)
             time.sleep(0.2)
@@ -1703,7 +1730,6 @@ def evaluate_lora_networks(networks):
                 f.write(net_name)
         except Exception as e:
             logger.warning(f"[LORA-EVAL] Could not write state files: {e}")
- 
     # ── Abrir porta serial ──
     try:
         ser = _serial.Serial(port=LORA_SERIAL_PORT, baudrate=115200, timeout=1)
@@ -1729,7 +1755,20 @@ def evaluate_lora_networks(networks):
  
             _configure(ser, net_name, app_eui, app_key, dev_eui)
             joined = _join(ser, net_name, EVAL_JOIN_ATTEMPTS, EVAL_JOIN_INTERVAL, EVAL_JOIN_TIMEOUT)
- 
+
+            # Passo 5: duty cycle bloqueia módulo inteiro → abortar
+            if joined == "restricted":
+                logger.error("[LORA-EVAL] Module in duty cycle restriction, aborting evaluation")
+                return None, "restricted"
+
+            # Passo 3: escrever estado intermédio (0=joined, -1=failed)
+            try:
+                state = "0" if joined else "-1"
+                with open(f"/tmp/rak_njs_{net_name.lower()}", "w") as f:
+                    f.write(state)
+            except Exception:
+                pass
+
             metrics = None
             if joined:
                 last_joined_name = net_name
@@ -1767,17 +1806,40 @@ def evaluate_lora_networks(networks):
         ]
 
         if len(with_metrics) >= 2:
-            # Ambas têm stats → selecionar por RSSI (mais alto = melhor),
-            # desempate por SNR (mais alto = melhor)
-            best = max(with_metrics, key=lambda r: (
-                r["metrics"]["rssi"],
-                r["metrics"]["snr"],
-            ))
-            logger.info(
-                f"[LORA-EVAL] Selected {best['name']} via link quality "
-                f"(rssi={best['metrics']['rssi']}dBm, "
-                f"snr={best['metrics']['snr']}dB)"
+            # Lexicographic selection com hysteresis margin
+            # RSSI decide se a diferença for significativa (>= RSSI_MARGIN)
+            # Caso contrário, SNR desempata
+            RSSI_MARGIN = 6.0  # dBm
+
+            # Ordenar por RSSI decrescente
+            sorted_by_rssi = sorted(
+                with_metrics,
+                key=lambda r: r["metrics"]["rssi"],
+                reverse=True
             )
+            top = sorted_by_rssi[0]
+            second = sorted_by_rssi[1]
+
+            rssi_diff = top["metrics"]["rssi"] - second["metrics"]["rssi"]
+
+            if rssi_diff >= RSSI_MARGIN:
+                best = top
+                logger.info(
+                    f"[LORA-EVAL] Selected {best['name']} via RSSI "
+                    f"(rssi={best['metrics']['rssi']}dBm, "
+                    f"snr={best['metrics']['snr']}dB, "
+                    f"Δrssi={rssi_diff:.1f}dB >= margin={RSSI_MARGIN}dB)"
+                )
+            else:
+                best = max(with_metrics, key=lambda r: r["metrics"]["snr"])
+                logger.info(
+                    f"[LORA-EVAL] Selected {best['name']} via SNR tiebreak "
+                    f"(rssi={best['metrics']['rssi']}dBm, "
+                    f"snr={best['metrics']['snr']}dB, "
+                    f"Δrssi={rssi_diff:.1f}dB < margin={RSSI_MARGIN}dB)"
+                )
+
+
         elif len(with_metrics) == 1 and len(without_metrics) >= 1:
             # Só uma tem stats → preferir TTN se estiver joined (sem stats),
             # senão usar a que tem stats
@@ -1885,15 +1947,15 @@ def evaluate_lora_networks(networks):
  
 def decide_upload_technology(cursor=None):
     """
-    Handover cascade: WiFi (priority 1) → LoRa networks (priority 2+).
- 
-    A avaliação LoRa (evaluate_lora_networks) só é chamada quando não há
-    nenhuma rede cached como joined nos ficheiros /tmp/rak_njs_*.
-    Isto garante que a avaliação completa só acontece uma vez — nas execuções
-    seguintes, o fast path reutiliza a rede já joined.
+    Handover cascade: WiFi (priority 1) → LoRa (priority 2).
+
+    LoRa activation:
+      Tier 1 — Fast path /tmp: rede cached como joined → reutilizar (~0ms)
+      Full evaluation: apenas no boot ou quando nenhuma rede cached (~80s)
+      Duty cycle: flag /tmp/rak_duty_restricted → manter rede ativa sem enviar
     """
     own_connection = (cursor is None)
- 
+
     if cursor is None:
         try:
             connwifi = sqlite3.connect('/home/kali/Desktop/DB/SensorConfiguration.db', timeout=30)
@@ -1904,108 +1966,160 @@ def decide_upload_technology(cursor=None):
     else:
         cwifi = cursor
         connwifi = None
- 
+
     try:
         sensor_communication = cwifi.execute(
             """SELECT WifiAvailable, LoRaAvailable, WifiConnected FROM SensorCommunication"""
         ).fetchone()
- 
+
         if not sensor_communication:
             logger.error("[HANDOVER] SensorCommunication table is empty")
             return ('none', None)
- 
+
         wifiAvailable = sensor_communication[0]
         loraAvailable = sensor_communication[1]
         wifiConnected = sensor_communication[2]
- 
+
         upload_tech = 'none'
         active_network = None
- 
+
         if wifiAvailable and wifiConnected:
             upload_tech = 'wifi'
             logger.info("[HANDOVER] Using WiFi for uploads")
- 
-        elif loraAvailable:
-            logger.info("[HANDOVER] WiFi unavailable, evaluating LoRa networks")
- 
-            # Verificar se a rede ativa na DB ainda está cached como joined
-            current_cfg = cwifi.execute(
-                """SELECT Active_LoRa_Network FROM SensorConfiguration"""
-            ).fetchone()
-            current_network = current_cfg[0] if current_cfg else None
- 
-            if current_network and check_lora_network_status(current_network):
-                upload_tech = 'lora'
-                active_network = current_network
-                logger.info(f"[HANDOVER] Reusing already-joined network: {current_network}")
-            else:
-                # Fast path: verificar se alguma rede tem cached "joined"
-                networks = cwifi.execute(
-                    """SELECT name, app_eui, app_key, dev_eui FROM LoRaNetworks ORDER BY id ASC"""
-                ).fetchall()
- 
-                if not networks:
-                    logger.warning("[HANDOVER] No LoRa networks configured in database")
-                else:
-                    for net_name, _, _, _ in networks:
-                        if check_lora_network_status(net_name):
-                            upload_tech = 'lora'
-                            active_network = net_name
-                            logger.info(f"[HANDOVER] Reusing cached joined network: {net_name}")
-                            break
-                    else:
-                        # Nenhuma cached → avaliação completa (só acontece 1x)
-                        best_name, best_metrics = evaluate_lora_networks(networks)
- 
-                        if best_name:
-                            upload_tech = 'lora'
-                            active_network = best_name
- 
-                            if best_metrics:
-                                logger.info(
-                                    f"[HANDOVER] Selected {best_name} via evaluation "
-                                    f"(margin={best_metrics.get('margin')}dB, "
-                                    f"rssi={best_metrics.get('rssi')}dBm)"
-                                )
-                            else:
-                                logger.info(f"[HANDOVER] Selected {best_name} (join OK, no LinkCheck data)")
-                        else:
-                            logger.error("[HANDOVER] LoRa evaluation failed")
- 
-        else:
-            logger.error("[HANDOVER] No connectivity available")
- 
-        # Atualizar DB
-        if active_network:
             cwifi.execute(
                 """UPDATE SensorConfiguration
-                   SET Upload_Technology=?, Active_LoRa_Network=?, Last_Update=CURRENT_TIMESTAMP""",
-                (upload_tech, active_network)
-            )
-        else:
-            cwifi.execute(
-                """UPDATE SensorConfiguration
-                   SET Upload_Technology=?, Active_LoRa_Network=NULL, Last_Update=CURRENT_TIMESTAMP""",
+                   SET Upload_Technology=?, Last_Update=CURRENT_TIMESTAMP""",
                 (upload_tech,)
             )
- 
+
+        elif loraAvailable:
+            logger.info("[HANDOVER] WiFi unavailable, evaluating LoRa networks")
+
+            # ── Duty cycle check ──
+            duty_file = "/tmp/rak_duty_restricted"
+            if os.path.exists(duty_file):
+                try:
+                    ts_restricted = int(open(duty_file).read().strip())
+                    age_h = (time.time() - ts_restricted) / 3600
+                    if age_h < 24:
+                        current_cfg = cwifi.execute(
+                            """SELECT Active_LoRa_Network FROM SensorConfiguration"""
+                        ).fetchone()
+                        current_network = current_cfg[0] if current_cfg else None
+                        if current_network:
+                            upload_tech = 'lora'
+                            active_network = current_network
+                            logger.warning(
+                                f"[HANDOVER] Duty cycle restriction ({age_h:.1f}h ago) "
+                                f"— keeping {current_network} active"
+                            )
+                    else:
+                        os.remove(duty_file)
+                        logger.info("[HANDOVER] Duty cycle flag expired")
+                except Exception:
+                    try:
+                        os.remove(duty_file)
+                    except Exception:
+                        pass
+
+            if upload_tech == 'none':
+                current_cfg = cwifi.execute(
+                    """SELECT Active_LoRa_Network FROM SensorConfiguration"""
+                ).fetchone()
+                current_network = current_cfg[0] if current_cfg else None
+
+                # ── Tier 1: Fast path /tmp ──
+                if current_network and check_lora_network_status(current_network):
+                    upload_tech = 'lora'
+                    active_network = current_network
+                    logger.info(f"[HANDOVER] Tier 1: reusing joined network: {current_network}")
+                else:
+                    networks = cwifi.execute(
+                        """SELECT name, app_eui, app_key, dev_eui
+                           FROM LoRaNetworks ORDER BY id ASC"""
+                    ).fetchall()
+
+                    if not networks:
+                        logger.warning("[HANDOVER] No LoRa networks configured")
+                    else:
+                        # Verificar qualquer rede cached
+                        for net_name, _, _, _ in networks:
+                            if check_lora_network_status(net_name):
+                                upload_tech = 'lora'
+                                active_network = net_name
+                                logger.info(
+                                    f"[HANDOVER] Tier 1: reusing cached network: {net_name}"
+                                )
+                                break
+                        else:
+                            # ── Full evaluation (boot ou nenhuma cached) ──
+                            logger.info("[HANDOVER] Full evaluation")
+                            best_name, best_metrics = evaluate_lora_networks(networks)
+
+                            if best_metrics == "restricted":
+                                logger.error("[HANDOVER] Duty cycle restriction")
+                                try:
+                                    with open("/tmp/rak_duty_restricted", "w") as f:
+                                        f.write(str(int(time.time())))
+                                except Exception:
+                                    pass
+                            elif best_name:
+                                upload_tech = 'lora'
+                                active_network = best_name
+                                if best_metrics:
+                                    logger.info(
+                                        f"[HANDOVER] Selected {best_name} "
+                                        f"(rssi={best_metrics.get('rssi')}dBm, "
+                                        f"snr={best_metrics.get('snr')}dB)"
+                                    )
+                                else:
+                                    logger.info(
+                                        f"[HANDOVER] Selected {best_name} "
+                                        f"(join OK, no metrics)"
+                                    )
+                            else:
+                                logger.error("[HANDOVER] Full evaluation failed")
+
+            # Atualizar DB
+            if upload_tech != 'wifi':
+                if active_network:
+                    cwifi.execute(
+                        """UPDATE SensorConfiguration
+                           SET Upload_Technology=?, Active_LoRa_Network=?,
+                               Last_Update=CURRENT_TIMESTAMP""",
+                        (upload_tech, active_network)
+                    )
+                else:
+                    cwifi.execute(
+                        """UPDATE SensorConfiguration
+                           SET Upload_Technology=?, Last_Update=CURRENT_TIMESTAMP""",
+                        (upload_tech,)
+                    )
+
+        else:
+            logger.error("[HANDOVER] No connectivity available")
+            cwifi.execute(
+                """UPDATE SensorConfiguration
+                   SET Upload_Technology=?, Last_Update=CURRENT_TIMESTAMP""",
+                (upload_tech,)
+            )
+
         if own_connection:
             connwifi.commit()
- 
+
         if upload_tech == 'none':
             logger.error("[HANDOVER] No connectivity available - uploads disabled")
- 
+
         return (upload_tech, active_network)
- 
+
     except sqlite3.Error as error:
         logger.error(f"[HANDOVER] Database error: {error}")
         return ('none', None)
- 
+
     finally:
         if own_connection and connwifi:
             cwifi.close()
             connwifi.close()
-
 
 
 def get_sensor_wifi_profiles():
@@ -2211,7 +2325,7 @@ def try_wifi_failover(cursor=None, skip_current=False):
         (success: bool, profile_name: str | None)
     """
     from event_logger import log_event
-
+    
     profiles = get_sensor_wifi_profiles()
 
     if not profiles:
@@ -2219,15 +2333,42 @@ def try_wifi_failover(cursor=None, skip_current=False):
         log_event("wifi_failover_no_profiles")
         return False, None
 
+    log_event(
+        "wifi_failover_profiles_loaded",
+        candidates=len(profiles),
+        profiles=[p[0] for p in profiles],
+        priorities=[p[1] for p in profiles],
+    )
+
     active_profile = get_active_wifi_profile()
 
     if active_profile and not skip_current:
-        if check_wifi_connection():
+        active_ssid = get_wifi_profile_ssid(active_profile)
+
+        _t0_nc = time.monotonic()
+        nc_ok = check_wifi_connection()
+        nc_ms = round((time.monotonic() - _t0_nc) * 1000, 2)
+
+        log_event(
+            "wifi_reachability_probe",
+            profile=active_profile,
+            ssid=active_ssid,
+            priority=None,
+            attempt=1,
+            success=nc_ok,
+            duration_ms=nc_ms,
+            already_active=True,
+            pre_scan=True,
+        )
+
+        if nc_ok:
             logger.info(f"[WIFI-FAILOVER] Already connected via {active_profile}; server reachable")
 
             log_event(
                 "wifi_failover_already_connected",
                 profile=active_profile,
+                ssid=active_ssid,
+                reachability_ms=nc_ms,
             )
 
             return True, active_profile
@@ -2238,6 +2379,25 @@ def try_wifi_failover(cursor=None, skip_current=False):
         "wifi_scan_complete",
         visible_count=len(visible_ssids),
         visible_ssids=list(visible_ssids),
+    )
+
+    visible_candidates = []
+
+    for profile_name, priority in profiles:
+        profile_ssid = get_wifi_profile_ssid(profile_name)
+
+        if profile_ssid and profile_ssid in visible_ssids:
+            visible_candidates.append({
+                "profile": profile_name,
+                "ssid": profile_ssid,
+                "priority": priority,
+            })
+
+    log_event(
+        "wifi_failover_visible_candidates",
+        configured_candidates=len(profiles),
+        visible_candidates=len(visible_candidates),
+        candidates=visible_candidates,
     )
 
     log_event(
@@ -2305,7 +2465,23 @@ def try_wifi_failover(cursor=None, skip_current=False):
                 priority=priority,
             )
 
-            if check_wifi_connection():
+            _t0_nc = time.monotonic()
+            nc_ok = check_wifi_connection()
+            nc_ms = round((time.monotonic() - _t0_nc) * 1000, 2)
+
+            log_event(
+                "wifi_reachability_probe",
+                profile=profile_name,
+                ssid=profile_ssid,
+                priority=priority,
+                attempt=1,
+                success=nc_ok,
+                duration_ms=nc_ms,
+                already_active=True,
+                pre_scan=False,
+            )
+
+            if nc_ok:
                 logger.info(f"[WIFI-FAILOVER] Active profile {profile_name} has server reachability")
 
                 log_event(
@@ -2314,6 +2490,7 @@ def try_wifi_failover(cursor=None, skip_current=False):
                     ssid=profile_ssid,
                     priority=priority,
                     already_active=True,
+                    reachability_ms=nc_ms,
                 )
 
                 return True, profile_name
@@ -2325,11 +2502,23 @@ def try_wifi_failover(cursor=None, skip_current=False):
                 profile=profile_name,
                 ssid=profile_ssid,
                 priority=priority,
+                reachability_ms=nc_ms,
             )
 
             continue
 
+        _t0_activation = time.monotonic()
         activated = try_activate_wifi_profile(profile_name)
+        activation_ms = round((time.monotonic() - _t0_activation) * 1000, 2)
+
+        log_event(
+            "wifi_profile_activation_timed",
+            profile=profile_name,
+            ssid=profile_ssid,
+            priority=priority,
+            success=activated,
+            duration_ms=activation_ms,
+        )
 
         if not activated:
             logger.info(f"[WIFI-FAILOVER] Could not activate {profile_name}")
@@ -2339,26 +2528,57 @@ def try_wifi_failover(cursor=None, skip_current=False):
                 profile=profile_name,
                 ssid=profile_ssid,
                 priority=priority,
+                activation_ms=activation_ms,
             )
 
             continue
 
         reachable = False
+        last_nc_ms = None
 
-        for attempt in range(1, 4):
-            if check_wifi_connection():
-                reachable = True
-                break
+        MAX_WIFI_REACHABILITY_ATTEMPTS = 2
+        WIFI_RETRY_SLEEP_SEC = 1
+        WIFI_POST_ACTIVATION_SETTLE_SEC = 1
+
+        time.sleep(WIFI_POST_ACTIVATION_SETTLE_SEC)
+
+        reachable = False
+        last_nc_ms = None
+
+        for attempt in range(1, MAX_WIFI_REACHABILITY_ATTEMPTS + 1):
+            _t0_nc = time.monotonic()
+            nc_ok = check_wifi_connection()
+            nc_ms = round((time.monotonic() - _t0_nc) * 1000, 2)
+            last_nc_ms = nc_ms
 
             log_event(
-                "wifi_failover_netcat_retry",
+                "wifi_reachability_probe",
                 profile=profile_name,
                 ssid=profile_ssid,
                 priority=priority,
                 attempt=attempt,
+                success=nc_ok,
+                duration_ms=nc_ms,
+                already_active=False,
+                activation_ms=activation_ms,
             )
 
-            time.sleep(2)
+            if nc_ok:
+                reachable = True
+                break
+
+            if attempt < MAX_WIFI_REACHABILITY_ATTEMPTS:
+                log_event(
+                    "wifi_failover_netcat_retry",
+                    profile=profile_name,
+                    ssid=profile_ssid,
+                    priority=priority,
+                    attempt=attempt,
+                    reachability_ms=nc_ms,
+                    next_retry_in_s=WIFI_RETRY_SLEEP_SEC,
+                )
+
+                time.sleep(WIFI_RETRY_SLEEP_SEC)
 
         if reachable:
             logger.info(f"[WIFI-FAILOVER] Connected and server reachable via {profile_name}")
@@ -2369,6 +2589,8 @@ def try_wifi_failover(cursor=None, skip_current=False):
                 ssid=profile_ssid,
                 priority=priority,
                 already_active=False,
+                activation_ms=activation_ms,
+                reachability_ms=last_nc_ms,
             )
 
             return True, profile_name
@@ -2382,6 +2604,8 @@ def try_wifi_failover(cursor=None, skip_current=False):
             profile=profile_name,
             ssid=profile_ssid,
             priority=priority,
+            activation_ms=activation_ms,
+            reachability_ms=last_nc_ms,
         )
 
     logger.info("[WIFI-FAILOVER] All profiles exhausted")
@@ -2389,10 +2613,10 @@ def try_wifi_failover(cursor=None, skip_current=False):
     log_event(
         "wifi_failover_exhausted",
         candidates=len(profiles),
+        visible_candidates=len(visible_candidates),
     )
 
     return False, None
-
     
 def downlink_cb(mType, port, length, msgHex):
     logger.info(f"[DOWNLINK RAW] type={mType} port={port} len={length} hex={msgHex}")
@@ -2746,3 +2970,186 @@ def remove_n_pending_measurements(n):
     cursor.close()
     conn.close()
     print(f"[PENDING] Removed {n} oldest pending measurements.")
+
+
+
+# ══════════════════════════════════════════════════════════════════
+# Measurement Buffer — circular, 256 slots, substitui PendingMeasurements
+# ══════════════════════════════════════════════════════════════════
+
+BUFFER_DB_PATH = '/home/kali/Desktop/DB/StoredMeasurements.db'
+BUFFER_SIZE = 256
+LAST_ACK_SEQ_FILE = "/home/kali/Desktop/DB/last_ack_seq.txt"
+LORA_SEQ_FILE = "/home/kali/Desktop/DB/lora_seq.txt"
+
+
+def init_measurement_buffer():
+    """Cria a tabela MeasurementBuffer se não existir."""
+    conn = sqlite3.connect(BUFFER_DB_PATH, timeout=30)
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS MeasurementBuffer (
+            seq INTEGER PRIMARY KEY,
+            timestamp INTEGER NOT NULL,
+            devices_detected INTEGER NOT NULL
+        )
+    """)
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+
+def buffer_insert(seq, timestamp, devices_detected):
+    """
+    Insere/substitui uma medição no buffer circular.
+    O seq é sempre mod 256, o INSERT OR REPLACE garante a circularidade.
+    """
+    conn = sqlite3.connect(BUFFER_DB_PATH, timeout=30)
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT OR REPLACE INTO MeasurementBuffer (seq, timestamp, devices_detected) VALUES (?, ?, ?)",
+        (seq % BUFFER_SIZE, timestamp, int(devices_detected))
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+
+def buffer_get_range(from_seq_exclusive, to_seq_inclusive):
+    """
+    Devolve medições do buffer para SEQs no intervalo (from_seq_exclusive, to_seq_inclusive].
+    Lida com wrap-around do uint8.
+
+    Returns:
+        list de (seq, timestamp, devices_detected) ordenada por posição no gap.
+    """
+    conn = sqlite3.connect(BUFFER_DB_PATH, timeout=30)
+    cursor = conn.cursor()
+
+    results = []
+
+    # Quantos SEQs no gap?
+    gap = (to_seq_inclusive - from_seq_exclusive) % BUFFER_SIZE
+
+    if gap == 0:
+        cursor.close()
+        conn.close()
+        return results
+
+    # Nunca mais do que BUFFER_SIZE
+    if gap > BUFFER_SIZE:
+        gap = BUFFER_SIZE
+
+    for i in range(1, gap + 1):
+        seq = (from_seq_exclusive + i) % BUFFER_SIZE
+        row = cursor.execute(
+            "SELECT seq, timestamp, devices_detected FROM MeasurementBuffer WHERE seq = ?",
+            (seq,)
+        ).fetchone()
+
+        if row:
+            results.append(row)
+
+    cursor.close()
+    conn.close()
+    return results
+
+
+# ── SEQ counter (persistente, uint8 0-255) ───────────────────────
+
+def get_and_increment_lora_seq():
+    """Devolve o SEQ atual e incrementa o contador em disco."""
+    try:
+        with open(LORA_SEQ_FILE, "r") as f:
+            seq = int(f.read().strip()) % BUFFER_SIZE
+    except (FileNotFoundError, ValueError):
+        seq = 0
+
+    with open(LORA_SEQ_FILE, "w") as f:
+        f.write(str((seq + 1) % BUFFER_SIZE))
+
+    return seq
+
+
+def get_current_lora_seq():
+    """Lê o SEQ atual sem incrementar (para uso no downlink handler)."""
+    try:
+        with open(LORA_SEQ_FILE, "r") as f:
+            val = int(f.read().strip()) % BUFFER_SIZE
+            # O ficheiro guarda o PRÓXIMO seq, logo o atual é val - 1
+            return (val - 1) % BUFFER_SIZE
+    except (FileNotFoundError, ValueError):
+        return 0
+
+
+# ── last_ack_seq (persistente) ───────────────────────────────────
+
+def get_last_ack_seq():
+    """
+    Lê o último SEQ confirmado como recebido pelo servidor.
+    Retorna None se nunca houve confirmação (primeiro arranque).
+    """
+    try:
+        with open(LAST_ACK_SEQ_FILE, "r") as f:
+            val = f.read().strip()
+            if val == "" or val.lower() == "none":
+                return None
+            return int(val)
+    except (FileNotFoundError, ValueError):
+        return None
+
+
+def set_last_ack_seq(seq):
+    """Guarda o último SEQ confirmado."""
+    with open(LAST_ACK_SEQ_FILE, "w") as f:
+        f.write(str(seq))
+
+
+# ── Funções legadas (manter para backward compat, remover depois) ─
+
+def get_n_pending_measurements(n):
+    conn = sqlite3.connect(BUFFER_DB_PATH, timeout=30)
+    cursor = conn.cursor()
+    rows = cursor.execute(
+        """SELECT Timestamp, DevicesDetected FROM PendingMeasurements
+           ORDER BY Timestamp ASC LIMIT ?""",
+        (n,)
+    ).fetchall()
+    cursor.close()
+    conn.close()
+    return rows
+
+
+def remove_n_pending_measurements(n):
+    conn = sqlite3.connect(BUFFER_DB_PATH, timeout=30)
+    cursor = conn.cursor()
+    cursor.execute("""
+        DELETE FROM PendingMeasurements
+        WHERE rowid IN (
+            SELECT rowid FROM PendingMeasurements
+            ORDER BY Timestamp ASC LIMIT ?
+        )
+    """, (n,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+# ── last_confirmed_seq (conservador, só avança com confirmação) ──
+
+LAST_CONFIRMED_SEQ_FILE = "/home/kali/Desktop/DB/last_confirmed_seq.txt"
+
+def get_last_confirmed_seq():
+    """Último SEQ que o servidor confirmou explicitamente via FPort 5."""
+    try:
+        with open(LAST_CONFIRMED_SEQ_FILE, "r") as f:
+            val = f.read().strip()
+            if val == "" or val.lower() == "none":
+                return None
+            return int(val)
+    except (FileNotFoundError, ValueError):
+        return None
+
+def set_last_confirmed_seq(seq):
+    """Guarda o último SEQ confirmado pelo servidor."""
+    with open(LAST_CONFIRMED_SEQ_FILE, "w") as f:
+        f.write(str(seq))

@@ -73,7 +73,7 @@ def update_wifi_state_after_profile_change(cursor):
             (True, ip_addr, upload_interface, detection_interface)
         )
         cursor.execute(
-            """UPDATE SensorConfiguration SET Upload_Technology=?, Active_LoRa_Network=NULL, Last_Update=CURRENT_TIMESTAMP""",
+            """UPDATE SensorConfiguration SET Upload_Technology=?, Last_Update=CURRENT_TIMESTAMP""",
             ("wifi",)
         )
     except Exception as e:
@@ -145,8 +145,8 @@ _final_upload_technology = current_upload_technology
 # cwifi.execute("UPDATE SensorConfiguration SET Upload_Technology='wifi', Active_LoRa_Network=NULL")
 # connwifi.commit()
 # sys.exit(0)
-# wifiAvailable = False
-# wifiConnected = False
+#wifiAvailable = False
+#wifiConnected = False
 
 # ── Phase 1: Detection — timed precisely ──────────────────────────────────────
 #
@@ -257,6 +257,7 @@ _wifi_failover_profile = None
 
 if current_upload_technology == "wifi":
     if not wifiConnected:
+        _active_wifi_profile = get_active_wifi_profile()
         log_event(
             "link_failure_detected",
             link="wifi",
@@ -423,6 +424,9 @@ log_event(
     cycle_ms=round((_time.monotonic() - _t0_cycle) * 1000, 2),
     final_upload_technology=_final_upload_technology,
     handover_attempted=needs_handover,
+    wifi_failover_attempted=(_wifi_failover_ms is not None),
+    wifi_failover_ms=_wifi_failover_ms,
+    wifi_failover_profile=_wifi_failover_profile,
 )
 
 release_comm_check_lock()
