@@ -12,6 +12,8 @@ import json
 from datetime import datetime
 import ssl
 from event_logger import log_event
+import threading
+
 
 
 
@@ -321,40 +323,112 @@ def get_mqtt_credentials_from_db():
         print(f"[MQTT][ERROR] Failed to read MQTT credentials from database: {error}")
         return None, None
     
-def connect_mqtt():
-    client_id = f'python-mqtt-{random.randint(0, 1000)}'
+def connect_mqtt(timeout=10):
+    client_id = f"python-mqtt-{uuid.uuid4().hex[:8]}"
 
-    #Get cloud ip address
+    # Obter o endereço do servidor MQTT
     try:
-
-        connwifi = sqlite3.connect('/home/kali/Desktop/DB/SensorConfiguration.db', timeout=30)
+        connwifi = sqlite3.connect(
+            "/home/kali/Desktop/DB/SensorConfiguration.db",
+            timeout=30
+        )
         cwifi = connwifi.cursor()
 
-        cloud_ip_addr = cwifi.execute("""SELECT Cloud_IP_Address FROM SensorConfiguration""").fetchone()[0]
+        result = cwifi.execute(
+            "SELECT Cloud_IP_Address FROM SensorConfiguration"
+        ).fetchone()
 
         cwifi.close()
         connwifi.close()
 
-    except sqlite3.Error as error:
-        print("Failed to get data from database.", error)
+        if result is None or not result[0]:
+            raise RuntimeError(
+                "Cloud_IP_Address is not configured in SensorConfiguration."
+            )
 
-    def on_connect(client, userdata, flags, rc, properties):
-        if rc == 0:
+        cloud_ip_addr = result[0]
+
+    except sqlite3.Error as error:
+        raise RuntimeError(
+            f"Failed to get MQTT server address from database: {error}"
+        ) from error
+
+    connected_event = threading.Event()
+    connection_result = {
+        "success": False,
+        "reason_code": None
+    }
+
+    def on_connect(client, userdata, flags, reason_code, properties):
+        connection_result["reason_code"] = reason_code
+        connection_result["success"] = reason_code == 0
+
+        if reason_code == 0:
             print("Connected to MQTT Broker!")
         else:
-            print("Failed to connect, return code %d\n", rc)
-            
-    # Set Connecting Client ID
-    client = mqtt_client.Client(client_id=client_id, callback_api_version=mqtt_client.CallbackAPIVersion.VERSION2)
+            print(
+                f"Failed to connect to MQTT Broker: "
+                f"reason_code={reason_code}"
+            )
+
+        connected_event.set()
+
+    client = mqtt_client.Client(
+        callback_api_version=mqtt_client.CallbackAPIVersion.VERSION2,
+        client_id=client_id
+    )
+
     mqtt_username, mqtt_password = get_mqtt_credentials_from_db()
 
     if not mqtt_username or not mqtt_password:
-        raise RuntimeError("MQTT credentials are not configured in the database.")
+        raise RuntimeError(
+            "MQTT credentials are not configured in the database."
+        )
 
-    client.username_pw_set(mqtt_username, mqtt_password)
+    client.username_pw_set(
+        mqtt_username,
+        mqtt_password
+    )
+
     client.on_connect = on_connect
-    client.tls_set(tls_version=ssl.PROTOCOL_TLS)
-    client.connect(cloud_ip_addr, MQTT_PORT) 
+
+    client.tls_set(
+        tls_version=ssl.PROTOCOL_TLS
+    )
+
+    connect_rc = client.connect(
+        cloud_ip_addr,
+        MQTT_PORT,
+        keepalive=60
+    )
+
+    if connect_rc != mqtt_client.MQTT_ERR_SUCCESS:
+        raise ConnectionError(
+            f"MQTT TCP connection failed: rc={connect_rc}"
+        )
+
+    # Essencial para processar CONNACK, PUBACK e callbacks
+    client.loop_start()
+
+    # Esperar pela confirmação MQTT da ligação
+    if not connected_event.wait(timeout=timeout):
+        client.loop_stop()
+        client.disconnect()
+
+        raise TimeoutError(
+            "MQTT connection timeout: CONNACK was not received."
+        )
+
+    if not connection_result["success"]:
+        reason_code = connection_result["reason_code"]
+
+        client.disconnect()
+        client.loop_stop()
+
+        raise ConnectionError(
+            f"MQTT broker rejected the connection: {reason_code}"
+        )
+
     return client
 
 
@@ -774,10 +848,22 @@ def publish_mqtt_message(msg_payload, topic):
         print("\nFailed to publish mqtt message.")
         return False
 
-def publish_detections_mqtt_message(unix_timestamp, devices_detected: int, topic,
-                                     norm_new=None, norm_disappeared=None, seq=None):
+import json
+import paho.mqtt.client as mqtt
 
-    client = connect_mqtt()
+from timeline_logger import log_timeline
+
+
+def publish_detections_mqtt_message(
+        unix_timestamp,
+        devices_detected: int,
+        topic,
+        norm_new=None,
+        norm_disappeared=None,
+        seq=None):
+
+    client = None
+
     msg_payload = {
         "timestamp": unix_timestamp,
         "devices_detected": int(devices_detected)
@@ -785,20 +871,103 @@ def publish_detections_mqtt_message(unix_timestamp, devices_detected: int, topic
 
     if seq is not None:
         msg_payload["seq"] = int(seq)
-    if norm_new is not None:
-        msg_payload["norm_new_fingerprints"] = round(norm_new, 4)
-    if norm_disappeared is not None:
-        msg_payload["norm_disappeared_fingerprints"] = round(norm_disappeared, 4)
 
-    json_msg_payload = json.dumps(msg_payload, separators=(",", ":"))
-    result = client.publish(topic, json_msg_payload)
-    status = result[0]
-    if status == 0:
-        print(f"Send `{msg_payload}` to topic `{topic}`.")
+    if norm_new is not None:
+        msg_payload["norm_new_fingerprints"] = round(
+            norm_new,
+            4
+        )
+
+    if norm_disappeared is not None:
+        msg_payload["norm_disappeared_fingerprints"] = round(
+            norm_disappeared,
+            4
+        )
+
+    json_msg_payload = json.dumps(
+        msg_payload,
+        separators=(",", ":")
+    )
+
+    try:
+        client = connect_mqtt(timeout=10)
+
+        # O cliente já está ligado neste ponto.
+        log_timeline(
+            "send_start",
+            seq,
+            "wifi"
+        )
+
+        result = client.publish(
+            topic,
+            json_msg_payload,
+            qos=1
+        )
+
+        if result.rc != mqtt_client.MQTT_ERR_SUCCESS:
+            print(
+                f"Failed to queue MQTT message: rc={result.rc}"
+            )
+
+            log_timeline(
+                "send_failed",
+                seq,
+                "wifi"
+            )
+
+            return False
+
+        result.wait_for_publish(timeout=10)
+
+        if not result.is_published():
+            print("MQTT PUBACK timeout.")
+
+            log_timeline(
+                "send_failed",
+                seq,
+                "wifi"
+            )
+
+            return False
+
+        # Em QoS 1, a publicação fica concluída após o PUBACK.
+        log_timeline(
+            "ack_received",
+            seq,
+            "wifi"
+        )
+
+        print(
+            f"Sent `{msg_payload}` to topic `{topic}` "
+            f"with QoS 1; PUBACK received."
+        )
+
         return True
-    else:
-        print("\nFailed to publish mqtt message.")
+
+    except Exception as error:
+        print(f"MQTT publication failed: {error}")
+
+        if seq is not None:
+            log_timeline(
+                "send_failed",
+                seq,
+                "wifi"
+            )
+
         return False
+
+    finally:
+        if client is not None:
+            try:
+                client.disconnect()
+            except Exception:
+                pass
+
+            try:
+                client.loop_stop()
+            except Exception:
+                pass
 
 # Insert pending measurement in database
 def store_pending_measurement(unix_timestamp, devices_detected):
