@@ -15,10 +15,6 @@ last_commit_time = time.monotonic()
 
 COMMIT_BATCH_SIZE = 50
 COMMIT_MAX_INTERVAL = 15  # seconds
-last_commit_time = time.monotonic()
-
-COMMIT_BATCH_SIZE = 50
-COMMIT_MAX_INTERVAL = 15  # seconds
 
 dr_con = sqlite3.connect('/home/kali/Desktop/MemoryDB/DeviceRecords.db', timeout=30)
 dr_cur = dr_con.cursor()
@@ -44,12 +40,16 @@ with open("/home/kali/Desktop/Sniffer/wireshark-oui-list.txt", 'r') as file:
         splits = line.split('\t')
         OUI_DICT[splits[0].strip()] = splits[1].strip()
 
+last_seen_macs = {}
+# Garbage Collection Configuration
+CLEANUP_INTERVAL_SEC = 300
+last_cleanup_time = 0.0
+
 def frame_processing(pkt):
 
     mac = pkt[Dot11].addr2.upper()
     oui = mac[:8]
-    global commit_counter, last_commit_time
-    global commit_counter, last_commit_time
+    global commit_counter, last_commit_time, last_cleanup_time
 
     if mac == CALIBRATION_MAC:
         try:
@@ -75,48 +75,51 @@ def frame_processing(pkt):
 
     if(isMobileManufacturer(oui)):
 
+        time_val = float(pkt.time)
+        try: seq = pkt.SC >> 4
+        except: seq = 0
+
+        # Garbage Collection
+        if last_cleanup_time == 0.0:
+                last_cleanup_time = time_val
+                
+        if (time_val - last_cleanup_time) >= CLEANUP_INTERVAL_SEC:
+            stale_macs = [mac for mac, data in last_seen_macs.items() 
+                            if (time_val - data['time']) > CLEANUP_INTERVAL_SEC]
+
+            for mac in stale_macs:
+                del last_seen_macs[mac]
+
+            last_cleanup_time = time_val
+
+        # Burst assessment
+        is_new_burst = True
+        if mac in last_seen_macs:
+            last_pkt = last_seen_macs[mac]
+            if (time_val - last_pkt['time']) <= 3.0 and ((seq - last_pkt['seq']) % 4096) <= 15:
+                is_new_burst = False
+            
+        last_seen_macs[mac] = {'time': time_val, 'seq': seq}
+
         ie = pkt.getlayer(Dot11Elt)
         array_v = []
 
         while ie:
-            if ie.ID in [1, 50, 107, 191]:          # Supported Rates, Extended Supported Rates, Interworking, VHT Capabilities
+            if ie.ID in [1, 45, 50, 59, 70, 107, 127, 191]:     # Supported Rates, HT Capabilities, Extended Supported Rates, Interworking, Extended Capabilities, VHT Capabilities
                 array_v.extend([ie.ID, ie.len])
                 array_v.extend(ie.info)
-            elif ie.ID == 45:                       # HT Capabilities
-                array_v.extend([ie.ID, ie.len])
-                for i, c in enumerate(ie.info):
-                    # Mask Index 1: 2nd bit (0x40) -> Inverse: 0xBF
-                    if i == 1:
-                        array_v.append(c & 0xBF)
-                    else:
-                        array_v.append(c)
-            elif ie.ID == 127:                      # Extended Capabilities
-                array_v.extend([ie.ID, ie.len])
-                for i, c in enumerate(ie.info):
-                    # Mask Index 3: 6th bit (0x04) -> Inverse: 0xFB
-                    if i == 3:
-                        array_v.append(c & 0xFB)
-                    else:
-                        array_v.append(c)
             elif ie.ID == 221:                      # Vendor Specific
                 array_v.extend([ie.ID, ie.len])
-                is_microsoft = False
                 is_epigram = False
 
                 if len(ie.info) >= 3:
-                    # Microsoft (00:50:F2)
-                    if ie.info[0] == 0x00 and ie.info[1] == 0x50 and ie.info[2] == 0xF2:
-                        is_microsoft = True
                     # Epigram (00:90:4C)
-                    elif ie.info[0] == 0x00 and ie.info[1] == 0x90 and ie.info[2] == 0x4C:
+                    if ie.info[0] == 0x00 and ie.info[1] == 0x90 and ie.info[2] == 0x4C:
                         is_epigram = True
                 
                 for i, c in enumerate(ie.info):
-                    # Mask Index 5: 8th bit (0x01) -> Inverse: 0xFE
-                    if is_microsoft and i == 5:
-                        array_v.append(c & 0xFE)
                     # Mask Index 8: 2nd, 3rd bits (0x60) -> Inverse: 0x9F
-                    elif is_epigram and i == 8:
+                    if is_epigram and i == 8:
                         array_v.append(c & 0x9F)
                     # Mask Index 9: 4th bit (0x10) -> Inverse: 0xEF
                     elif is_epigram and i == 9:
@@ -130,17 +133,16 @@ def frame_processing(pkt):
 
         current_unix_time = time.time()
 
-        dr_cur.execute("INSERT INTO Probe_Requests VALUES(?, ?, ?)", (fingerprint, pkt.addr2, current_unix_time))  
+        dr_cur.execute("INSERT INTO Probe_Requests VALUES(?, ?, ?, ?)", (fingerprint, pkt.addr2, int(is_new_burst), current_unix_time))
 
-        # Batch commit por número de registos ou por tempo
+        # Batch commit
         commit_counter += 1
         now = time.monotonic()
 
         if (commit_counter >= COMMIT_BATCH_SIZE or (now - last_commit_time) >= COMMIT_MAX_INTERVAL):
             dr_con.commit()
             commit_counter = 0
-            last_commit_time = now  
-            last_commit_time = now  
+            last_commit_time = now
 
         return
 
@@ -156,14 +158,7 @@ def isMobileManufacturer(oui):
 def signal_term_handler(signal, frame):
     global commit_counter
 
-    global commit_counter
-
     open(PID_FILE, "w").close()
-
-    if commit_counter > 0:
-        dr_con.commit()
-        commit_counter = 0
-
 
     if commit_counter > 0:
         dr_con.commit()

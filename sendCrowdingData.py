@@ -9,6 +9,13 @@ import sys
 import os
 import struct
 
+# Suppress TensorFlow Warnings
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0' 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+import logging
+logging.getLogger("tensorflow").setLevel(logging.ERROR)
+from tensorflow.keras.models import load_model
+
 from swARM_at_custom.swARM_at.RAK3172 import RAK3172
 from sensorFunctions import *
 from sensorFunctions import downlink_cb
@@ -16,7 +23,12 @@ from communication_manager import CommunicationManager
 from event_logger import log_event
 from uart_lock import acquire_uart_lock, release_uart_lock, get_uart_lock_info
 
-MODEL_PATH = '/home/kali/Desktop/Sniffer/crowd_rf_regressor.pkl'
+MODEL_PATH = '/home/kali/Desktop/Sniffer/wifi_lstm_regressor.keras'
+SCALER_PATH = '/home/kali/Desktop/Sniffer/wifi_lstm_scaler.pkl'
+HISTORY_FILE = '/home/kali/Desktop/Sniffer/lstm_feature_history.csv'
+FEATURE_COLS = ['Total_Packets', 'Total_Bursts', 'Unique_MACs', 'Unique_Fingerprints', 'Packets_Per_Fingerprint', 'Bursts_Per_Fingerprint']
+TIME_STEPS = 3
+
 SEND_EXTENDED_FINGERPRINTS = False
 
 COMM_CHECK_LOCK_FILE = "/tmp/sensor_communication_check.lock"
@@ -171,7 +183,8 @@ if not available_released:
 dprint(f"waited_for_comm_available={waited_for_comm_available}s")
 
 try:
-    model = joblib.load(MODEL_PATH)
+    scaler = joblib.load(SCALER_PATH)
+    model = load_model(MODEL_PATH)
 except Exception as e:
     print(f"Failed to load RF model: {e}")
     sys.exit(1)
@@ -189,7 +202,8 @@ try:
         sensorName = sensor_configuration[0][1]
         influxdb_bucket = sensor_configuration[0][8]
         upload_periodicity = sensor_configuration[0][10]
-        slidingWindow = sensor_configuration[0][11]
+        # slidingWindow = sensor_configuration[0][11]
+        slidingWindow = 15
 
         active_lora_network = None
         if len(sensor_configuration[0]) > 16:
@@ -226,7 +240,6 @@ try:
     previous_start = current_start - (upload_periodicity * 60)
     previous_end = current_end - (upload_periodicity * 60)
 
-    detected_devices = 0
     norm_new_fingerprints = 0.0
     norm_disappeared_fingerprints = 0.0
 
@@ -289,24 +302,66 @@ try:
         
         # FEATURE 2: CURRENT WINDOW FEATURES FOR ML MODEL
         
+        current_features = {
+        'Total_Packets': 0,
+        'Total_Bursts': 0,
+        'Unique_MACs': 0, 
+        'Unique_Fingerprints': 0,
+        'Packets_Per_Fingerprint': 0.0,
+        'Bursts_Per_Fingerprint': 0.0
+        }
 
         if total_current_packets > 0:
             unique_macs = df_current['MAC'].nunique()
             unique_fingerprints = df_current['Fingerprint'].nunique()
+            total_bursts = int(df_current.get('Is_New_Burst', pd.Series([0])).sum())
 
-            if unique_fingerprints == 0:
-                packets_per_fingerprint = 0
-            else:
+            if unique_fingerprints > 0:
                 packets_per_fingerprint = total_current_packets / unique_fingerprints
+                bursts_per_fingerprint = total_bursts / unique_fingerprints
+            else:
+                packets_per_fingerprint = 0.0
+                bursts_per_fingerprint = 0.0
 
-            X_live = pd.DataFrame([{
-                'Total_Packets': total_current_packets,
-                'Unique_MACs': unique_macs,
-                'Unique_Fingerprints': unique_fingerprints,
-                'Packets_Per_Fingerprint': packets_per_fingerprint
-            }])
+            current_features = {
+            'Total_Packets': total_current_packets,
+            'Total_Bursts': total_bursts,
+            'Unique_MACs': unique_macs,
+            'Unique_Fingerprints': unique_fingerprints,
+            'Packets_Per_Fingerprint': packets_per_fingerprint,
+            'Bursts_Per_Fingerprint': bursts_per_fingerprint
+            }
 
-            raw_prediction = model.predict(X_live)[0]
+            # Manage History Buffer
+            if os.path.exists(HISTORY_FILE):
+                df_history = pd.read_csv(HISTORY_FILE)
+                df_history = pd.concat([df_history, pd.DataFrame([current_features])], ignore_index=True)
+            else:
+                df_history = pd.DataFrame([current_features])
+
+            # Keep only the last TIME_STEPS rows
+            if len(df_history) > TIME_STEPS:
+                df_history = df_history.tail(TIME_STEPS).reset_index(drop=True)
+
+            df_history.to_csv(HISTORY_FILE, index=False)
+
+            # Prepare for LSTM
+            pad_needed = TIME_STEPS - len(df_history)
+            if pad_needed > 0:
+                padding = pd.DataFrame([current_features] * pad_needed)
+                df_sequence = pd.concat([padding, df_history], ignore_index=True)
+            else:
+                df_sequence = df_history
+
+            raw_sequence_array = df_sequence[FEATURE_COLS].values
+
+            # Scale the 3x6 matrix
+            sequence_scaled = scaler.transform(raw_sequence_array)
+            
+            # Reshape to 3D: (1 sample, 3 time steps, 6 features)
+            X_live_reshaped = sequence_scaled.reshape(1, TIME_STEPS, sequence_scaled.shape[1])
+
+            raw_prediction = model.predict(X_live_reshaped, verbose=0)[0][0]
             detected_devices = max(0, int(np.round(raw_prediction)))
 
     dr_con.close()

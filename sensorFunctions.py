@@ -708,7 +708,7 @@ def write_crontab_file(status, detection_if, upload_periodicity, reboot_periodic
             f.write("#*/5 * * * * /usr/bin/python3 /home/kali/Desktop/sendSensorLocation.py\n")
 
         f.write("# Periodic delete of outdated and unnecessary data from local database\n")
-        f.write("0 * * * * /usr/bin/python3 /home/kali/Desktop/Sniffer/dataRetentionManager.py 30\n")
+        f.write("@hourly /usr/bin/python3 /home/kali/Desktop/Sniffer/dataRetentionManager.py 30\n")
 
     elif status == "Disabled":
         f.write("# Wi-Fi detection of devices\n")
@@ -722,10 +722,10 @@ def write_crontab_file(status, detection_if, upload_periodicity, reboot_periodic
         f.write("#*/5 * * * * sleep 40 && /usr/bin/python3 /home/kali/Desktop/sendSensorLocation.py\n")
 
         f.write("# Periodic delete of outdated and unnecessary data from local database\n")
-        f.write("#0 * * * * /usr/bin/python3 /home/kali/Desktop/Sniffer/dataRetentionManager.py 30\n")
+        f.write("#@hourly /usr/bin/python3 /home/kali/Desktop/Sniffer/dataRetentionManager.py 30\n")
 
     f.write("# Periodic upload of OUI list\n")
-    f.write("0 0 * * 0 /usr/bin/python3 /home/kali/Desktop/macOUIupdater.py\n")
+    f.write("@weekly /usr/bin/python3 /home/kali/Desktop/Sniffer/macOUIupdater.py\n")
 
     f.write("# Reboot\n")
     if reboot_periodicity == "daily":

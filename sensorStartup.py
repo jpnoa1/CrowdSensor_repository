@@ -46,7 +46,7 @@ try:
     dr_con = sqlite3.connect('/home/kali/Desktop/MemoryDB/DeviceRecords.db', timeout=30)
     dr_cur = dr_con.cursor()
 
-    dr_cur.execute("CREATE TABLE IF NOT EXISTS Probe_Requests (Fingerprint TEXT, MAC TEXT, Timestamp REAL);")
+    dr_cur.execute("CREATE TABLE IF NOT EXISTS Probe_Requests (Fingerprint TEXT, MAC TEXT, Is_New_Burst INTEGER, Timestamp REAL);")
     dr_con.commit()
     dr_con.close()
     logging.info("Database table checked/created successfully.")

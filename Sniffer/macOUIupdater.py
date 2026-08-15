@@ -1,11 +1,13 @@
 # Script para atualizar ficheiro de texto com lista de OUIs de fabricantes do Wireshark de forma a ficar com OUIs de manufatores de dispositivos móveis
 
-import sys
-import os
+import urllib.request
 
-cmd ='curl "https://www.wireshark.org/download/automated/data/manuf" > /home/kali/Desktop/Sniffer/wireshark-oui-list.txt'
-print(cmd)
-os.system(cmd)
+url = "https://www.wireshark.org/download/automated/data/manuf"
+output_file = "/home/kali/Desktop/Sniffer/wireshark-oui-list.txt"
+
+print(f"Downloading from {url}...")
+urllib.request.urlretrieve(url, output_file)
+print("Download complete!")
 
 MOBILE_MANUFACTURERS = set()
 with open("/home/kali/Desktop/Sniffer/Mobile_device_manufacturers.txt") as file:
@@ -15,10 +17,10 @@ f = open(r'/home/kali/Desktop/Sniffer/wireshark-oui-list.txt', "r+", encoding='u
 
 new_file = []
 
-for i in range(10):
-  next(f)
-
 for line in f:
+  if line.startswith('#') or not line.strip():
+    continue
+
   splits = line.split('\t')
 
   splits_twodots = splits[0].split(':')
