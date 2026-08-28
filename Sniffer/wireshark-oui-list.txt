@@ -257,10 +257,12 @@
 00:5A:13	Huawei Technologies Co.,Ltd
 00:5B:94	Apple, Inc.
 00:61:51	Huawei Technologies Co.,Ltd
+00:61:68	Nokia
 00:61:71	Apple, Inc.
 00:62:01	Motorola Mobility LLC, a Lenovo Company
 00:66:19	Huawei Device Co., Ltd.
 00:66:4B	Huawei Technologies Co.,Ltd
+00:66:DC	Apple, Inc.
 00:68:2B	Huawei Device Co., Ltd.
 00:6B:6F	Huawei Technologies Co.,Ltd
 00:6D:52	Apple, Inc.
@@ -289,6 +291,7 @@
 00:9E:C8	Xiaomi Communications Co Ltd
 00:A0:40	Apple, Inc.
 00:A1:59	LG Electronics
+00:A3:07	Honor Device Co., Ltd.
 00:A4:5F	Huawei Device Co., Ltd.
 00:A9:1D	Huawei Technologies Co.,Ltd
 00:AA:70	LG Electronics (Mobile Communications)
@@ -305,6 +308,7 @@
 00:C5:85	Apple, Inc.
 00:C6:10	Apple, Inc.
 00:CA:E0	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
+00:CC:05	Huawei Technologies Co.,Ltd
 00:CD:FE	Apple, Inc.
 00:D0:F6	Nokia
 00:D8:A2	Huawei Device Co., Ltd.
@@ -375,6 +379,7 @@
 04:55:B8	Huawei Technologies Co.,Ltd
 04:56:04	Gionee Communication Equipment Co.,Ltd.
 04:56:65	Nokia Shanghai Bell Co., Ltd.
+04:5A:3D	Nothing Technology Limited
 04:5A:95	Nokia Corporation
 04:5D:4B	Sony Corporation
 04:63:D0	Huawei Device Co., Ltd.
@@ -382,6 +387,7 @@
 04:68:65	Apple, Inc.
 04:69:F8	Apple, Inc.
 04:6E:CB	zte corporation
+04:6F:00	LG Electronics
 04:72:95	Apple, Inc.
 04:72:EF	Apple, Inc.
 04:74:9E	Huawei Technologies Co.,Ltd
@@ -390,6 +396,7 @@
 04:79:75	Honor Device Co., Ltd.
 04:7A:0B	Beijing Xiaomi Electronics Co., Ltd.
 04:7A:AE	Huawei Device Co., Ltd.
+04:80:1A	Huawei Device Co., Ltd.
 04:88:5F	Huawei Technologies Co.,Ltd
 04:8C:16	Huawei Technologies Co.,Ltd
 04:8C:9A	Huawei Device Co., Ltd.
@@ -433,6 +440,7 @@
 04:D4:C4	ASUSTek COMPUTER INC.
 04:D9:F5	ASUSTek COMPUTER INC.
 04:DB:56	Apple, Inc.
+04:DB:D9	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 04:E4:B6	Samsung Electronics Co.,Ltd
 04:E5:36	Apple, Inc.
 04:E5:98	Xiaomi Communications Co Ltd
@@ -463,6 +471,7 @@
 08:21:EF	Samsung Electronics Co.,Ltd
 08:23:B2	vivo Mobile Communication Co., Ltd.
 08:23:C6	Huawei Technologies Co.,Ltd
+08:24:0B	Apple, Inc.
 08:25:25	Xiaomi Communications Co Ltd
 08:25:73	Apple, Inc.
 08:27:6B	Huawei Device Co., Ltd.
@@ -507,6 +516,7 @@
 08:8C:2C	Samsung Electronics Co.,Ltd
 08:8E:DC	Apple, Inc.
 08:93:56	Huawei Technologies Co.,Ltd
+08:94:EC	Huawei Device Co., Ltd.
 08:95:42	Apple, Inc.
 08:9A:C7	zte corporation
 08:9B:B9	Nokia Solutions and Networks GmbH & Co. KG
@@ -534,8 +544,10 @@
 08:D4:6A	LG Electronics (Mobile Communications)
 08:D9:45	Huawei Technologies Co.,Ltd
 08:DD:03	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
+08:DD:82	Huawei Technologies Co.,Ltd
 08:E0:21	Honor Device Co., Ltd.
 08:E6:3B	zte corporation
+08:E6:4B	Apple, Inc.
 08:E6:89	Apple, Inc.
 08:E7:E5	Huawei Device Co., Ltd.
 08:E8:4F	Huawei Technologies Co.,Ltd
@@ -558,6 +570,7 @@
 0C:02:BD	Samsung Electronics Co.,Ltd
 0C:07:DF	Xiaomi Communications Co Ltd
 0C:07:F3	Huawei Technologies Co.,Ltd
+0C:0C:EA	BLU Products Inc
 0C:0E:CB	Huawei Device Co., Ltd.
 0C:12:62	zte corporation
 0C:14:20	Samsung Electronics Co.,Ltd
@@ -570,6 +583,7 @@
 0C:20:D3	vivo Mobile Communication Co., Ltd.
 0C:23:8D	Huawei Technologies Co.,Ltd
 0C:2C:54	Huawei Technologies Co.,Ltd
+0C:2D:71	Apple, Inc.
 0C:2E:57	Huawei Technologies Co.,Ltd
 0C:2F:B0	Samsung Electronics Co.,Ltd
 0C:30:21	Apple, Inc.
@@ -595,6 +609,7 @@
 0C:60:46	vivo Mobile Communication Co., Ltd.
 0C:67:43	Huawei Technologies Co.,Ltd
 0C:6A:C4	Apple, Inc.
+0C:6F:8B	Apple, Inc.
 0C:70:43	Sony Interactive Entertainment Inc.
 0C:70:4A	Huawei Technologies Co.,Ltd
 0C:71:5D	Samsung Electronics Co.,Ltd
@@ -618,6 +633,7 @@
 0C:96:BF	Huawei Technologies Co.,Ltd
 0C:98:38	Xiaomi Communications Co Ltd
 0C:9D:92	ASUSTek COMPUTER INC.
+0C:A3:B2	Apple, Inc.
 0C:A8:A7	Samsung Electronics Co.,Ltd
 0C:B3:19	Samsung Electronics Co.,Ltd
 0C:B5:27	Huawei Technologies Co.,Ltd
@@ -644,7 +660,9 @@
 0C:E0:DC	Samsung Electronics Co.,Ltd
 0C:E4:41	Apple, Inc.
 0C:E4:A0	Huawei Device Co., Ltd.
+0C:E5:A1	Apple, Inc.
 0C:E5:B5	Huawei Technologies Co.,Ltd
+0C:E6:23	Huawei Device Co., Ltd.
 0C:E6:7C	Realme Chongqing Mobile Telecommunications Corp.,Ltd.
 0C:EC:8D	Motorola Mobility LLC, a Lenovo Company
 0C:ED:C8	Xiaomi Communications Co Ltd
@@ -674,6 +692,7 @@
 10:32:1D	Huawei Technologies Co.,Ltd
 10:32:7E	Huawei Device Co., Ltd.
 10:39:17	Samsung Electronics Co.,Ltd
+10:3B:54	Huawei Technologies Co.,Ltd
 10:3B:59	Samsung Electronics Co.,Ltd
 10:3C:59	zte corporation
 10:3F:44	Xiaomi Communications Co Ltd
@@ -683,6 +702,7 @@
 10:44:00	Huawei Technologies Co.,Ltd
 10:47:38	Nokia Shanghai Bell Co., Ltd.
 10:47:80	Huawei Technologies Co.,Ltd
+10:49:0E	Huawei Technologies Co.,Ltd
 10:4F:A8	Sony Corporation
 10:51:72	Huawei Technologies Co.,Ltd
 10:52:BD	Huawei Technologies Co.,Ltd
@@ -710,10 +730,12 @@
 10:98:26	Nokia
 10:9A:DD	Apple, Inc.
 10:9D:7A	Huawei Device Co., Ltd.
+10:9E:6B	Apple, Inc.
 10:9F:41	Apple, Inc.
 10:A1:DA	Apple, Inc.
 10:A2:D3	Apple, Inc.
 10:A3:0F	Huawei Technologies Co.,Ltd
+10:A4:C9	Apple, Inc.
 10:A4:DA	Huawei Technologies Co.,Ltd
 10:AB:C9	Samsung Electronics Co.,Ltd
 10:B1:F8	Huawei Technologies Co.,Ltd
@@ -724,10 +746,12 @@
 10:BD:3A	Apple, Inc.
 10:BF:48	ASUSTek COMPUTER INC.
 10:C1:72	Huawei Technologies Co.,Ltd
+10:C1:97	Xiaomi Communications Co Ltd
 10:C3:7B	ASUSTek COMPUTER INC.
 10:C3:AB	Huawei Technologies Co.,Ltd
 10:C5:95	Lenovo
 10:C6:1F	Huawei Technologies Co.,Ltd
+10:CD:54	Huawei Technologies Co.,Ltd
 10:CE:E9	Apple, Inc.
 10:CF:0F	Apple, Inc.
 10:D0:AB	zte corporation
@@ -750,6 +774,7 @@
 10:FC:33	Huawei Device Co., Ltd.
 14:00:7D	zte corporation
 14:01:52	Samsung Electronics Co.,Ltd
+14:03:38	Huawei Technologies Co.,Ltd
 14:05:89	Motorola Mobility LLC, a Lenovo Company
 14:09:B4	zte corporation
 14:09:DC	Huawei Technologies Co.,Ltd
@@ -775,6 +800,7 @@
 14:35:B7	Apple, Inc.
 14:36:05	Nokia Corporation
 14:36:C6	Lenovo Mobile Communication Technology Ltd.
+14:38:FA	Motorola Mobility LLC, a Lenovo Company
 14:3B:51	Huawei Device Co., Ltd.
 14:3C:C3	Huawei Technologies Co.,Ltd
 14:3E:60	Nokia
@@ -783,6 +809,7 @@
 14:46:58	Huawei Technologies Co.,Ltd
 14:47:2D	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 14:49:20	Huawei Technologies Co.,Ltd
+14:49:C5	Huawei Device Co., Ltd.
 14:49:D4	Xiaomi Communications Co Ltd
 14:50:51	SHARP Corporation
 14:51:20	Huawei Device Co., Ltd.
@@ -814,6 +841,7 @@
 14:8C:4A	Huawei Technologies Co.,Ltd
 14:8F:79	Apple, Inc.
 14:8F:C6	Apple, Inc.
+14:90:7A	Beijing Xiaomi Mobile Software Co., Ltd
 14:94:6C	Apple, Inc.
 14:95:CE	Apple, Inc.
 14:96:E5	Samsung Electronics Co.,Ltd
@@ -848,6 +876,7 @@
 14:D1:1F	Huawei Technologies Co.,Ltd
 14:D1:69	Huawei Technologies Co.,Ltd
 14:D1:9E	Apple, Inc.
+14:D1:D4	Huawei Device Co., Ltd.
 14:D8:81	Beijing Xiaomi Mobile Software Co., Ltd
 14:DA:B9	Huawei Device Co., Ltd.
 14:DA:E9	ASUSTek COMPUTER INC.
@@ -901,6 +930,7 @@
 18:5B:00	Nokia
 18:5B:B3	Samsung Electronics Co.,Ltd
 18:5E:0B	zte corporation
+18:5F:27	Motorola Mobility LLC, a Lenovo Company
 18:65:90	Apple, Inc.
 18:67:B0	Samsung Electronics Co.,Ltd
 18:68:6A	zte corporation
@@ -917,6 +947,7 @@
 18:89:5B	Samsung Electronics Co.,Ltd
 18:9E:2C	Huawei Device Co., Ltd.
 18:9E:FC	Apple, Inc.
+18:A0:84	Apple, Inc.
 18:AA:0F	Huawei Device Co., Ltd.
 18:AB:1D	Samsung Electronics Co.,Ltd
 18:AC:C2	TCL King Electrical Appliances(Huizhou)Co.,Ltd
@@ -924,6 +955,8 @@
 18:AF:8F	Apple, Inc.
 18:B0:A4	zte corporation
 18:B6:57	Huawei Technologies Co.,Ltd
+18:B8:3D	Samsung Electronics Co.,Ltd
+18:B8:42	Apple, Inc.
 18:BB:1C	Huawei Device Co., Ltd.
 18:BB:41	Huawei Device Co., Ltd.
 18:BF:B3	Samsung Electronics Co., Ltd., Memory Division
@@ -967,6 +1000,7 @@
 1C:1F:F1	Huawei Device Co., Ltd.
 1C:20:DB	Huawei Technologies Co.,Ltd
 1C:23:2C	Samsung Electronics Co.,Ltd
+1C:25:75	Xiaomi Communications Co Ltd
 1C:27:04	zte corporation
 1C:2A:8B	Nokia
 1C:2A:B0	Beijing Xiaomi Electronics Co.,Ltd
@@ -977,6 +1011,7 @@
 1C:3C:D4	Huawei Technologies Co.,Ltd
 1C:3D:2F	Huawei Technologies Co.,Ltd
 1C:42:7D	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
+1C:42:C2	Huawei Device Co., Ltd.
 1C:43:63	Huawei Technologies Co.,Ltd
 1C:47:2F	Huawei Device Co., Ltd.
 1C:48:CE	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
@@ -1025,6 +1060,7 @@
 1C:B4:6C	Huawei Technologies Co.,Ltd
 1C:B7:2C	ASUSTek COMPUTER INC.
 1C:B7:96	Huawei Technologies Co.,Ltd
+1C:BA:B8	vivo Mobile Communication Co., Ltd.
 1C:C3:EB	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 1C:C9:92	Honor Device Co., Ltd.
 1C:CC:D6	Xiaomi Communications Co Ltd
@@ -1073,6 +1109,7 @@
 20:31:1C	vivo Mobile Communication Co., Ltd.
 20:32:6C	Samsung Electronics Co.,Ltd
 20:32:C6	Apple, Inc.
+20:33:89	Google, Inc.
 20:34:62	Xiaomi Communications Co Ltd
 20:34:FB	Xiaomi Communications Co Ltd
 20:36:D0	Motorola Mobility LLC, a Lenovo Company
@@ -1086,6 +1123,7 @@
 20:3D:BD	LG Innotek
 20:46:3A	Apple, Inc.
 20:47:DA	Xiaomi Communications Co Ltd
+20:52:1D	Apple, Inc.
 20:53:83	Huawei Technologies Co.,Ltd
 20:54:76	Sony Corporation
 20:54:FA	Huawei Technologies Co.,Ltd
@@ -1111,14 +1149,17 @@
 20:7D:74	Apple, Inc.
 20:82:6A	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 20:82:C0	Xiaomi Communications Co Ltd
+20:84:5F	Apple, Inc.
 20:87:EC	Huawei Technologies Co.,Ltd
 20:89:86	zte corporation
 20:8C:86	Huawei Technologies Co.,Ltd
 20:91:DF	Apple, Inc.
 20:99:52	Xiaomi Communications Co Ltd
 20:9B:CD	Apple, Inc.
+20:9B:DD	Huawei Technologies Co.,Ltd
 20:A2:00	Huawei Technologies Co.,Ltd
 20:A2:E4	Apple, Inc.
+20:A3:66	vivo Mobile Communication Co., Ltd.
 20:A5:CB	Apple, Inc.
 20:A6:0C	Xiaomi Communications Co Ltd
 20:A6:80	Huawei Technologies Co.,Ltd
@@ -1126,6 +1167,8 @@
 20:A8:BF	Huawei Technologies Co.,Ltd
 20:AB:37	Apple, Inc.
 20:AB:48	Huawei Technologies Co.,Ltd
+20:AB:53	Motorola Mobility LLC, a Lenovo Company
+20:AE:B6	Huawei Device Co., Ltd.
 20:B8:68	Motorola Mobility LLC, a Lenovo Company
 20:C2:B0	Huawei Technologies Co.,Ltd
 20:C9:D0	Apple, Inc.
@@ -1143,6 +1186,7 @@
 20:E0:9C	Nokia
 20:E2:A8	Apple, Inc.
 20:E4:6F	vivo Mobile Communication Co., Ltd.
+20:E5:25	Huawei Device Co., Ltd.
 20:E8:74	Apple, Inc.
 20:E8:82	zte corporation
 20:EE:28	Apple, Inc.
@@ -1180,6 +1224,7 @@
 24:27:E5	Huawei Device Co., Ltd.
 24:29:34	Google, Inc.
 24:29:B0	Huawei Technologies Co.,Ltd
+24:2A:EA	Apple, Inc.
 24:2E:02	Huawei Technologies Co.,Ltd
 24:30:F8	Huawei Device Co., Ltd.
 24:31:54	Huawei Technologies Co.,Ltd
@@ -1205,7 +1250,9 @@
 24:60:78	Huawei Technologies Co.,Ltd
 24:60:B3	Samsung Electronics Co.,Ltd
 24:62:C6	Huawei Device Co., Ltd.
+24:64:77	Beijing Xiaomi Mobile Software Co., Ltd
 24:64:9F	Huawei Device Co., Ltd.
+24:68:00	Samsung Electronics Co.,Ltd
 24:68:B0	Samsung Electronics Co.,Ltd
 24:69:A5	Huawei Technologies Co.,Ltd
 24:6C:60	Huawei Device Co., Ltd.
@@ -1238,6 +1285,7 @@
 24:B3:39	Apple, Inc.
 24:B5:B9	Motorola Mobility LLC, a Lenovo Company
 24:BC:F8	Huawei Technologies Co.,Ltd
+24:C0:13	zte corporation
 24:C4:4A	zte corporation
 24:C6:13	Samsung Electronics Co.,Ltd
 24:C6:96	Samsung Electronics Co.,Ltd
@@ -1306,6 +1354,7 @@
 28:45:AC	Huawei Device Co., Ltd.
 28:47:AA	Nokia Corporation
 28:48:E7	Huawei Device Co., Ltd.
+28:49:E9	Apple, Inc.
 28:4B:54	Apple, Inc.
 28:4D:7D	zte corporation
 28:4E:44	Huawei Technologies Co.,Ltd
@@ -1322,6 +1371,7 @@
 28:6C:07	XIAOMI Electronics,CO.,LTD
 28:6E:D4	Huawei Technologies Co.,Ltd
 28:6F:B9	Nokia Shanghai Bell Co., Ltd.
+28:72:C6	Samsung Electronics Co.,Ltd
 28:74:F5	Nokia Solutions and Networks GmbH & Co. KG
 28:77:77	zte corporation
 28:77:F1	Apple, Inc.
@@ -1349,6 +1399,7 @@
 28:BC:05	BLU Products Inc
 28:BD:89	Google, Inc.
 28:BE:43	vivo Mobile Communication Co., Ltd.
+28:C0:39	Huawei Technologies Co.,Ltd
 28:C1:A0	Apple, Inc.
 28:C5:38	Apple, Inc.
 28:C7:09	Apple, Inc.
@@ -1393,6 +1444,7 @@
 2C:18:09	Apple, Inc.
 2C:19:5C	Beijing Xiaomi Mobile Software Co., Ltd
 2C:1A:01	Huawei Technologies Co.,Ltd
+2C:1C:F7	Apple, Inc.
 2C:1F:23	Apple, Inc.
 2C:20:0B	Apple, Inc.
 2C:20:80	Huawei Device Co., Ltd.
@@ -1419,6 +1471,7 @@
 2C:5B:B8	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 2C:5D:34	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 2C:61:F6	Apple, Inc.
+2C:63:A1	Huawei Device Co., Ltd.
 2C:69:3E	Huawei Technologies Co.,Ltd
 2C:6F:37	Nokia
 2C:70:4F	zte corporation
@@ -1481,6 +1534,7 @@
 2C:FE:4F	Xiaomi Communications Co Ltd
 2C:FF:EE	vivo Mobile Communication Co., Ltd.
 30:00:FC	Nokia
+30:09:16	Apple, Inc.
 30:09:C0	Motorola Mobility LLC, a Lenovo Company
 30:0C:23	zte corporation
 30:0D:43	Microsoft Mobile Oy
@@ -1514,6 +1568,7 @@
 30:58:EB	zte corporation
 30:5A:3A	ASUSTek COMPUTER INC.
 30:61:A2	Huawei Technologies Co.,Ltd
+30:62:22	Samsung Electronics Co.,Ltd
 30:63:6B	Apple, Inc.
 30:66:D0	Huawei Device Co., Ltd.
 30:6A:85	Samsung Electronics Co.,Ltd
@@ -1543,6 +1598,7 @@
 30:96:FB	Samsung Electronics Co.,Ltd
 30:99:35	zte corporation
 30:9E:62	Huawei Technologies Co.,Ltd
+30:A0:33	Apple, Inc.
 30:A1:FA	Huawei Technologies Co.,Ltd
 30:A2:C2	Huawei Device Co., Ltd.
 30:A3:0F	Huawei Technologies Co.,Ltd
@@ -1575,6 +1631,7 @@
 30:DC:E7	zte corporation
 30:E0:44	Google, Inc.
 30:E0:4F	Apple, Inc.
+30:E2:26	Apple, Inc.
 30:E3:96	Huawei Device Co., Ltd.
 30:E4:D8	Huawei Device Co., Ltd.
 30:E7:BC	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
@@ -1597,13 +1654,16 @@
 34:0A:98	Huawei Technologies Co.,Ltd
 34:0E:22	Apple, Inc.
 34:10:BE	Apple, Inc.
+34:10:D0	Huawei Technologies Co.,Ltd
 34:12:98	Apple, Inc.
 34:12:F9	Huawei Technologies Co.,Ltd
 34:14:5F	Samsung Electronics Co.,Ltd
+34:15:30	vivo Mobile Communication Co., Ltd.
 34:15:9E	Apple, Inc.
 34:1C:F0	Xiaomi Communications Co Ltd
 34:1E:6B	Huawei Technologies Co.,Ltd
 34:24:3E	zte corporation
+34:26:01	Huawei Technologies Co.,Ltd
 34:28:40	Apple, Inc.
 34:29:12	Huawei Technologies Co.,Ltd
 34:2B:6E	Apple, Inc.
@@ -1611,17 +1671,21 @@
 34:2E:B6	Huawei Technologies Co.,Ltd
 34:31:11	Samsung Electronics Co.,Ltd
 34:31:8F	Apple, Inc.
+34:36:38	Huawei Technologies Co.,Ltd
 34:36:3B	Apple, Inc.
 34:36:54	zte corporation
 34:37:59	zte corporation
 34:39:16	Google, Inc.
+34:3D:A9	Huawei Technologies Co.,Ltd
 34:42:62	Apple, Inc.
 34:46:EC	Huawei Device Co., Ltd.
 34:47:9A	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 34:4A:1B	zte corporation
+34:4A:86	Honor Device Co., Ltd.
 34:4B:50	zte corporation
 34:4D:EA	zte corporation
 34:4D:F7	LG Electronics (Mobile Communications)
+34:4E:E2	Huawei Device Co., Ltd.
 34:51:80	TCL King Electrical Appliances (Huizhou) Co., Ltd
 34:51:84	Huawei Device Co., Ltd.
 34:51:C9	Apple, Inc.
@@ -1644,6 +1708,7 @@
 34:82:C5	Samsung Electronics Co.,Ltd
 34:83:D5	Huawei Technologies Co.,Ltd
 34:86:DA	Honor Device Co., Ltd.
+34:8A:3B	Huawei Device Co., Ltd.
 34:8A:7B	Samsung Electronics Co.,Ltd
 34:8B:75	Lava International(H.K) Limited
 34:8C:5E	Apple, Inc.
@@ -1653,10 +1718,12 @@
 34:A1:37	Huawei Technologies Co.,Ltd
 34:A2:A2	Huawei Technologies Co.,Ltd
 34:A3:95	Apple, Inc.
+34:A8:A0	Huawei Technologies Co.,Ltd
 34:A8:EB	Apple, Inc.
 34:AA:8B	Samsung Electronics Co.,Ltd
 34:AA:99	Nokia
 34:AB:37	Apple, Inc.
+34:AC:2F	zte corporation
 34:B1:EB	Apple, Inc.
 34:B2:0A	Huawei Device Co., Ltd.
 34:B3:54	Huawei Technologies Co.,Ltd
@@ -1665,6 +1732,8 @@
 34:BB:26	Motorola Mobility LLC, a Lenovo Company
 34:BE:00	Samsung Electronics Co.,Ltd
 34:C0:59	Apple, Inc.
+34:C2:32	Samsung Electronics Co.,Ltd
+34:C3:86	Apple, Inc.
 34:C3:AC	Samsung Electronics Co.,Ltd
 34:C7:E9	Google, Inc.
 34:C8:03	Nokia Corporation
@@ -1674,6 +1743,7 @@
 34:D6:93	Huawei Device Co., Ltd.
 34:DA:A1	Apple, Inc.
 34:DA:B7	zte corporation
+34:DD:CC	Google, Inc.
 34:DE:34	zte corporation
 34:E0:CF	zte corporation
 34:E2:FD	Apple, Inc.
@@ -1681,22 +1751,27 @@
 34:E6:E6	LG Innotek
 34:E9:11	vivo Mobile Communication Co., Ltd.
 34:EE:16	Apple, Inc.
+34:EF:D7	Huawei Technologies Co.,Ltd
 34:F0:15	Beijing Xiaomi Mobile Software Co., Ltd
 34:F0:43	Samsung Electronics Co.,Ltd
+34:F0:84	Samsung Electronics Co.,Ltd
 34:F5:D7	Huawei Device Co., Ltd.
 34:F6:2D	SHARP Corporation
 34:F6:8D	Apple, Inc.
+34:F8:DD	Apple, Inc.
 34:FA:1C	Beijing Xiaomi Mobile Software Co., Ltd
 34:FC:EF	LG Electronics (Mobile Communications)
 34:FD:6A	Apple, Inc.
 34:FE:77	Apple, Inc.
 34:FF:F3	Huawei Technologies Co.,Ltd
 38:01:95	Samsung Electronics Co.,Ltd
+38:04:84	Apple, Inc.
 38:09:FB	Apple, Inc.
 38:0A:94	Samsung Electronics Co.,Ltd
 38:0B:40	Samsung Electronics Co.,Ltd
 38:0F:4A	Apple, Inc.
 38:0F:AD	Huawei Technologies Co.,Ltd
+38:14:A1	LG Innotek
 38:16:5A	zte corporation
 38:16:D1	Samsung Electronics Co.,Ltd
 38:18:4C	Sony Home Entertainment&Sound Products Inc
@@ -1715,6 +1790,7 @@
 38:38:4B	vivo Mobile Communication Co., Ltd.
 38:39:6C	Huawei Device Co., Ltd.
 38:39:CD	vivo Mobile Communication Co., Ltd.
+38:39:DD	Nokia
 38:3F:E8	Huawei Technologies Co.,Ltd
 38:46:08	zte corporation
 38:47:BC	Huawei Technologies Co.,Ltd
@@ -1738,6 +1814,7 @@
 38:6F:6B	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 38:70:F2	Huawei Technologies Co.,Ltd
 38:71:DE	Apple, Inc.
+38:73:6E	Huawei Device Co., Ltd.
 38:78:62	Sony Corporation
 38:7F:8B	Apple, Inc.
 38:80:DF	Motorola Mobility LLC, a Lenovo Company
@@ -1770,6 +1847,7 @@
 38:C4:3A	Apple, Inc.
 38:C6:BD	Xiaomi Communications Co Ltd
 38:C9:86	Apple, Inc.
+38:C9:B1	zte corporation
 38:CA:DA	Apple, Inc.
 38:D0:9C	Huawei Technologies Co.,Ltd
 38:D4:0B	Samsung Electronics Co.,Ltd
@@ -1805,6 +1883,7 @@
 3C:0A:7A	Samsung Electronics Co.,Ltd
 3C:13:5A	Xiaomi Communications Co Ltd
 3C:13:BB	Huawei Technologies Co.,Ltd
+3C:15:5A	Nokia
 3C:15:C2	Apple, Inc.
 3C:15:FB	Huawei Technologies Co.,Ltd
 3C:18:9F	Nokia Corporation
@@ -1816,6 +1895,7 @@
 3C:24:0A	Huawei Device Co., Ltd.
 3C:25:D7	Nokia Corporation
 3C:28:6D	Google, Inc.
+3C:29:83	Samsung Electronics Co.,Ltd
 3C:2C:A6	Beijing Xiaomi Electronics Co.,Ltd
 3C:2E:F9	Apple, Inc.
 3C:2E:FF	Apple, Inc.
@@ -1826,6 +1906,7 @@
 3C:34:64	Apple, Inc.
 3C:36:3D	Nokia Corporation
 3C:36:6A	Huawei Technologies Co.,Ltd
+3C:38:1F	Huawei Device Co., Ltd.
 3C:38:24	Xiaomi Communications Co Ltd
 3C:38:F4	Sony Corporation
 3C:39:C8	Apple, Inc.
@@ -1841,14 +1922,17 @@
 3C:5A:37	Samsung Electronics Co.,Ltd
 3C:5A:B4	Google, Inc.
 3C:62:00	Samsung Electronics Co.,Ltd
+3C:65:D1	Huawei Technologies Co.,Ltd
 3C:67:8C	Huawei Technologies Co.,Ltd
 3C:6D:89	Apple, Inc.
 3C:6F:9B	zte corporation
+3C:75:DE	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 3C:76:25	zte corporation
 3C:77:87	Huawei Device Co., Ltd.
 3C:78:43	Huawei Technologies Co.,Ltd
 3C:7C:3F	ASUSTek COMPUTER INC.
 3C:7D:0A	Apple, Inc.
+3C:7F:6E	Xiaomi Communications Co Ltd
 3C:86:9A	Huawei Technologies Co.,Ltd
 3C:86:D1	vivo Mobile Communication Co., Ltd.
 3C:8B:FE	Samsung Electronics Co.,Ltd
@@ -1873,12 +1957,14 @@
 3C:B0:ED	Nothing Technology Limited
 3C:B2:33	Huawei Device Co., Ltd.
 3C:B6:B7	vivo Mobile Communication Co., Ltd.
+3C:B9:22	Huawei Technologies Co.,Ltd
 3C:BB:FD	Samsung Electronics Co.,Ltd
 3C:BC:D0	zte corporation
 3C:BD:3E	Beijing Xiaomi Electronics Co., Ltd.
 3C:BD:69	Nokia Shanghai Bell Co., Ltd.
 3C:BD:D8	Lg Electronics Inc
 3C:BF:60	Apple, Inc.
+3C:BF:D7	Apple, Inc.
 3C:C0:3E	Huawei Technologies Co.,Ltd
 3C:C2:43	Nokia Corporation
 3C:C5:C7	Huawei Technologies Co.,Ltd
@@ -1907,6 +1993,7 @@
 3C:FF:D8	Huawei Technologies Co.,Ltd
 40:06:34	Huawei Device Co., Ltd.
 40:08:77	Xiaomi Communications Co Ltd
+40:0E:B9	Huawei Technologies Co.,Ltd
 40:0E:F3	zte corporation
 40:11:C3	Samsung Electronics Co.,Ltd
 40:14:AD	Huawei Device Co., Ltd.
@@ -1939,6 +2026,7 @@
 40:55:82	Nokia
 40:58:46	vivo Mobile Communication Co., Ltd.
 40:5E:F6	Samsung Electronics Co.,Ltd
+40:67:68	Huawei Device Co., Ltd.
 40:6C:8F	Apple, Inc.
 40:6F:27	Huawei Technologies Co.,Ltd
 40:6F:2A	BlackBerry RTS
@@ -1951,6 +2039,7 @@
 40:7D:0F	Huawei Technologies Co.,Ltd
 40:83:1D	Apple, Inc.
 40:88:05	Motorola Mobility LLC, a Lenovo Company
+40:89:C2	Apple, Inc.
 40:8B:F6	Shenzhen TCL New Technology Co., Ltd
 40:8C:1F	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 40:8E:DF	Huawei Device Co., Ltd.
@@ -1961,6 +2050,7 @@
 40:A1:08	Motorola (Wuhan) Mobility Technologies Communication Co., Ltd.
 40:A4:4A	Google, Inc.
 40:A5:3B	Nokia
+40:A6:54	Huawei Technologies Co.,Ltd
 40:A6:D9	Apple, Inc.
 40:B0:76	ASUSTek COMPUTER INC.
 40:B0:FA	LG Electronics (Mobile Communications)
@@ -1998,6 +2088,8 @@
 44:07:0B	Google, Inc.
 44:09:C6	Huawei Technologies Co.,Ltd
 44:09:DA	Apple, Inc.
+44:0C:4B	Huawei Technologies Co.,Ltd
+44:10:30	Google, Inc.
 44:13:D0	zte corporation
 44:16:FA	Samsung Electronics Co.,Ltd
 44:18:FD	Apple, Inc.
@@ -2009,19 +2101,24 @@
 44:27:45	LG Innotek
 44:2A:60	Apple, Inc.
 44:30:3F	Huawei Technologies Co.,Ltd
+44:32:1D	Huawei Technologies Co.,Ltd
 44:32:62	zte corporation
 44:35:83	Apple, Inc.
 44:41:F0	zte corporation
 44:46:87	Realme Chongqing MobileTelecommunications Corp Ltd
 44:4A:37	Xiaomi Communications Co Ltd
+44:4A:4C	vivo Mobile Communication Co., Ltd.
 44:4A:DB	Apple, Inc.
 44:4C:0C	Apple, Inc.
 44:4E:1A	Samsung Electronics Co.,Ltd
+44:55:2B	Samsung Electronics Co.,Ltd
 44:55:B1	Huawei Technologies Co.,Ltd
 44:55:C4	Huawei Device Co., Ltd.
+44:57:9F	Beijing Xiaomi Mobile Software Co., Ltd
 44:59:43	zte corporation
 44:59:E3	Huawei Technologies Co.,Ltd
 44:5C:E9	Samsung Electronics Co.,Ltd
+44:63:B6	Apple, Inc.
 44:66:FC	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 44:67:47	Huawei Technologies Co.,Ltd
 44:6A:2E	Huawei Technologies Co.,Ltd
@@ -2030,6 +2127,7 @@
 44:71:47	Beijing Xiaomi Electronics Co.,Ltd
 44:74:6C	Sony Corporation
 44:76:54	Huawei Technologies Co.,Ltd
+44:78:31	Huawei Technologies Co.,Ltd
 44:78:3E	Samsung Electronics Co.,Ltd
 44:80:EB	Motorola Mobility LLC, a Lenovo Company
 44:82:E5	Huawei Technologies Co.,Ltd
@@ -2037,6 +2135,7 @@
 44:8F:17	Samsung Electronics Co., Ltd. ARTIK
 44:90:46	Honor Device Co., Ltd.
 44:90:BB	Apple, Inc.
+44:9A:52	zte corporation
 44:9B:C1	Huawei Technologies Co.,Ltd
 44:9E:8B	Apple, Inc.
 44:9E:F9	vivo Mobile Communication Co., Ltd.
@@ -2051,6 +2150,7 @@
 44:AE:AB	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 44:B3:C5	Huawei Device Co., Ltd.
 44:BB:3B	Google, Inc.
+44:BD:C8	Xiaomi Communications Co Ltd
 44:BE:0B	Huawei Technologies Co.,Ltd
 44:C3:46	Huawei Technologies Co.,Ltd
 44:C3:B6	Huawei Technologies Co.,Ltd
@@ -2060,13 +2160,17 @@
 44:C7:FC	Huawei Device Co., Ltd.
 44:CB:8B	LG Innotek
 44:CB:AD	Xiaomi Communications Co Ltd
+44:CE:1D	Nokia
 44:D4:E0	Sony Corporation
 44:D7:91	Huawei Technologies Co.,Ltd
 44:D8:84	Apple, Inc.
 44:DA:30	Apple, Inc.
+44:DB:BE	Huawei Technologies Co.,Ltd
 44:DF:65	Beijing Xiaomi Mobile Software Co., Ltd
+44:E2:13	Beijing Xiaomi Mobile Software Co., Ltd
 44:E5:9B	Huawei Technologies Co.,Ltd
 44:E6:6E	Apple, Inc.
+44:E8:53	Apple, Inc.
 44:E9:68	Huawei Technologies Co.,Ltd
 44:EA:30	Samsung Electronics Co.,Ltd
 44:F0:9E	Apple, Inc.
@@ -2084,6 +2188,7 @@
 48:02:34	Huawei Technologies Co.,Ltd
 48:02:86	Realme Chongqing Mobile Telecommunications Corp.,Ltd.
 48:05:E2	Huawei Device Co., Ltd.
+48:0A:28	Apple, Inc.
 48:12:58	Huawei Technologies Co.,Ltd
 48:12:8F	Huawei Technologies Co.,Ltd
 48:13:7E	Samsung Electronics Co.,Ltd
@@ -2100,9 +2205,11 @@
 48:35:2B	Apple, Inc.
 48:35:43	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 48:35:84	Huawei Device Co., Ltd.
+48:35:AB	Apple, Inc.
 48:38:71	Huawei Device Co., Ltd.
 48:3B:38	Apple, Inc.
 48:3C:0C	Huawei Technologies Co.,Ltd
+48:3F:72	Samsung Electronics Co.,Ltd
 48:3F:E9	Huawei Technologies Co.,Ltd
 48:41:7B	Nokia Solutions and Networks GmbH & Co. KG
 48:43:5A	Huawei Technologies Co.,Ltd
@@ -2133,6 +2240,7 @@
 48:77:BD	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 48:79:4D	Samsung Electronics Co.,Ltd
 48:7B:6B	Huawei Technologies Co.,Ltd
+48:82:DF	Huawei Device Co., Ltd.
 48:83:B4	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 48:87:59	Xiaomi Communications Co Ltd
 48:87:64	vivo Mobile Communication Co., Ltd.
@@ -2144,6 +2252,7 @@
 48:90:2F	LG Electronics (Mobile Communications)
 48:95:07	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 48:96:D9	zte corporation
+48:9A:58	Samsung Electronics Co.,Ltd
 48:9B:E0	Realme Chongqing Mobile Telecommunications Corp.,Ltd.
 48:9D:24	BlackBerry RTS
 48:9D:D1	Samsung Electronics Co.,Ltd
@@ -2207,6 +2316,7 @@
 4C:32:75	Apple, Inc.
 4C:39:46	Samsung Electronics Co.,Ltd
 4C:3C:16	Samsung Electronics Co.,Ltd
+4C:3C:E2	Huawei Device Co., Ltd.
 4C:49:29	TCL King Electrical Appliances(Huizhou)Co.,Ltd
 4C:49:4F	zte corporation
 4C:49:E3	Xiaomi Communications Co Ltd
@@ -2215,6 +2325,7 @@
 4C:50:77	Huawei Device Co., Ltd.
 4C:50:F1	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 4C:54:99	Huawei Technologies Co.,Ltd
+4C:55:B2	Xiaomi Communications Co Ltd
 4C:56:9D	Apple, Inc.
 4C:57:39	Samsung Electronics Co.,Ltd
 4C:57:CA	Apple, Inc.
@@ -2231,6 +2342,7 @@
 4C:7C:5F	Apple, Inc.
 4C:7C:D9	Apple, Inc.
 4C:7F:62	Nokia Corporation
+4C:80:FB	Google, Inc.
 4C:82:0C	Apple, Inc.
 4C:88:9E	Huawei Device Co., Ltd.
 4C:8B:EF	Huawei Technologies Co.,Ltd
@@ -2262,6 +2374,7 @@
 4C:CA:95	Huawei Device Co., Ltd.
 4C:CB:F5	zte corporation
 4C:CD:B6	Apple, Inc.
+4C:D0:12	Apple, Inc.
 4C:D0:CB	Huawei Technologies Co.,Ltd
 4C:D0:DD	Huawei Technologies Co.,Ltd
 4C:D1:A1	Huawei Technologies Co.,Ltd
@@ -2270,11 +2383,13 @@
 4C:DE:48	Huawei Device Co., Ltd.
 4C:E0:DB	Xiaomi Communications Co Ltd
 4C:E2:0F	Xiaomi Communications Co Ltd
+4C:E4:B6	Motorola Mobility LLC, a Lenovo Company
 4C:E6:50	Apple, Inc.
 4C:E6:5E	Huawei Technologies Co.,Ltd
 4C:E6:C0	Apple, Inc.
 4C:EA:AE	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 4C:EB:B0	Samsung Electronics Co.,Ltd
+4C:EC:EE	Samsung Electronics Co.,Ltd
 4C:ED:FB	ASUSTek COMPUTER INC.
 4C:F2:02	Xiaomi Communications Co Ltd
 4C:F4:75	Huawei Device Co., Ltd.
@@ -2289,6 +2404,7 @@
 50:05:6E	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 50:0B:23	Huawei Technologies Co.,Ltd
 50:0B:26	Huawei Technologies Co.,Ltd
+50:12:5C	Sony Corporation
 50:13:1D	Motorola Mobility LLC, a Lenovo Company
 50:14:C1	Huawei Technologies Co.,Ltd
 50:16:F4	Motorola Mobility LLC, a Lenovo Company
@@ -2303,6 +2419,7 @@
 50:2F:BB	Motorola Mobility LLC, a Lenovo Company
 50:32:37	Apple, Inc.
 50:32:75	Samsung Electronics Co.,Ltd
+50:3B:70	Apple, Inc.
 50:3C:C4	Lenovo Mobile Communication Technology Ltd.
 50:3C:EA	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 50:3D:7F	Nokia Shanghai Bell Co., Ltd.
@@ -2327,6 +2444,7 @@
 50:5D:7A	zte corporation
 50:5D:AC	Huawei Technologies Co.,Ltd
 50:5E:24	zte corporation
+50:63:82	Huawei Technologies Co.,Ltd
 50:63:91	Huawei Technologies Co.,Ltd
 50:64:2B	XIAOMI Electronics,CO.,LTD
 50:66:E5	Huawei Device Co., Ltd.
@@ -2352,6 +2470,7 @@
 50:92:6A	Beijing Xiaomi Mobile Software Co., Ltd
 50:92:B9	Samsung Electronics Co.,Ltd
 50:93:CE	Huawei Technologies Co.,Ltd
+50:95:46	Huawei Technologies Co.,Ltd
 50:98:39	Xiaomi Communications Co Ltd
 50:9A:88	Huawei Technologies Co.,Ltd
 50:9E:A7	Samsung Electronics Co.,Ltd
@@ -2404,15 +2523,18 @@
 54:13:10	Huawei Technologies Co.,Ltd
 54:19:C8	vivo Mobile Communication Co., Ltd.
 54:1F:8D	zte corporation
+54:1F:CD	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 54:21:1D	Huawei Device Co., Ltd.
 54:21:9D	Samsung Electronics Co.,Ltd
 54:22:59	Huawei Technologies Co.,Ltd
 54:22:F8	zte corporation
 54:25:EA	Huawei Technologies Co.,Ltd
+54:26:18	Huawei Technologies Co.,Ltd
 54:26:3D	Sony Corporation
 54:26:96	Apple, Inc.
 54:27:58	Motorola (Wuhan) Mobility Technologies Communication Co., Ltd.
 54:29:06	Apple, Inc.
+54:2A:43	Apple, Inc.
 54:2B:76	zte corporation
 54:2B:8D	Apple, Inc.
 54:2F:2B	Huawei Technologies Co.,Ltd
@@ -2444,9 +2566,11 @@
 54:69:90	Huawei Technologies Co.,Ltd
 54:71:DD	Huawei Device Co., Ltd.
 54:72:4F	Apple, Inc.
+54:73:5A	Huawei Device Co., Ltd.
 54:78:F0	zte corporation
 54:79:75	Nokia Corporation
 54:84:DC	zte corporation
+54:88:D5	zte corporation
 54:89:98	Huawei Technologies Co.,Ltd
 54:92:09	Huawei Technologies Co.,Ltd
 54:92:BE	Samsung Electronics Co.,Ltd
@@ -2477,6 +2601,7 @@
 54:E1:5B	Huawei Device Co., Ltd.
 54:E4:3A	Apple, Inc.
 54:E6:1B	Apple, Inc.
+54:E6:FD	Sony Interactive Entertainment Inc.
 54:EA:A8	Apple, Inc.
 54:EA:E1	Honor Device Co., Ltd.
 54:EB:E9	Apple, Inc.
@@ -2490,6 +2615,7 @@
 54:FC:F0	Samsung Electronics Co.,Ltd
 58:07:F8	Nokia Solutions and Networks GmbH & Co. KG
 58:0A:D4	Apple, Inc.
+58:0F:A5	Apple, Inc.
 58:11:22	ASUSTek COMPUTER INC.
 58:17:0C	Sony Corporation
 58:18:62	Sony Corporation
@@ -2499,6 +2625,7 @@
 58:20:71	Samsung Electronics Co.,Ltd
 58:24:29	Google, Inc.
 58:25:75	Huawei Technologies Co.,Ltd
+58:2A:93	Apple, Inc.
 58:2A:F7	Huawei Technologies Co.,Ltd
 58:30:6E	Nokia
 58:35:5D	Huawei Device Co., Ltd.
@@ -2511,6 +2638,7 @@
 58:4B:BC	zte corporation
 58:55:95	Apple, Inc.
 58:55:CA	Apple, Inc.
+58:56:AA	Apple, Inc.
 58:56:C2	Huawei Technologies Co.,Ltd
 58:5F:F6	zte corporation
 58:60:5F	Huawei Technologies Co.,Ltd
@@ -2528,6 +2656,8 @@
 58:85:A2	Realme Chongqing MobileTelecommunications Corp Ltd
 58:85:E9	Realme Chongqing MobileTelecommunications Corp Ltd
 58:87:9F	Huawei Device Co., Ltd.
+58:8F:A7	LG Innotek
+58:92:04	zte corporation
 58:93:51	Huawei Device Co., Ltd.
 58:93:E8	Apple, Inc.
 58:94:AE	Huawei Device Co., Ltd.
@@ -2575,6 +2705,7 @@
 5C:0B:3B	Huawei Technologies Co.,Ltd
 5C:10:1E	zte corporation
 5C:10:C5	Samsung Electronics Co.,Ltd
+5C:13:AC	Apple, Inc.
 5C:13:CC	Apple, Inc.
 5C:16:48	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 5C:16:7D	Huawei Technologies Co.,Ltd
@@ -2583,6 +2714,7 @@
 5C:1B:F4	Apple, Inc.
 5C:1C:B9	vivo Mobile Communication Co., Ltd.
 5C:1D:D9	Apple, Inc.
+5C:23:C2	Apple, Inc.
 5C:2E:59	Samsung Electronics Co.,Ltd
 5C:33:7B	Google, Inc.
 5C:36:B8	TCL King Electrical Appliances (Huizhou) Co., Ltd
@@ -2590,6 +2722,7 @@
 5C:3C:27	Samsung Electronics Co.,Ltd
 5C:3E:1B	Apple, Inc.
 5C:40:71	Xiaomi Communications Co Ltd
+5C:48:79	Huawei Technologies Co.,Ltd
 5C:49:7D	Samsung Electronics Co.,Ltd
 5C:4C:A9	Huawei Technologies Co.,Ltd
 5C:4D:BF	zte corporation
@@ -2604,6 +2737,7 @@
 5C:59:48	Apple, Inc.
 5C:5E:0A	Samsung Electronics Co.,Ltd
 5C:5E:BB	Huawei Technologies Co.,Ltd
+5C:61:17	Huawei Technologies Co.,Ltd
 5C:64:7A	Huawei Technologies Co.,Ltd
 5C:66:6C	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 5C:70:17	Apple, Inc.
@@ -2615,6 +2749,7 @@
 5C:7D:AE	zte corporation
 5C:83:82	Nokia
 5C:84:3C	Sony Interactive Entertainment Inc.
+5C:85:05	Huawei Device Co., Ltd.
 5C:86:5C	Samsung Electronics Co.,Ltd
 5C:87:30	Apple, Inc.
 5C:8D:4E	Apple, Inc.
@@ -2640,6 +2775,7 @@
 5C:B3:95	Huawei Technologies Co.,Ltd
 5C:B4:3E	Huawei Technologies Co.,Ltd
 5C:B5:24	Sony Corporation
+5C:B8:B7	Apple, Inc.
 5C:BB:EE	zte corporation
 5C:BD:9A	Huawei Device Co., Ltd.
 5C:C0:A0	Huawei Technologies Co.,Ltd
@@ -2667,6 +2803,7 @@
 5C:F7:E6	Apple, Inc.
 5C:F9:38	Apple, Inc.
 5C:F9:6A	Huawei Technologies Co.,Ltd
+5C:FF:A9	zte corporation
 60:01:B1	Huawei Technologies Co.,Ltd
 60:03:08	Apple, Inc.
 60:06:E3	Apple, Inc.
@@ -2679,8 +2816,10 @@
 60:18:3A	Huawei Device Co., Ltd.
 60:18:88	zte corporation
 60:1D:91	Motorola Mobility LLC, a Lenovo Company
+60:1F:56	Huawei Technologies Co.,Ltd
 60:21:01	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 60:2E:20	Huawei Technologies Co.,Ltd
+60:2E:D5	Apple, Inc.
 60:30:B3	Huawei Technologies Co.,Ltd
 60:30:D4	Apple, Inc.
 60:33:4B	Apple, Inc.
@@ -2691,6 +2830,7 @@
 60:45:CB	ASUSTek COMPUTER INC.
 60:4D:E1	Huawei Technologies Co.,Ltd
 60:4F:5B	Huawei Device Co., Ltd.
+60:53:55	Huawei Technologies Co.,Ltd
 60:53:75	Huawei Technologies Co.,Ltd
 60:56:B1	Huawei Technologies Co.,Ltd
 60:57:C8	Apple, Inc.
@@ -2708,6 +2848,7 @@
 60:73:BC	zte corporation
 60:75:6C	LG Electronics
 60:77:E2	Samsung Electronics Co.,Ltd
+60:79:C9	Huawei Technologies Co.,Ltd
 60:7E:C9	Apple, Inc.
 60:7E:CD	Huawei Technologies Co.,Ltd
 60:7E:DD	Microsoft Mobile Oy
@@ -2725,6 +2866,7 @@
 60:91:F3	vivo Mobile Communication Co., Ltd.
 60:92:17	Apple, Inc.
 60:93:16	Apple, Inc.
+60:95:78	Samsung Electronics Co.,Ltd
 60:95:BD	Apple, Inc.
 60:96:A4	Huawei Technologies Co.,Ltd
 60:98:49	Nokia Solutions and Networks India Private Limited
@@ -2774,6 +2916,7 @@
 60:F1:8A	Huawei Technologies Co.,Ltd
 60:F4:45	Apple, Inc.
 60:F5:49	Apple, Inc.
+60:F7:23	Beijing Xiaomi Mobile Software Co., Ltd
 60:F8:1D	Apple, Inc.
 60:FA:9D	Huawei Technologies Co.,Ltd
 60:FA:CD	Apple, Inc.
@@ -2803,6 +2946,7 @@
 64:2C:0F	vivo Mobile Communication Co., Ltd.
 64:2C:AC	Huawei Technologies Co.,Ltd
 64:2E:41	Huawei Technologies Co.,Ltd
+64:2F:1C	Huawei Technologies Co.,Ltd
 64:31:35	Apple, Inc.
 64:3E:0A	Huawei Technologies Co.,Ltd
 64:3E:8C	Huawei Technologies Co.,Ltd
@@ -2811,6 +2955,7 @@
 64:48:42	Apple, Inc.
 64:51:F4	Huawei Device Co., Ltd.
 64:53:E0	Huawei Technologies Co.,Ltd
+64:56:B5	Samsung Electronics Co.,Ltd
 64:5A:36	Apple, Inc.
 64:5A:ED	Apple, Inc.
 64:5D:F4	Samsung Electronics Co.,Ltd
@@ -2847,6 +2992,7 @@
 64:A5:C3	Apple, Inc.
 64:A6:51	Huawei Technologies Co.,Ltd
 64:A7:69	HTC Corporation
+64:AC:E0	Samsung Electronics Co.,Ltd
 64:B0:A6	Apple, Inc.
 64:B0:E8	Huawei Device Co., Ltd.
 64:B3:10	Samsung Electronics Co.,Ltd
@@ -2859,13 +3005,17 @@
 64:BC:43	Huawei Technologies Co.,Ltd
 64:BD:6D	Apple, Inc.
 64:BF:6B	Huawei Technologies Co.,Ltd
+64:C0:45	Apple, Inc.
 64:C2:DE	LG Electronics (Mobile Communications)
 64:C3:94	Huawei Technologies Co.,Ltd
 64:C7:53	Apple, Inc.
+64:C9:05	Apple, Inc.
+64:CA:80	Realme Chongqing Mobile Telecommunications Corp.,Ltd.
 64:CB:E9	LG Innotek
 64:CC:2E	Xiaomi Communications Co Ltd
 64:D0:D6	Samsung Electronics Co.,Ltd
 64:D2:C4	Apple, Inc.
+64:D5:62	Huawei Device Co., Ltd.
 64:D7:C0	Huawei Device Co., Ltd.
 64:DB:38	zte corporation
 64:DB:43	Motorola (Wuhan) Mobility Technologies Communication Co., Ltd.
@@ -2881,6 +3031,7 @@
 68:05:71	Samsung Electronics Co.,Ltd
 68:09:27	Apple, Inc.
 68:13:24	Huawei Device Co., Ltd.
+68:1A:47	Apple, Inc.
 68:1A:B2	zte corporation
 68:1B:EF	Huawei Technologies Co.,Ltd
 68:22:E5	Huawei Device Co., Ltd.
@@ -2891,6 +3042,7 @@
 68:2F:67	Apple, Inc.
 68:30:36	Apple, Inc.
 68:30:45	Huawei Technologies Co.,Ltd
+68:3B:09	Apple, Inc.
 68:3E:34	MEIZU Technology Co., Ltd.
 68:3E:C0	Apple, Inc.
 68:44:65	Apple, Inc.
@@ -2923,6 +3075,7 @@
 68:89:C1	Huawei Technologies Co.,Ltd
 68:8A:F0	zte corporation
 68:8F:84	Huawei Technologies Co.,Ltd
+68:92:68	Motorola Mobility LLC, a Lenovo Company
 68:94:4A	zte corporation
 68:95:1B	Huawei Device Co., Ltd.
 68:96:2E	Huawei Technologies Co.,Ltd
@@ -2937,6 +3090,7 @@
 68:A3:4F	Nokia
 68:A4:6A	Huawei Technologies Co.,Ltd
 68:A5:93	Apple, Inc.
+68:A7:29	Apple, Inc.
 68:A7:B4	Honor Device Co., Ltd.
 68:A8:28	Huawei Technologies Co.,Ltd
 68:A8:6D	Apple, Inc.
@@ -3020,6 +3174,7 @@
 6C:71:D2	Huawei Technologies Co.,Ltd
 6C:72:E7	Apple, Inc.
 6C:76:37	Huawei Device Co., Ltd.
+6C:77:42	zte corporation
 6C:77:F0	Huawei Device Co., Ltd.
 6C:7E:67	Apple, Inc.
 6C:7F:49	Huawei Device Co., Ltd.
@@ -3028,6 +3183,7 @@
 6C:8B:2F	zte corporation
 6C:8D:C1	Apple, Inc.
 6C:8F:B5	Microsoft Mobile Oy
+6C:91:88	Nokia
 6C:94:F8	Apple, Inc.
 6C:96:CF	Apple, Inc.
 6C:97:6D	Motorola Mobility LLC, a Lenovo Company
@@ -3078,6 +3234,7 @@
 70:25:26	Nokia
 70:26:05	SONY Visual Products Inc.
 70:28:04	Realme Chongqing Mobile Telecommunications Corp.,Ltd.
+70:28:7D	Google, Inc.
 70:28:8B	Samsung Electronics Co.,Ltd
 70:2A:D5	Samsung Electronics Co.,Ltd
 70:2E:22	zte corporation
@@ -3101,12 +3258,14 @@
 70:5A:AC	Samsung Electronics Co.,Ltd
 70:5E:55	Realme Chongqing MobileTelecommunications Corp Ltd
 70:5F:A3	Xiaomi Communications Co Ltd
+70:62:CB	Apple, Inc.
 70:66:2A	Sony Interactive Entertainment Inc.
 70:66:B9	Huawei Device Co., Ltd.
 70:6A:C9	zte corporation
 70:6E:10	Huawei Technologies Co.,Ltd
 70:70:0D	Apple, Inc.
 70:70:13	Huawei Technologies Co.,Ltd
+70:70:D5	Huawei Technologies Co.,Ltd
 70:72:0D	Lenovo Mobile Communication Technology Ltd.
 70:72:3C	Huawei Technologies Co.,Ltd
 70:72:FE	Apple, Inc.
@@ -3124,6 +3283,7 @@
 70:8D:09	Nokia Corporation
 70:8F:47	vivo Mobile Communication Co., Ltd.
 70:90:B7	Huawei Device Co., Ltd.
+70:96:84	Apple, Inc.
 70:97:51	Beijing Xiaomi Mobile Software Co., Ltd
 70:9A:C4	Huawei Device Co., Ltd.
 70:9C:45	Huawei Technologies Co.,Ltd
@@ -3134,6 +3294,7 @@
 70:A7:03	Honor Device Co., Ltd.
 70:A8:E3	Huawei Technologies Co.,Ltd
 70:AA:B2	BlackBerry RTS
+70:AE:2A	Apple, Inc.
 70:AE:D5	Apple, Inc.
 70:B1:3D	Samsung Electronics Co.,Ltd
 70:B3:06	Apple, Inc.
@@ -3165,6 +3326,7 @@
 74:0A:E1	Huawei Device Co., Ltd.
 74:0C:EE	Huawei Device Co., Ltd.
 74:0E:A4	Apple, Inc.
+74:13:6A	Motorola Mobility LLC, a Lenovo Company
 74:14:D0	Apple, Inc.
 74:15:75	Xiaomi Communications Co Ltd
 74:15:F5	Apple, Inc.
@@ -3177,6 +3339,7 @@
 74:24:35	Huawei Device Co., Ltd.
 74:26:FF	zte corporation
 74:28:69	Huawei Device Co., Ltd.
+74:29:17	Apple, Inc.
 74:29:59	Apple, Inc.
 74:31:74	Apple, Inc.
 74:33:57	vivo Mobile Communication Co., Ltd.
@@ -3206,14 +3369,17 @@
 74:73:B4	Apple, Inc.
 74:74:46	Google, Inc.
 74:77:86	Apple, Inc.
+74:78:DE	vivo Mobile Communication Co., Ltd.
 74:81:14	Apple, Inc.
 74:86:69	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 74:86:6F	zte corporation
 74:87:2E	Huawei Technologies Co.,Ltd
 74:88:2A	Huawei Technologies Co.,Ltd
+74:8B:23	Samsung Electronics Co.,Ltd
 74:8D:08	Apple, Inc.
 74:8D:AA	Huawei Technologies Co.,Ltd
 74:8F:3C	Apple, Inc.
+74:8F:BF	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 74:97:81	zte corporation
 74:9B:89	Huawei Technologies Co.,Ltd
 74:9D:8F	Huawei Technologies Co.,Ltd
@@ -3224,6 +3390,7 @@
 74:A6:CD	Apple, Inc.
 74:A7:22	LG Electronics (Mobile Communications)
 74:A7:8E	zte corporation
+74:A9:81	Huawei Technologies Co.,Ltd
 74:B0:59	Motorola Mobility LLC, a Lenovo Company
 74:B5:7E	zte corporation
 74:B5:87	Apple, Inc.
@@ -3238,6 +3405,7 @@
 74:D0:2B	ASUSTek COMPUTER INC.
 74:D2:1D	Huawei Technologies Co.,Ltd
 74:D5:58	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
+74:D5:E8	Apple, Inc.
 74:D6:E5	Huawei Device Co., Ltd.
 74:E1:47	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 74:E1:B6	Apple, Inc.
@@ -3279,12 +3447,14 @@
 78:2B:60	Huawei Device Co., Ltd.
 78:2D:AD	Huawei Technologies Co.,Ltd
 78:2E:EF	Nokia Corporation
+78:2F:02	Honor Device Co., Ltd.
 78:30:5D	zte corporation
 78:31:2B	zte corporation
 78:31:C1	Apple, Inc.
 78:33:C6	Samsung Electronics Co.,Ltd
 78:34:09	Huawei Technologies Co.,Ltd
 78:34:86	Nokia
+78:34:B4	Huawei Technologies Co.,Ltd
 78:34:FD	vivo Mobile Communication Co., Ltd.
 78:36:CC	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 78:37:16	Samsung Electronics Co.,Ltd
@@ -3293,8 +3463,10 @@
 78:3F:4D	Apple, Inc.
 78:40:E4	Samsung Electronics Co.,Ltd
 78:45:B3	Huawei Device Co., Ltd.
+78:45:DC	Huawei Technologies Co.,Ltd
 78:46:D4	Samsung Electronics Co.,Ltd
 78:47:1D	Samsung Electronics Co.,Ltd
+78:49:D7	Samsung Electronics Co.,Ltd
 78:4F:43	Apple, Inc.
 78:52:1A	Samsung Electronics Co.,Ltd
 78:52:37	zte corporation
@@ -3314,6 +3486,7 @@
 78:6C:1C	Apple, Inc.
 78:6C:AB	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 78:75:3E	Apple, Inc.
+78:78:26	Huawei Technologies Co.,Ltd
 78:79:84	Apple, Inc.
 78:7B:8A	Apple, Inc.
 78:7E:42	zte corporation
@@ -3324,6 +3497,8 @@
 78:88:6D	Apple, Inc.
 78:90:A2	zte corporation
 78:92:3E	Nokia Corporation
+78:96:0D	Apple, Inc.
+78:96:6E	Huawei Device Co., Ltd.
 78:96:82	zte corporation
 78:99:87	Xiaomi Communications Co Ltd
 78:9E:D0	Samsung Electronics Co.,Ltd
@@ -3335,7 +3510,9 @@
 78:AB:BB	Samsung Electronics Co.,Ltd
 78:B4:6A	Huawei Technologies Co.,Ltd
 78:B5:54	Huawei Device Co., Ltd.
+78:B5:F2	Huawei Technologies Co.,Ltd
 78:B6:FE	Samsung Electronics Co.,Ltd
+78:BB:5C	Nokia Solutions and Networks India Private Limited
 78:BD:BC	Samsung Electronics Co.,Ltd
 78:C1:1D	Samsung Electronics Co.,Ltd
 78:C1:A7	zte corporation
@@ -3355,6 +3532,7 @@
 78:DA:AF	Huawei Technologies Co.,Ltd
 78:DC:87	Huawei Technologies Co.,Ltd
 78:DD:33	Huawei Technologies Co.,Ltd
+78:E0:C5	Samsung Electronics Co.,Ltd
 78:E2:2C	Huawei Device Co., Ltd.
 78:E3:DE	Apple, Inc.
 78:E6:1C	Honor Device Co., Ltd.
@@ -3382,6 +3560,8 @@
 7C:10:C9	ASUSTek COMPUTER INC.
 7C:11:BE	Apple, Inc.
 7C:11:CB	Huawei Technologies Co.,Ltd
+7C:16:2A	Huawei Device Co., Ltd.
+7C:19:E3	Google, Inc.
 7C:1A:C0	Huawei Technologies Co.,Ltd
 7C:1B:93	Huawei Device Co., Ltd.
 7C:1C:4E	LG Innotek
@@ -3407,7 +3587,9 @@
 7C:46:85	Motorola (Wuhan) Mobility Technologies Communication Co., Ltd.
 7C:49:EB	XIAOMI Electronics,CO.,LTD
 7C:4B:26	Apple, Inc.
+7C:4F:CD	Apple, Inc.
 7C:50:49	Apple, Inc.
+7C:59:B1	Apple, Inc.
 7C:60:97	Huawei Technologies Co.,Ltd
 7C:60:DB	zte corporation
 7C:61:30	Apple, Inc.
@@ -3428,14 +3610,17 @@
 7C:7B:BF	Samsung Electronics Co.,Ltd
 7C:7D:21	zte corporation
 7C:7D:3D	Huawei Technologies Co.,Ltd
+7C:85:2F	Huawei Device Co., Ltd.
 7C:85:30	Nokia
 7C:89:31	Huawei Device Co., Ltd.
 7C:89:56	Samsung Electronics Co.,Ltd
 7C:8B:B5	Samsung Electronics Co.,Ltd
+7C:90:E9	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 7C:91:22	Samsung Electronics Co.,Ltd
 7C:94:2A	Huawei Technologies Co.,Ltd
 7C:97:E1	Huawei Device Co., Ltd.
 7C:9A:1D	Apple, Inc.
+7C:A0:5E	Motorola Mobility LLC, a Lenovo Company
 7C:A1:77	Huawei Technologies Co.,Ltd
 7C:A1:AE	Apple, Inc.
 7C:A2:3E	Huawei Technologies Co.,Ltd
@@ -3457,9 +3642,11 @@
 7C:C5:37	Apple, Inc.
 7C:C8:82	Huawei Technologies Co.,Ltd
 7C:C8:DF	Apple, Inc.
+7C:D1:AD	Apple, Inc.
 7C:D1:C3	Apple, Inc.
 7C:D2:DA	Apple, Inc.
 7C:D3:E5	Huawei Technologies Co.,Ltd
+7C:D6:2C	Apple, Inc.
 7C:D6:61	Xiaomi Communications Co Ltd
 7C:D9:5C	Google, Inc.
 7C:D9:A0	Huawei Technologies Co.,Ltd
@@ -3489,7 +3676,9 @@
 80:13:82	Huawei Technologies Co.,Ltd
 80:18:A7	Samsung Electronics Co.,Ltd
 80:19:70	Samsung Electronics Co.,Ltd
+80:1D:39	Apple, Inc.
 80:20:FD	Samsung Electronics Co.,Ltd
+80:2A:F6	Honor Device Co., Ltd.
 80:2D:1A	zte corporation
 80:2E:C3	Huawei Technologies Co.,Ltd
 80:2E:DE	Huawei Device Co., Ltd.
@@ -3499,10 +3688,13 @@
 80:38:BC	Huawei Technologies Co.,Ltd
 80:39:8C	Samsung Electronics Co.,Ltd
 80:3C:20	Huawei Technologies Co.,Ltd
+80:3F:D4	Apple, Inc.
 80:41:26	Huawei Technologies Co.,Ltd
+80:47:15	Apple, Inc.
 80:47:86	Samsung Electronics Co.,Ltd
 80:49:71	Apple, Inc.
 80:4A:14	Apple, Inc.
+80:4D:CB	Huawei Device Co., Ltd.
 80:4E:70	Samsung Electronics Co.,Ltd
 80:4E:81	Samsung Electronics Co.,Ltd
 80:50:1B	Nokia Corporation
@@ -3532,6 +3724,7 @@
 80:83:F6	Apple, Inc.
 80:86:D9	Samsung Electronics Co.,Ltd
 80:88:00	zte corporation
+80:89:43	Samsung Electronics Co.,Ltd
 80:8A:8B	vivo Mobile Communication Co., Ltd.
 80:8A:BD	Samsung Electronics Co.,Ltd
 80:8F:97	Xiaomi Communications Co Ltd
@@ -3553,6 +3746,7 @@
 80:B9:46	Nokia
 80:B9:89	Apple, Inc.
 80:BE:05	Apple, Inc.
+80:BF:21	vivo Mobile Communication Co., Ltd.
 80:CC:12	Huawei Device Co., Ltd.
 80:CE:B9	Samsung Electronics Co.,Ltd
 80:CF:41	Lenovo Mobile Communication Technology Ltd.
@@ -3561,9 +3755,12 @@
 80:D1:CE	Apple, Inc.
 80:D4:A5	Huawei Technologies Co.,Ltd
 80:D6:05	Apple, Inc.
+80:DA:CE	Huawei Device Co., Ltd.
 80:E1:BF	Huawei Technologies Co.,Ltd
+80:E6:3C	Xiaomi Communications Co Ltd
 80:E6:50	Apple, Inc.
 80:E7:69	Realme Chongqing Mobile Telecommunications Corp.,Ltd.
+80:E8:A4	zte corporation
 80:EA:96	Apple, Inc.
 80:ED:2C	Apple, Inc.
 80:F1:A4	Huawei Technologies Co.,Ltd
@@ -3571,18 +3768,22 @@
 80:FD:7A	BLU Products Inc
 80:FD:7B	BLU Products Inc
 84:00:D2	Sony Corporation
+84:01:6E	Honor Device Co., Ltd.
 84:05:11	Apple, Inc.
 84:0F:4C	Apple, Inc.
 84:10:0D	Motorola Mobility LLC, a Lenovo Company
 84:11:9E	Samsung Electronics Co.,Ltd
 84:13:9F	zte corporation
 84:15:D3	Huawei Technologies Co.,Ltd
+84:16:23	zte corporation
+84:19:85	Samsung Electronics Co.,Ltd
 84:1C:70	zte corporation
 84:21:F1	Huawei Technologies Co.,Ltd
 84:22:89	Samsung Electronics Co.,Ltd
 84:25:19	Samsung Electronics
 84:25:DB	Samsung Electronics Co.,Ltd
 84:26:2B	Nokia
+84:27:89	Apple, Inc.
 84:29:99	Apple, Inc.
 84:2E:27	Samsung Electronics Co.,Ltd
 84:2F:57	Apple, Inc.
@@ -3590,6 +3791,7 @@
 84:38:35	Apple, Inc.
 84:39:FC	Nokia
 84:3C:99	zte corporation
+84:3C:FC	Huawei Technologies Co.,Ltd
 84:3E:92	Huawei Technologies Co.,Ltd
 84:41:67	Apple, Inc.
 84:46:93	Beijing Xiaomi Mobile Software Co., Ltd
@@ -3599,6 +3801,7 @@
 84:51:81	Samsung Electronics Co.,Ltd
 84:54:DF	Huawei Device Co., Ltd.
 84:55:A5	Samsung Electronics Co.,Ltd
+84:57:EB	Motorola Mobility LLC, a Lenovo Company
 84:5B:12	Huawei Technologies Co.,Ltd
 84:5F:04	Samsung Electronics Co.,Ltd
 84:64:DD	Huawei Technologies Co.,Ltd
@@ -3634,6 +3837,7 @@
 84:AC:16	Apple, Inc.
 84:AD:58	Huawei Technologies Co.,Ltd
 84:AD:8D	Apple, Inc.
+84:AE:DE	Xiaomi Communications Co Ltd
 84:B1:53	Apple, Inc.
 84:B1:E4	Apple, Inc.
 84:B5:41	Samsung Electronics Co.,Ltd
@@ -3661,10 +3865,12 @@
 84:FE:40	Huawei Technologies Co.,Ltd
 88:03:E9	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 88:07:4B	LG Electronics (Mobile Communications)
+88:10:32	Apple, Inc.
 88:10:8F	Huawei Technologies Co.,Ltd
 88:11:96	Huawei Technologies Co.,Ltd
 88:15:66	Huawei Device Co., Ltd.
 88:15:C5	Huawei Device Co., Ltd.
+88:17:A8	Apple, Inc.
 88:18:F1	Nokia
 88:19:08	Apple, Inc.
 88:1E:5A	Apple, Inc.
@@ -3708,11 +3914,13 @@
 88:6C:60	Xiaomi Communications Co Ltd
 88:6D:2D	Huawei Device Co., Ltd.
 88:6E:EB	Huawei Technologies Co.,Ltd
+88:70:15	Apple, Inc.
 88:70:8C	Lenovo Mobile Communication Technology Ltd.
 88:74:77	Huawei Technologies Co.,Ltd
 88:75:98	Samsung Electronics Co.,Ltd
 88:79:7E	Motorola Mobility LLC, a Lenovo Company
 88:7B:2C	zte corporation
+88:7E:9B	Apple, Inc.
 88:7F:D5	zte corporation
 88:81:B9	Huawei Device Co., Ltd.
 88:83:22	Samsung Electronics Co.,Ltd
@@ -3744,6 +3952,7 @@
 88:C0:8B	Apple, Inc.
 88:C1:74	zte corporation
 88:C2:27	Huawei Technologies Co.,Ltd
+88:C3:44	Google, Inc.
 88:C3:97	Beijing Xiaomi Mobile Software Co., Ltd
 88:C6:63	Apple, Inc.
 88:C6:E8	Huawei Technologies Co.,Ltd
@@ -3764,6 +3973,7 @@
 88:E3:AB	Huawei Technologies Co.,Ltd
 88:E8:7F	Apple, Inc.
 88:E9:FE	Apple, Inc.
+88:F2:CE	Apple, Inc.
 88:F5:6E	Huawei Technologies Co.,Ltd
 88:F6:DC	Huawei Device Co., Ltd.
 88:F7:BF	vivo Mobile Communication Co., Ltd.
@@ -3774,11 +3984,14 @@
 8C:0C:87	Nokia
 8C:0D:76	Huawei Technologies Co.,Ltd
 8C:0E:E3	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
+8C:0F:7E	TCL King Electrical Appliances(Huizhou)Co.,Ltd
 8C:0F:C9	Huawei Device Co., Ltd.
 8C:14:B4	zte corporation
 8C:15:C7	Huawei Technologies Co.,Ltd
 8C:17:B6	Huawei Device Co., Ltd.
+8C:18:01	zte corporation
 8C:1A:BF	Samsung Electronics Co.,Ltd
+8C:21:14	Huawei Device Co., Ltd.
 8C:25:05	Huawei Technologies Co.,Ltd
 8C:26:AA	Apple, Inc.
 8C:29:37	Apple, Inc.
@@ -3816,6 +4029,7 @@
 8C:7A:AA	Apple, Inc.
 8C:7B:9D	Apple, Inc.
 8C:7C:92	Apple, Inc.
+8C:82:83	Apple, Inc.
 8C:83:DF	Nokia
 8C:83:E1	Samsung Electronics Co.,Ltd
 8C:83:E8	Huawei Technologies Co.,Ltd
@@ -3830,6 +4044,8 @@
 8C:91:A4	Apple, Inc.
 8C:93:8B	Realme Chongqing Mobile Telecommunications Corp.,Ltd.
 8C:98:6B	Apple, Inc.
+8C:98:85	Samsung Electronics Co.,Ltd
+8C:A2:F5	Huawei Device Co., Ltd.
 8C:A3:EC	Samsung Electronics Co.,Ltd
 8C:A5:CF	Huawei Technologies Co.,Ltd
 8C:A9:6D	Huawei Technologies Co.,Ltd
@@ -3837,6 +4053,7 @@
 8C:B0:E9	Samsung Electronics.,LTD
 8C:BE:BE	Xiaomi Communications Co Ltd
 8C:BF:A6	Samsung Electronics Co.,Ltd
+8C:C2:46	Apple, Inc.
 8C:C5:D0	Samsung Electronics Co.,Ltd
 8C:C8:CD	Samsung Electronics Co.,Ltd
 8C:C9:E9	Huawei Device Co., Ltd.
@@ -3865,6 +4082,8 @@
 90:01:17	Huawei Technologies Co.,Ltd
 90:03:25	Huawei Technologies Co.,Ltd
 90:06:28	Samsung Electronics Co.,Ltd
+90:06:DB	Huawei Technologies Co.,Ltd
+90:0A:48	Samsung Electronics Co.,Ltd
 90:0C:C8	Google, Inc.
 90:16:BA	Huawei Technologies Co.,Ltd
 90:17:3F	Huawei Technologies Co.,Ltd
@@ -3885,6 +4104,7 @@
 90:47:48	Sony Interactive Entertainment Inc.
 90:4C:02	vivo Mobile Communication Co., Ltd.
 90:4C:C5	Apple, Inc.
+90:4D:E2	Apple, Inc.
 90:4E:2B	Huawei Technologies Co.,Ltd
 90:5E:44	Huawei Technologies Co.,Ltd
 90:5F:7A	Apple, Inc.
@@ -3896,6 +4116,7 @@
 90:68:C3	Motorola Mobility LLC, a Lenovo Company
 90:72:40	Apple, Inc.
 90:73:5A	Motorola Mobility LLC, a Lenovo Company
+90:74:F2	Huawei Technologies Co.,Ltd
 90:75:BC	Nokia Shanghai Bell Co., Ltd.
 90:78:B2	Xiaomi Communications Co Ltd
 90:79:CF	zte corporation
@@ -3920,18 +4141,22 @@
 90:AC:6D	Apple, Inc.
 90:AD:F7	vivo Mobile Communication Co., Ltd.
 90:B0:ED	Apple, Inc.
+90:B1:41	Motorola Mobility LLC, a Lenovo Company
 90:B1:44	Samsung Electronics Co.,Ltd
 90:B2:1F	Apple, Inc.
 90:B6:22	Samsung Electronics Co.,Ltd
 90:B7:90	Apple, Inc.
 90:B9:31	Apple, Inc.
 90:B9:42	zte corporation
+90:B9:F9	Motorola Mobility LLC, a Lenovo Company
+90:BA:09	Huawei Technologies Co.,Ltd
 90:C1:15	Sony Corporation
 90:C1:19	Nokia
 90:C1:C6	Apple, Inc.
 90:C5:4A	vivo Mobile Communication Co., Ltd.
 90:C7:10	zte corporation
 90:C7:D8	zte corporation
+90:C9:7E	Huawei Technologies Co.,Ltd
 90:CA:FA	Google, Inc.
 90:CC:7A	Huawei Device Co., Ltd.
 90:CD:E8	Apple, Inc.
@@ -3939,6 +4164,7 @@
 90:D2:0B	Nokia Shanghai Bell Co., Ltd.
 90:D4:32	zte corporation
 90:D4:73	vivo Mobile Communication Co., Ltd.
+90:D7:33	Huawei Technologies Co.,Ltd
 90:D8:F3	zte corporation
 90:DD:5D	Apple, Inc.
 90:DF:7D	Realme Chongqing Mobile Telecommunications Corp.,Ltd.
@@ -3949,9 +4175,11 @@
 90:EC:E3	Nokia
 90:EC:EA	Apple, Inc.
 90:EE:C7	Samsung Electronics Co.,Ltd
+90:F0:4C	Nokia Solutions (Shanghai) Co.,Ltd.
 90:F0:52	MEIZU Technology Co., Ltd.
 90:F1:AA	Samsung Electronics Co.,Ltd
 90:F6:44	Huawei Device Co., Ltd.
+90:F8:0C	Samsung Electronics Co.,Ltd
 90:F9:70	Huawei Technologies Co.,Ltd
 90:F9:B7	Huawei Technologies Co.,Ltd
 90:FB:5D	Beijing Xiaomi Mobile Software Co., Ltd
@@ -3967,6 +4195,7 @@
 94:0B:83	zte corporation
 94:0B:CD	Apple, Inc.
 94:0C:98	Apple, Inc.
+94:0E:5F	Apple, Inc.
 94:0E:6B	Huawei Technologies Co.,Ltd
 94:0E:E7	Huawei Technologies Co.,Ltd
 94:14:7A	vivo Mobile Communication Co., Ltd.
@@ -3974,6 +4203,7 @@
 94:16:25	Apple, Inc.
 94:17:00	Xiaomi Communications Co Ltd
 94:17:87	Nokia
+94:1D:D4	Google, Inc.
 94:20:53	Nokia Corporation
 94:21:57	Apple, Inc.
 94:24:53	Huawei Technologies Co.,Ltd
@@ -3993,17 +4223,20 @@
 94:44:44	LG Innotek
 94:45:60	Google, Inc.
 94:47:88	Huawei Technologies Co.,Ltd
+94:49:F6	Huawei Device Co., Ltd.
 94:4F:DB	Nokia
 94:51:03	Samsung Electronics Co.,Ltd
 94:52:44	Samsung Electronics Co.,Ltd
 94:54:CE	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 94:5A:EA	Huawei Technologies Co.,Ltd
 94:5C:9A	Apple, Inc.
+94:5D:BF	Nokia Solutions and Networks India Private Limited
 94:60:10	Huawei Device Co., Ltd.
 94:62:6D	Beijing Xiaomi Electronics Co.,Ltd
 94:63:72	vivo Mobile Communication Co., Ltd.
 94:63:D1	Samsung Electronics Co.,Ltd
 94:65:2D	OnePlus Technology (Shenzhen) Co., Ltd
+94:6A:7C	OnePlus Technology (Shenzhen) Co., Ltd
 94:76:B7	Samsung Electronics Co.,Ltd
 94:77:2B	Huawei Technologies Co.,Ltd
 94:7A:F4	Huawei Technologies Co.,Ltd
@@ -4020,12 +4253,15 @@
 94:95:A0	Google, Inc.
 94:97:AE	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 94:98:69	zte corporation
+94:9C:BE	Huawei Technologies Co.,Ltd
 94:9F:8B	zte corporation
 94:A0:7D	Huawei Device Co., Ltd.
+94:A2:5D	Huawei Technologies Co.,Ltd
 94:A4:F9	Huawei Technologies Co.,Ltd
 94:A7:B7	zte corporation
 94:AA:07	Nokia
 94:AB:FE	Nokia
+94:AD:05	Huawei Device Co., Ltd.
 94:AD:23	Apple, Inc.
 94:B0:1F	Apple, Inc.
 94:B1:0A	Samsung Electronics Co.,Ltd
@@ -4068,6 +4304,7 @@
 98:00:C6	Apple, Inc.
 98:01:A7	Apple, Inc.
 98:03:D8	Apple, Inc.
+98:04:5F	Huawei Device Co., Ltd.
 98:06:3C	Samsung Electronics Co.,Ltd
 98:07:09	Huawei Device Co., Ltd.
 98:09:CF	OnePlus Technology (Shenzhen) Co., Ltd
@@ -4086,6 +4323,8 @@
 98:1C:A2	Apple, Inc.
 98:1D:FA	Samsung Electronics Co.,Ltd
 98:24:7B	Huawei Technologies Co.,Ltd
+98:2A:FD	Huawei Technologies Co.,Ltd
+98:2B:A6	Motorola Mobility LLC, a Lenovo Company
 98:2D:68	Samsung Electronics Co., Ltd
 98:2F:86	vivo Mobile Communication Co., Ltd.
 98:2F:F8	Huawei Device Co., Ltd.
@@ -4114,6 +4353,7 @@
 98:6C:F5	zte corporation
 98:6F:60	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 98:75:1A	Huawei Device Co., Ltd.
+98:75:52	Xiaomi Communications Co Ltd
 98:7E:B5	Huawei Device Co., Ltd.
 98:7E:E3	vivo Mobile Communication Co., Ltd.
 98:80:EE	Samsung Electronics Co.,Ltd
@@ -4127,7 +4367,9 @@
 98:9A:B9	zte corporation
 98:9C:57	Huawei Technologies Co.,Ltd
 98:9E:63	Apple, Inc.
+98:9E:85	Honor Device Co., Ltd.
 98:9F:1E	Huawei Technologies Co.,Ltd
+98:A3:75	Huawei Device Co., Ltd.
 98:A5:F9	Apple, Inc.
 98:AC:EF	Realme Chongqing Mobile Telecommunications Corp.,Ltd.
 98:AD:1D	Huawei Device Co., Ltd.
@@ -4152,6 +4394,7 @@
 98:E0:81	Beijing Xiaomi Mobile Software Co., Ltd
 98:E0:D9	Apple, Inc.
 98:E7:F5	Huawei Technologies Co.,Ltd
+98:E8:59	Apple, Inc.
 98:EE:8C	zte corporation
 98:EE:94	Xiaomi Communications Co Ltd
 98:F0:83	Huawei Technologies Co.,Ltd
@@ -4170,6 +4413,7 @@
 9C:03:51	Huawei Technologies Co.,Ltd
 9C:04:EB	Apple, Inc.
 9C:05:67	Honor Device Co., Ltd.
+9C:09:CA	Huawei Device Co., Ltd.
 9C:0C:DF	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 9C:18:74	Nokia Danmark A/S
 9C:1A:25	Apple, Inc.
@@ -4235,6 +4479,7 @@
 9C:92:4F	Apple, Inc.
 9C:95:67	Huawei Device Co., Ltd.
 9C:96:13	Lenovo Future Communication Technology (Chongqing) Company Limited
+9C:97:74	Huawei Technologies Co.,Ltd
 9C:97:93	Huawei Technologies Co.,Ltd
 9C:99:A0	Xiaomi Communications Co Ltd
 9C:9D:7E	Beijing Xiaomi Mobile Software Co., Ltd
@@ -4272,6 +4517,7 @@
 9C:EA:97	Honor Device Co., Ltd.
 9C:EC:61	Huawei Device Co., Ltd.
 9C:F1:55	Nokia
+9C:F2:7E	Samsung Electronics Co.,Ltd
 9C:F3:87	Apple, Inc.
 9C:F3:AC	Apple, Inc.
 9C:F4:8E	Apple, Inc.
@@ -4327,6 +4573,7 @@ A0:78:2D	Apple, Inc.
 A0:7D:9C	Samsung Electronics Co.,Ltd
 A0:82:1F	Samsung Electronics Co.,Ltd
 A0:86:C6	Xiaomi Communications Co Ltd
+A0:87:BE	Apple, Inc.
 A0:88:9D	Huawei Device Co., Ltd.
 A0:8C:F8	Huawei Technologies Co.,Ltd
 A0:8D:16	Huawei Technologies Co.,Ltd
@@ -4348,10 +4595,12 @@ A0:AD:62	Huawei Technologies Co.,Ltd
 A0:AD:9F	ASUSTek COMPUTER INC.
 A0:AF:12	Huawei Technologies Co.,Ltd
 A0:B0:BD	Samsung Electronics Co.,Ltd
+A0:B1:5C	Google, Inc.
 A0:B4:0F	Apple, Inc.
 A0:B4:A5	Samsung Electronics Co.,Ltd
 A0:C1:C5	Apple, Inc.
 A0:C2:0D	Huawei Device Co., Ltd.
+A0:C9:26	Huawei Device Co., Ltd.
 A0:C9:8B	Nokia Solutions and Networks GmbH & Co. KG
 A0:CB:FD	Samsung Electronics Co.,Ltd
 A0:CF:F5	zte corporation
@@ -4378,6 +4627,7 @@ A0:FB:83	Honor Device Co., Ltd.
 A0:FB:C5	Apple, Inc.
 A4:00:E2	Huawei Technologies Co.,Ltd
 A4:07:B6	Samsung Electronics Co.,Ltd
+A4:08:53	Nokia Solutions and Networks India Private Limited
 A4:09:87	Apple, Inc.
 A4:09:B3	Huawei Technologies Co.,Ltd
 A4:0F:98	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
@@ -4387,6 +4637,7 @@ A4:16:C0	Apple, Inc.
 A4:16:E7	Huawei Technologies Co.,Ltd
 A4:17:8B	Huawei Technologies Co.,Ltd
 A4:1A:6E	zte corporation
+A4:22:B6	Motorola Mobility LLC, a Lenovo Company
 A4:30:7A	Samsung Electronics Co.,Ltd
 A4:31:35	Apple, Inc.
 A4:36:C7	LG Innotek
@@ -4395,6 +4646,7 @@ A4:39:B3	Beijing Xiaomi Mobile Software Co., Ltd
 A4:3B:0E	Huawei Device Co., Ltd.
 A4:3D:78	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 A4:40:27	zte corporation
+A4:42:80	Apple, Inc.
 A4:43:43	Huawei Device Co., Ltd.
 A4:43:80	Huawei Device Co., Ltd.
 A4:45:19	Xiaomi Communications Co Ltd
@@ -4427,6 +4679,7 @@ A4:90:CE	vivo Mobile Communication Co., Ltd.
 A4:92:CB	Nokia
 A4:93:3F	Huawei Technologies Co.,Ltd
 A4:93:AD	Huawei Device Co., Ltd.
+A4:93:FE	Huawei Technologies Co.,Ltd
 A4:99:47	Huawei Technologies Co.,Ltd
 A4:9A:58	Samsung Electronics Co.,Ltd
 A4:9B:4F	Huawei Technologies Co.,Ltd
@@ -4523,6 +4776,7 @@ A8:5B:78	Apple, Inc.
 A8:5B:B7	Apple, Inc.
 A8:5C:2C	Apple, Inc.
 A8:5E:45	ASUSTek COMPUTER INC.
+A8:5F:61	Apple, Inc.
 A8:60:B6	Apple, Inc.
 A8:66:7F	Apple, Inc.
 A8:6A:86	Xiaomi Communications Co Ltd
@@ -4583,6 +4837,7 @@ A8:E9:78	Huawei Device Co., Ltd.
 A8:EE:67	Samsung Electronics Co.,Ltd
 A8:EF:5F	Realme Chongqing Mobile Telecommunications Corp.,Ltd.
 A8:F0:59	Huawei Technologies Co.,Ltd
+A8:F0:7C	Huawei Device Co., Ltd.
 A8:F2:66	Huawei Device Co., Ltd.
 A8:F2:74	Samsung Electronics Co.,Ltd
 A8:F5:AC	Huawei Technologies Co.,Ltd
@@ -4602,6 +4857,7 @@ AC:1E:92	Samsung Electronics Co.,Ltd
 AC:1E:9E	Xiaomi Communications Co Ltd
 AC:1F:74	Apple, Inc.
 AC:22:0B	ASUSTek COMPUTER INC.
+AC:22:41	Huawei Technologies Co.,Ltd
 AC:29:3A	Apple, Inc.
 AC:31:84	Huawei Device Co., Ltd.
 AC:33:28	Huawei Device Co., Ltd.
@@ -4611,12 +4867,14 @@ AC:38:70	Lenovo Mobile Communication Technology Ltd.
 AC:39:71	Realme Chongqing Mobile Telecommunications Corp.,Ltd.
 AC:3C:0B	Apple, Inc.
 AC:3E:B1	Google, Inc.
+AC:40:1E	vivo Mobile Communication Co., Ltd.
 AC:45:00	Apple, Inc.
 AC:45:CA	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 AC:47:1B	Huawei Device Co., Ltd.
 AC:49:DB	Apple, Inc.
 AC:4E:91	Huawei Technologies Co.,Ltd
 AC:51:AB	Huawei Technologies Co.,Ltd
+AC:53:22	Samsung Electronics Co.,Ltd
 AC:56:2C	Lava International(H.K) Limited
 AC:5A:14	Samsung Electronics Co.,Ltd
 AC:5A:F0	LG Electronics
@@ -4682,7 +4940,10 @@ AC:E0:11	Huawei Technologies Co.,Ltd
 AC:E2:15	Huawei Technologies Co.,Ltd
 AC:E3:42	Huawei Technologies Co.,Ltd
 AC:E4:B5	Apple, Inc.
+AC:E4:D8	Xiaomi Communications Co Ltd
+AC:E6:06	Honor Device Co., Ltd.
 AC:E6:BB	Google, Inc.
+AC:E6:FB	Apple, Inc.
 AC:E8:7B	Huawei Technologies Co.,Ltd
 AC:EA:EA	Huawei Technologies Co.,Ltd
 AC:EE:9E	Samsung Electronics Co.,Ltd
@@ -4721,6 +4982,7 @@ B0:55:08	Huawei Technologies Co.,Ltd
 B0:5A:7B	Huawei Device Co., Ltd.
 B0:5B:67	Huawei Technologies Co.,Ltd
 B0:5C:E5	Nokia Corporation
+B0:64:E0	Samsung Electronics Co.,Ltd
 B0:65:BD	Apple, Inc.
 B0:67:B5	Apple, Inc.
 B0:6A:41	Google, Inc.
@@ -4746,6 +5008,7 @@ B0:98:BC	Huawei Device Co., Ltd.
 B0:99:5A	Huawei Technologies Co.,Ltd
 B0:99:D7	Samsung Electronics Co.,Ltd
 B0:9C:63	Xiaomi Communications Co Ltd
+B0:9C:B2	Google, Inc.
 B0:9F:BA	Apple, Inc.
 B0:A1:87	Realme Chongqing Mobile Telecommunications Corp.,Ltd.
 B0:A4:F0	Huawei Technologies Co.,Ltd
@@ -4753,6 +5016,7 @@ B0:AA:36	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 B0:AC:D2	zte corporation
 B0:B1:94	zte corporation
 B0:B5:C3	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
+B0:BB:A9	Apple, Inc.
 B0:BE:83	Apple, Inc.
 B0:C1:9E	zte corporation
 B0:C2:C7	Motorola Mobility LLC, a Lenovo Company
@@ -4771,6 +5035,7 @@ B0:D5:76	Apple, Inc.
 B0:D5:FB	Google, Inc.
 B0:D7:7E	Huawei Technologies Co.,Ltd
 B0:DE:28	Apple, Inc.
+B0:DE:31	Samsung Electronics Co.,Ltd
 B0:DF:3A	Samsung Electronics Co.,Ltd
 B0:E1:7E	Huawei Technologies Co.,Ltd
 B0:E2:35	Xiaomi Communications Co Ltd
@@ -4780,8 +5045,10 @@ B0:E5:ED	Huawei Technologies Co.,Ltd
 B0:E5:EF	Apple, Inc.
 B0:E5:F9	Apple, Inc.
 B0:EB:57	Huawei Technologies Co.,Ltd
+B0:EC:69	Apple, Inc.
 B0:EC:71	Samsung Electronics Co.,Ltd
 B0:EC:DD	Huawei Technologies Co.,Ltd
+B0:F0:79	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 B0:F1:D8	Apple, Inc.
 B0:F2:F6	Samsung Electronics Co.,Ltd
 B0:FA:8B	Huawei Device Co., Ltd.
@@ -4795,6 +5062,7 @@ B4:0F:B3	vivo Mobile Communication Co., Ltd.
 B4:13:24	Google, Inc.
 B4:14:E6	Huawei Technologies Co.,Ltd
 B4:15:13	Huawei Technologies Co.,Ltd
+B4:15:84	Samsung Electronics Co.,Ltd
 B4:18:D1	Apple, Inc.
 B4:19:74	Apple, Inc.
 B4:1A:1D	Samsung Electronics Co.,Ltd
@@ -4819,6 +5087,7 @@ B4:43:89	Huawei Technologies Co.,Ltd
 B4:4B:D2	Apple, Inc.
 B4:52:7D	Sony Corporation
 B4:52:7E	Sony Corporation
+B4:54:F2	Huawei Device Co., Ltd.
 B4:55:75	Apple, Inc.
 B4:56:E3	Apple, Inc.
 B4:57:E6	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
@@ -4836,12 +5105,15 @@ B4:74:43	Samsung Electronics Co.,Ltd
 B4:76:A4	Huawei Device Co., Ltd.
 B4:7B:1A	Huawei Technologies Co.,Ltd
 B4:7C:A6	zte corporation
+B4:7E:9F	Xiaomi Communications Co Ltd
 B4:85:E1	Apple, Inc.
 B4:86:55	Huawei Technologies Co.,Ltd
 B4:89:01	Huawei Technologies Co.,Ltd
 B4:8B:19	Apple, Inc.
+B4:91:07	Huawei Technologies Co.,Ltd
 B4:96:A5	Apple, Inc.
 B4:98:42	zte corporation
+B4:9A:7D	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 B4:9C:DF	Apple, Inc.
 B4:9D:02	Samsung Electronics Co.,Ltd
 B4:9D:6B	vivo Mobile Communication Co., Ltd.
@@ -4852,14 +5124,17 @@ B4:AE:C1	Apple, Inc.
 B4:B0:55	Huawei Technologies Co.,Ltd
 B4:B2:91	LG Electronics
 B4:B3:62	zte corporation
+B4:B6:50	Realme Chongqing Mobile Telecommunications Corp.,Ltd.
 B4:B8:53	Honor Device Co., Ltd.
 B4:BF:F6	Samsung Electronics Co.,Ltd
 B4:C2:F7	Huawei Device Co., Ltd.
+B4:C3:D9	Huawei Technologies Co.,Ltd
 B4:C4:FC	Xiaomi Communications Co Ltd
 B4:CB:57	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 B4:CD:27	Huawei Technologies Co.,Ltd
 B4:CE:40	Samsung Electronics Co.,Ltd
 B4:CE:F6	HTC Corporation
+B4:D1:F6	Huawei Technologies Co.,Ltd
 B4:D5:E5	Samsung Electronics Co.,Ltd
 B4:DE:DF	zte corporation
 B4:E1:C4	Microsoft Mobile Oy
@@ -4877,12 +5152,15 @@ B4:F7:A1	LG Electronics (Mobile Communications)
 B4:FA:48	Apple, Inc.
 B4:FB:F9	Huawei Technologies Co.,Ltd
 B4:FF:98	Huawei Technologies Co.,Ltd
+B8:00:5B	Huawei Device Co., Ltd.
 B8:01:1F	Apple, Inc.
 B8:05:33	Apple, Inc.
 B8:05:AB	zte corporation
 B8:07:16	vivo Mobile Communication Co., Ltd.
 B8:08:D7	Huawei Technologies Co.,Ltd
 B8:09:8A	Apple, Inc.
+B8:0B:9A	Huawei Technologies Co.,Ltd
+B8:0C:68	Honor Device Co., Ltd.
 B8:14:4D	Apple, Inc.
 B8:14:5C	Huawei Device Co., Ltd.
 B8:16:5F	LG Innotek
@@ -4896,6 +5174,7 @@ B8:22:0C	Apple, Inc.
 B8:27:C5	Huawei Device Co., Ltd.
 B8:2A:A9	Apple, Inc.
 B8:2B:68	Huawei Device Co., Ltd.
+B8:34:46	Motorola Mobility LLC, a Lenovo Company
 B8:37:4A	Apple, Inc.
 B8:37:65	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 B8:3B:CC	Xiaomi Communications Co Ltd
@@ -4921,6 +5200,7 @@ B8:5E:7B	Samsung Electronics Co.,Ltd
 B8:5F:B0	Huawei Technologies Co.,Ltd
 B8:63:4D	Apple, Inc.
 B8:6C:E8	Samsung Electronics Co.,Ltd
+B8:75:2E	Huawei Device Co., Ltd.
 B8:78:2E	Apple, Inc.
 B8:7B:C5	Apple, Inc.
 B8:7B:D4	Google, Inc.
@@ -4958,6 +5238,7 @@ B8:C9:B5	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 B8:D4:3E	vivo Mobile Communication Co., Ltd.
 B8:D4:BC	zte corporation
 B8:D4:C3	Huawei Technologies Co.,Ltd
+B8:D5:AD	Nokia
 B8:D6:F6	Huawei Technologies Co.,Ltd
 B8:D9:CE	Samsung Electronics Co.,Ltd
 B8:DA:E8	Huawei Device Co., Ltd.
@@ -4973,6 +5254,7 @@ B8:F4:A4	Google, Inc.
 B8:F6:B1	Apple, Inc.
 B8:F9:34	Sony Corporation
 B8:FF:61	Apple, Inc.
+BC:00:23	Honor Device Co., Ltd.
 BC:09:63	Apple, Inc.
 BC:0E:AB	Samsung Electronics Co.,Ltd
 BC:10:7B	Samsung Electronics Co.,Ltd
@@ -5005,6 +5287,7 @@ BC:47:60	Samsung Electronics Co.,Ltd
 BC:4C:78	Huawei Technologies Co.,Ltd
 BC:4C:A0	Huawei Technologies Co.,Ltd
 BC:4C:C4	Apple, Inc.
+BC:4F:2D	Apple, Inc.
 BC:51:5F	Nokia Solutions and Networks India Private Limited
 BC:52:74	Samsung Electronics Co.,Ltd
 BC:52:B4	Nokia
@@ -5018,11 +5301,13 @@ BC:62:0E	Huawei Technologies Co.,Ltd
 BC:62:9C	zte corporation
 BC:64:D9	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 BC:67:78	Apple, Inc.
+BC:68:C3	Huawei Technologies Co.,Ltd
 BC:6A:D1	Xiaomi Communications Co Ltd
 BC:6B:4D	Nokia
 BC:6C:21	Apple, Inc.
 BC:6E:64	Sony Corporation
 BC:72:B1	Samsung Electronics Co.,Ltd
+BC:74:EA	Apple, Inc.
 BC:75:74	Huawei Technologies Co.,Ltd
 BC:76:5E	Samsung Electronics Co.,Ltd
 BC:76:70	Huawei Technologies Co.,Ltd
@@ -5036,6 +5321,7 @@ BC:7F:A4	Xiaomi Communications Co Ltd
 BC:80:4E	Apple, Inc.
 BC:85:1F	Samsung Electronics Co.,Ltd
 BC:89:A7	Apple, Inc.
+BC:89:C1	Apple, Inc.
 BC:8D:0E	Nokia
 BC:92:6B	Apple, Inc.
 BC:93:07	Samsung Electronics Co.,Ltd
@@ -5062,7 +5348,9 @@ BC:B8:63	Apple, Inc.
 BC:BB:58	Apple, Inc.
 BC:BC:CA	Huawei Device Co., Ltd.
 BC:BD:84	zte corporation
+BC:BF:2E	ASUSTek COMPUTER INC.
 BC:C4:27	Huawei Technologies Co.,Ltd
+BC:C4:36	Nokia
 BC:C6:DB	Nokia Corporation
 BC:CD:7F	Huawei Device Co., Ltd.
 BC:CF:CC	HTC Corporation
@@ -5098,10 +5386,12 @@ C0:28:0B	Honor Device Co., Ltd.
 C0:2C:5C	Apple, Inc.
 C0:2E:1D	Nokia Solutions and Networks GmbH & Co. KG
 C0:2E:25	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
+C0:2F:CD	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 C0:33:79	Huawei Technologies Co.,Ltd
 C0:38:F9	Nokia Danmark A/S
 C0:3D:03	Samsung Electronics Co.,Ltd
 C0:3E:50	Huawei Technologies Co.,Ltd
+C0:3E:75	Huawei Technologies Co.,Ltd
 C0:3F:DD	Huawei Technologies Co.,Ltd
 C0:41:21	Nokia Solutions and Networks GmbH & Co. KG
 C0:41:F6	Lg Electronics Inc
@@ -5116,6 +5406,8 @@ C0:52:34	Huawei Technologies Co.,Ltd
 C0:54:4D	Nokia Shanghai Bell Co., Ltd.
 C0:57:24	Honor Device Co., Ltd.
 C0:5B:44	Beijing Xiaomi Mobile Software Co., Ltd
+C0:5B:BD	Huawei Technologies Co.,Ltd
+C0:61:94	Huawei Device Co., Ltd.
 C0:63:94	Apple, Inc.
 C0:64:C6	Nokia Corporation
 C0:65:99	Samsung Electronics Co.,Ltd
@@ -5140,6 +5432,7 @@ C0:9B:63	Huawei Technologies Co.,Ltd
 C0:9F:05	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 C0:9F:42	Apple, Inc.
 C0:9F:E1	zte corporation
+C0:A3:6D	Huawei Technologies Co.,Ltd
 C0:A5:3E	Apple, Inc.
 C0:A6:00	Apple, Inc.
 C0:A9:38	Huawei Technologies Co.,Ltd
@@ -5170,6 +5463,7 @@ C0:DC:DA	Samsung Electronics Co.,Ltd
 C0:E0:18	Huawei Technologies Co.,Ltd
 C0:E1:BE	Huawei Technologies Co.,Ltd
 C0:E3:FB	Huawei Technologies Co.,Ltd
+C0:E5:79	Huawei Device Co., Ltd.
 C0:E8:62	Apple, Inc.
 C0:ED:E5	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 C0:EE:FB	OnePlus Tech (Shenzhen) Ltd
@@ -5212,6 +5506,7 @@ C4:42:02	Samsung Electronics Co.,Ltd
 C4:43:8F	LG Electronics (Mobile Communications)
 C4:44:7D	Huawei Technologies Co.,Ltd
 C4:47:3F	Huawei Technologies Co.,Ltd
+C4:49:1B	Apple, Inc.
 C4:49:3E	Motorola Mobility LLC, a Lenovo Company
 C4:4F:5F	Huawei Device Co., Ltd.
 C4:50:06	Samsung Electronics Co.,Ltd
@@ -5228,6 +5523,7 @@ C4:62:EA	Samsung Electronics Co.,Ltd
 C4:63:C4	Huawei Technologies Co.,Ltd
 C4:66:99	vivo Mobile Communication Co., Ltd.
 C4:67:D1	Huawei Technologies Co.,Ltd
+C4:69:40	Xiaomi Communications Co Ltd
 C4:69:F0	Huawei Technologies Co.,Ltd
 C4:6A:B7	Xiaomi Communications Co Ltd
 C4:6D:D1	Huawei Technologies Co.,Ltd
@@ -5237,13 +5533,16 @@ C4:74:1E	zte corporation
 C4:75:EA	Huawei Technologies Co.,Ltd
 C4:77:64	Samsung Electronics Co.,Ltd
 C4:78:A2	Huawei Device Co., Ltd.
+C4:7B:E3	Huawei Technologies Co.,Ltd
 C4:7D:9F	Samsung Electronics Co.,Ltd
 C4:80:25	Huawei Device Co., Ltd.
 C4:84:66	Apple, Inc.
+C4:84:C0	Motorola Mobility LLC, a Lenovo Company
 C4:84:FC	Apple, Inc.
 C4:86:E9	Huawei Technologies Co.,Ltd
 C4:88:E5	Samsung Electronics Co.,Ltd
 C4:91:0C	Apple, Inc.
+C4:92:D9	zte corporation
 C4:93:BB	Beijing Xiaomi Mobile Software Co., Ltd
 C4:93:D9	Samsung Electronics Co.,Ltd
 C4:98:80	Apple, Inc.
@@ -5278,6 +5577,7 @@ C4:E3:9F	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 C4:EB:FF	zte corporation
 C4:EF:3D	Samsung Electronics Co.,Ltd
 C4:F0:81	Huawei Technologies Co.,Ltd
+C4:F4:45	Apple, Inc.
 C4:F7:C1	Apple, Inc.
 C4:FB:AA	Huawei Technologies Co.,Ltd
 C4:FE:5B	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
@@ -5297,6 +5597,7 @@ C8:1F:E8	Apple, Inc.
 C8:28:32	Beijing Xiaomi Electronics Co., Ltd.
 C8:2A:14	Apple, Inc.
 C8:2A:DD	Google, Inc.
+C8:30:49	Huawei Device Co., Ltd.
 C8:33:4B	Apple, Inc.
 C8:33:E5	Huawei Technologies Co.,Ltd
 C8:38:70	Samsung Electronics Co.,Ltd
@@ -5405,6 +5706,7 @@ CC:2D:8C	Lg Electronics Inc
 CC:2D:B7	Apple, Inc.
 CC:31:2A	Huizhou Tcl Communication Electron Co.,Ltd
 CC:32:96	Huawei Device Co., Ltd.
+CC:38:E1	Huawei Technologies Co.,Ltd
 CC:3D:D1	Huawei Technologies Co.,Ltd
 CC:3F:36	Apple, Inc.
 CC:42:10	Xiaomi Communications Co Ltd
@@ -5414,6 +5716,7 @@ CC:46:4E	Samsung Electronics Co.,Ltd
 CC:4B:04	Apple, Inc.
 CC:4D:75	Beijing Xiaomi Mobile Software Co., Ltd
 CC:53:B5	Huawei Technologies Co.,Ltd
+CC:58:C7	Nokia
 CC:5C:61	Huawei Device Co., Ltd.
 CC:60:23	Apple, Inc.
 CC:61:E5	Motorola Mobility LLC, a Lenovo Company
@@ -5424,10 +5727,12 @@ CC:66:B2	Nokia
 CC:68:E0	Apple, Inc.
 CC:69:FA	Apple, Inc.
 CC:6E:A4	Samsung Electronics Co.,Ltd
+CC:72:2A	Apple, Inc.
 CC:76:3A	zte corporation
 CC:78:5F	Apple, Inc.
 CC:79:4A	BLU Products Inc.
 CC:7B:35	zte corporation
+CC:80:8F	Apple, Inc.
 CC:81:2A	vivo Mobile Communication Co., Ltd.
 CC:81:7D	Apple, Inc.
 CC:87:4A	Nokia
@@ -5436,8 +5741,10 @@ CC:89:5E	Huawei Technologies Co.,Ltd
 CC:89:FD	Nokia Corporation
 CC:8A:84	Huawei Device Co., Ltd.
 CC:90:96	Huawei Device Co., Ltd.
+CC:91:5B	Huawei Device Co., Ltd.
 CC:96:A0	Huawei Technologies Co.,Ltd
 CC:98:8B	SONY Visual Products Inc.
+CC:98:EF	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 CC:A0:8F	zte corporation
 CC:A1:2B	TCL King Electrical Appliances (Huizhou) Co., Ltd
 CC:A2:23	Huawei Technologies Co.,Ltd
@@ -5446,12 +5753,15 @@ CC:B0:A8	Huawei Device Co., Ltd.
 CC:B1:1A	Samsung Electronics Co.,Ltd
 CC:B1:82	Huawei Technologies Co.,Ltd
 CC:B5:D1	Beijing Xiaomi Mobile Software Co., Ltd
+CC:B7:75	Huawei Device Co., Ltd.
 CC:B7:77	zte corporation
 CC:B7:C4	Huawei Technologies Co.,Ltd
 CC:BA:6F	Huawei Technologies Co.,Ltd
 CC:BB:FE	Huawei Technologies Co.,Ltd
 CC:BC:2B	Huawei Device Co., Ltd.
 CC:BC:E3	Huawei Technologies Co.,Ltd
+CC:BE:61	Apple, Inc.
+CC:C2:53	zte corporation
 CC:C3:EA	Motorola Mobility LLC, a Lenovo Company
 CC:C7:60	Apple, Inc.
 CC:C9:5D	Apple, Inc.
@@ -5471,11 +5781,13 @@ CC:F9:E8	Samsung Electronics Co.,Ltd
 CC:F9:F0	Samsung Electronics Co.,Ltd
 CC:FA:00	LG Electronics (Mobile Communications)
 CC:FA:66	Huawei Device Co., Ltd.
+CC:FA:95	Honor Device Co., Ltd.
 CC:FE:3C	Samsung Electronics Co.,Ltd
 CC:FF:90	Huawei Device Co., Ltd.
 D0:03:4B	Apple, Inc.
 D0:03:DF	Samsung Electronics Co.,Ltd
 D0:04:01	Motorola Mobility LLC, a Lenovo Company
+D0:04:77	Huawei Technologies Co.,Ltd
 D0:04:B0	Samsung Electronics Co.,Ltd
 D0:05:E4	Huawei Device Co., Ltd.
 D0:0D:F7	Huawei Device Co., Ltd.
@@ -5531,13 +5843,16 @@ D0:7F:A0	Samsung Electronics Co.,Ltd
 D0:81:7A	Apple, Inc.
 D0:87:E2	Samsung Electronics Co.,Ltd
 D0:88:0C	Apple, Inc.
+D0:92:82	Apple, Inc.
 D0:94:CF	Huawei Technologies Co.,Ltd
+D0:96:EA	vivo Mobile Communication Co., Ltd.
 D0:97:FE	Realme Chongqing Mobile Telecommunications Corp.,Ltd.
 D0:9C:7A	Xiaomi Communications Co Ltd
 D0:9C:AE	vivo Mobile Communication Co., Ltd.
 D0:A6:37	Apple, Inc.
 D0:AE:05	Xiaomi Communications Co Ltd
 D0:B1:28	Samsung Electronics Co.,Ltd
+D0:B3:24	Apple, Inc.
 D0:B4:5D	Huawei Device Co., Ltd.
 D0:BB:61	zte corporation
 D0:C0:50	Apple, Inc.
@@ -5548,6 +5863,7 @@ D0:C5:F3	Apple, Inc.
 D0:C6:5B	Huawei Technologies Co.,Ltd
 D0:C6:7F	Huawei Technologies Co.,Ltd
 D0:C7:30	zte corporation
+D0:CD:BF	LG Electronics
 D0:CE:C0	Xiaomi Communications Co Ltd
 D0:D0:03	Samsung Electronics Co.,Ltd
 D0:D0:4B	Huawei Technologies Co.,Ltd
@@ -5565,6 +5881,7 @@ D0:E5:81	Apple, Inc.
 D0:EF:C1	Huawei Technologies Co.,Ltd
 D0:F3:F5	Huawei Device Co., Ltd.
 D0:F4:F7	Huawei Device Co., Ltd.
+D0:F8:15	Huawei Technologies Co.,Ltd
 D0:F8:8C	Motorola (Wuhan) Mobility Technologies Communication Co., Ltd.
 D0:F9:28	zte corporation
 D0:F9:9B	zte corporation
@@ -5573,10 +5890,12 @@ D0:FF:98	Huawei Technologies Co.,Ltd
 D4:0B:1A	HTC Corporation
 D4:0F:9E	Apple, Inc.
 D4:11:A3	Samsung Electronics Co.,Ltd
+D4:12:6E	Apple, Inc.
 D4:17:61	Xiaomi Communications Co Ltd
 D4:1A:3F	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 D4:20:6D	HTC Corporation
 D4:22:3F	Lenovo Mobile Communication Technology Ltd.
+D4:2C:A6	Samsung Electronics Co.,Ltd
 D4:2D:CC	Apple, Inc.
 D4:2F:CA	Apple, Inc.
 D4:35:38	Beijing Xiaomi Mobile Software Co., Ltd
@@ -5613,6 +5932,7 @@ D4:6A:A8	Huawei Technologies Co.,Ltd
 D4:6B:A6	Huawei Technologies Co.,Ltd
 D4:6E:5C	Huawei Technologies Co.,Ltd
 D4:72:26	zte corporation
+D4:73:27	Huawei Technologies Co.,Ltd
 D4:74:15	Huawei Device Co., Ltd.
 D4:76:EA	zte corporation
 D4:79:54	Huawei Device Co., Ltd.
@@ -5642,6 +5962,7 @@ D4:A3:65	Xiaomi Communications Co Ltd
 D4:A9:23	Huawei Technologies Co.,Ltd
 D4:AE:05	Samsung Electronics Co.,Ltd
 D4:B1:10	Huawei Technologies Co.,Ltd
+D4:B6:C9	Nokia
 D4:B7:09	zte corporation
 D4:BA:FA	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 D4:BB:C8	vivo Mobile Communication Co., Ltd.
@@ -5651,6 +5972,7 @@ D4:C1:FC	Nokia Corporation
 D4:C9:4B	Motorola Mobility LLC, a Lenovo Company
 D4:CB:AF	Nokia Corporation
 D4:CB:CC	vivo Mobile Communication Co., Ltd.
+D4:CE:40	Apple, Inc.
 D4:D5:1B	Huawei Technologies Co.,Ltd
 D4:D7:CF	Realme Chongqing Mobile Telecommunications Corp.,Ltd.
 D4:D8:92	Huawei Technologies Co.,Ltd
@@ -5694,6 +6016,7 @@ D8:31:39	zte corporation
 D8:31:CF	Samsung Electronics Co.,Ltd
 D8:32:E3	Xiaomi Communications Co Ltd
 D8:40:08	Huawei Technologies Co.,Ltd
+D8:46:CE	Apple, Inc.
 D8:47:BB	Huawei Device Co., Ltd.
 D8:49:0B	Huawei Technologies Co.,Ltd
 D8:4A:2B	zte corporation
@@ -5702,12 +6025,14 @@ D8:4C:90	Apple, Inc.
 D8:4F:B8	Lg Electronics
 D8:50:E6	ASUSTek COMPUTER INC.
 D8:53:BC	Lenovo Information Products (Shenzhen)Co.,Ltd
+D8:54:37	Huawei Technologies Co.,Ltd
 D8:54:F2	Huawei Device Co., Ltd.
 D8:55:75	Samsung Electronics Co.,Ltd
 D8:55:A3	zte corporation
 D8:57:EF	Samsung Electronics Co.,Ltd
 D8:59:82	Huawei Technologies Co.,Ltd
 D8:5B:2A	Samsung Electronics Co.,Ltd
+D8:60:C5	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 D8:63:0D	Motorola (Wuhan) Mobility Technologies Communication Co., Ltd.
 D8:63:75	Xiaomi Communications Co Ltd
 D8:67:D3	Huawei Device Co., Ltd.
@@ -5725,6 +6050,7 @@ D8:74:DF	Huawei Technologies Co.,Ltd
 D8:75:33	Nokia Corporation
 D8:76:AE	Huawei Technologies Co.,Ltd
 D8:80:DC	Huawei Device Co., Ltd.
+D8:85:5E	zte corporation
 D8:88:63	Huawei Technologies Co.,Ltd
 D8:8A:DC	Huawei Device Co., Ltd.
 D8:8C:73	zte corporation
@@ -5753,6 +6079,7 @@ D8:BB:2C	Apple, Inc.
 D8:BE:1F	Apple, Inc.
 D8:C4:E9	Samsung Electronics Co.,Ltd
 D8:C7:71	Huawei Technologies Co.,Ltd
+D8:C9:60	Huawei Device Co., Ltd.
 D8:CC:98	Huawei Device Co., Ltd.
 D8:CE:3A	Xiaomi Communications Co Ltd
 D8:CF:9C	Apple, Inc.
@@ -5768,6 +6095,7 @@ D8:E3:74	Xiaomi Communications Co Ltd
 D8:E5:93	Apple, Inc.
 D8:E8:44	zte corporation
 D8:EB:46	Google, Inc.
+D8:ED:A8	Xiaomi Communications Co Ltd
 D8:EF:42	Huawei Device Co., Ltd.
 D8:EF:CD	Nokia Solutions and Networks GmbH & Co. KG
 DA:A1:19	Google, Inc.
@@ -5805,6 +6133,7 @@ DC:61:80	Huawei Technologies Co.,Ltd
 DC:62:1F	Huawei Technologies Co.,Ltd
 DC:66:72	Samsung Electronics Co.,Ltd
 DC:68:80	zte corporation
+DC:69:CC	LG Innotek
 DC:69:E2	Samsung Electronics Co.,Ltd
 DC:6A:E7	Xiaomi Communications Co Ltd
 DC:6B:1B	Huawei Device Co., Ltd.
@@ -5817,12 +6146,15 @@ DC:73:85	Huawei Device Co., Ltd.
 DC:74:A8	Samsung Electronics Co.,Ltd
 DC:77:94	Huawei Device Co., Ltd.
 DC:7E:1D	Huawei Technologies Co.,Ltd
+DC:7E:F5	Huawei Technologies Co.,Ltd
 DC:80:84	Apple, Inc.
 DC:86:8D	Huawei Technologies Co.,Ltd
 DC:86:D8	Apple, Inc.
+DC:87:F8	Samsung Electronics Co.,Ltd
 DC:89:83	Samsung Electronics Co.,Ltd
 DC:8C:1B	vivo Mobile Communication Co., Ltd.
 DC:8D:8A	Nokia Solutions and Networks GmbH & Co. KG
+DC:8E:6D	Huawei Device Co., Ltd.
 DC:90:88	Huawei Technologies Co.,Ltd
 DC:91:66	Huawei Device Co., Ltd.
 DC:93:96	Apple, Inc.
@@ -5830,6 +6162,7 @@ DC:95:66	Apple, Inc.
 DC:99:14	Huawei Technologies Co.,Ltd
 DC:9B:9C	Apple, Inc.
 DC:9C:99	Huawei Technologies Co.,Ltd
+DC:9D:ED	Samsung Electronics Co.,Ltd
 DC:9E:8F	Apple, Inc.
 DC:9F:A4	Nokia Corporation
 DC:A1:20	Nokia
@@ -5859,6 +6192,7 @@ DC:DB:27	Huawei Device Co., Ltd.
 DC:DC:E2	Samsung Electronics Co.,Ltd
 DC:DE:4F	Gionee Communication Equipment Co Ltd
 DC:DF:D6	zte corporation
+DC:E5:41	Apple, Inc.
 DC:E5:5B	Google, Inc.
 DC:E5:D8	zte corporation
 DC:EB:4D	Motorola (Wuhan) Mobility Technologies Communication Co., Ltd.
@@ -5919,9 +6253,11 @@ E0:97:96	Huawei Technologies Co.,Ltd
 E0:98:61	Motorola Mobility LLC, a Lenovo Company
 E0:99:71	Samsung Electronics Co.,Ltd
 E0:9D:13	Samsung Electronics Co.,Ltd
+E0:9D:1E	zte corporation
 E0:A1:CE	zte corporation
 E0:A3:66	Motorola Mobility LLC, a Lenovo Company
 E0:A3:AC	Huawei Technologies Co.,Ltd
+E0:A4:47	zte corporation
 E0:A6:70	Nokia Corporation
 E0:AA:96	Samsung Electronics Co.,Ltd
 E0:AC:CB	Apple, Inc.
@@ -5932,6 +6268,7 @@ E0:B5:5F	Apple, Inc.
 E0:B6:55	Beijing Xiaomi Electronics Co., Ltd.
 E0:B6:68	zte corporation
 E0:B9:BA	Apple, Inc.
+E0:BA:78	Apple, Inc.
 E0:BD:A0	Apple, Inc.
 E0:BF:B2	Apple, Inc.
 E0:C2:9E	zte corporation
@@ -5960,6 +6297,7 @@ E0:F3:30	Huawei Technologies Co.,Ltd
 E0:F4:42	Huawei Device Co., Ltd.
 E0:F5:C6	Apple, Inc.
 E0:F8:47	Apple, Inc.
+E4:06:E0	Huawei Technologies Co.,Ltd
 E4:07:2B	Huawei Device Co., Ltd.
 E4:0A:16	Huawei Technologies Co.,Ltd
 E4:0C:FD	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
@@ -5992,6 +6330,7 @@ E4:47:90	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 E4:47:B3	zte corporation
 E4:4E:12	zte corporation
 E4:50:EB	Apple, Inc.
+E4:53:41	Apple, Inc.
 E4:54:E5	Huawei Device Co., Ltd.
 E4:57:68	vivo Mobile Communication Co., Ltd.
 E4:58:B8	Samsung Electronics Co.,Ltd
@@ -6004,6 +6343,8 @@ E4:60:4D	zte corporation
 E4:66:AB	zte corporation
 E4:68:A3	Huawei Technologies Co.,Ltd
 E4:6A:35	Realme Chongqing Mobile Telecommunications Corp.,Ltd.
+E4:70:10	Apple, Inc.
+E4:72:9D	Nokia Shanghai Bell Co., Ltd.
 E4:72:E2	Huawei Technologies Co.,Ltd
 E4:73:19	Huawei Device Co., Ltd.
 E4:76:84	Apple, Inc.
@@ -6051,6 +6392,7 @@ E4:B5:55	Huawei Device Co., Ltd.
 E4:BC:AA	Xiaomi Communications Co Ltd
 E4:BD:4B	zte corporation
 E4:BE:FB	Huawei Technologies Co.,Ltd
+E4:C0:FE	Apple, Inc.
 E4:C2:D1	Huawei Technologies Co.,Ltd
 E4:C4:83	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 E4:C6:3D	Apple, Inc.
@@ -6059,6 +6401,7 @@ E4:CA:12	zte corporation
 E4:CD:A7	zte corporation
 E4:CE:8F	Apple, Inc.
 E4:D3:73	Huawei Technologies Co.,Ltd
+E4:D4:36	Nokia Solutions and Networks India Private Limited
 E4:DB:6D	Beijing Xiaomi Electronics Co., Ltd.
 E4:DC:43	Huawei Device Co., Ltd.
 E4:DC:CC	Huawei Technologies Co.,Ltd
@@ -6097,6 +6440,7 @@ E8:4A:78	Apple, Inc.
 E8:4D:74	Huawei Technologies Co.,Ltd
 E8:4D:D0	Huawei Technologies Co.,Ltd
 E8:4E:84	Samsung Electronics Co.,Ltd
+E8:4E:BA	Google, Inc.
 E8:4F:A7	Huawei Device Co., Ltd.
 E8:54:97	Samsung Electronics Co.,Ltd
 E8:5A:8B	Xiaomi Communications Co Ltd
@@ -6104,6 +6448,7 @@ E8:5B:5B	Lg Electronics Inc
 E8:5F:02	Apple, Inc.
 E8:5F:B4	Xiaomi Communications Co Ltd
 E8:68:19	Huawei Technologies Co.,Ltd
+E8:68:B1	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 E8:6D:CB	Samsung Electronics Co.,Ltd
 E8:6D:E9	Huawei Technologies Co.,Ltd
 E8:6E:3A	Sony Interactive Entertainment Inc.
@@ -6143,9 +6488,11 @@ E8:AC:AD	zte corporation
 E8:B2:AC	Apple, Inc.
 E8:B4:C8	Samsung Electronics Co.,Ltd
 E8:B5:41	zte corporation
+E8:BA:17	Beijing Xiaomi Mobile Software Co., Ltd
 E8:BB:A8	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 E8:BD:D1	Huawei Technologies Co.,Ltd
 E8:C3:86	Apple, Inc.
+E8:C3:C5	Huawei Device Co., Ltd.
 E8:C9:13	Samsung Electronics Co.,Ltd
 E8:CB:A1	Nokia Corporation
 E8:CD:2D	Huawei Technologies Co.,Ltd
@@ -6155,6 +6502,7 @@ E8:D7:75	Huawei Technologies Co.,Ltd
 E8:DA:3E	Huawei Device Co., Ltd.
 E8:E5:D6	Samsung Electronics Co.,Ltd
 E8:E7:C3	zte corporation
+E8:EA:34	Huawei Technologies Co.,Ltd
 E8:EA:4D	Huawei Technologies Co.,Ltd
 E8:F0:85	Huawei Technologies Co.,Ltd
 E8:F2:E2	LG Innotek
@@ -6167,6 +6515,7 @@ E8:F9:D4	Huawei Technologies Co.,Ltd
 E8:FA:23	Huawei Device Co., Ltd.
 E8:FB:E9	Apple, Inc.
 E8:FD:35	Huawei Device Co., Ltd.
+E8:FE:BE	Apple, Inc.
 E8:FF:98	Huawei Device Co., Ltd.
 E8:FF:F4	Apple, Inc.
 EC:01:EE	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
@@ -6183,6 +6532,7 @@ EC:23:3D	Huawei Technologies Co.,Ltd
 EC:23:7B	zte corporation
 EC:26:51	Apple, Inc.
 EC:28:D3	Apple, Inc.
+EC:2C:0D	Apple, Inc.
 EC:2C:73	Apple, Inc.
 EC:2C:E2	Apple, Inc.
 EC:2F:90	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
@@ -6234,6 +6584,7 @@ EC:AA:8F	Huawei Technologies Co.,Ltd
 EC:AD:B8	Apple, Inc.
 EC:B5:50	Samsung Electronics Co.,Ltd
 EC:B8:78	Huawei Device Co., Ltd.
+EC:B9:A5	Huawei Device Co., Ltd.
 EC:C0:1B	Huawei Technologies Co.,Ltd
 EC:C3:42	zte corporation
 EC:C3:B0	zte corporation
@@ -6241,6 +6592,8 @@ EC:C5:D2	Huawei Device Co., Ltd.
 EC:CB:30	Huawei Technologies Co.,Ltd
 EC:CE:D7	Apple, Inc.
 EC:D0:9F	Xiaomi Communications Co Ltd
+EC:D5:08	Apple, Inc.
+EC:DC:AA	Apple, Inc.
 EC:DF:3A	vivo Mobile Communication Co., Ltd.
 EC:E0:9B	Samsung Electronics Co.,Ltd
 EC:E6:1D	Huawei Device Co., Ltd.
@@ -6256,6 +6609,7 @@ EC:FF:3A	Apple, Inc.
 F0:04:E1	Apple, Inc.
 F0:05:1B	Samsung Electronics Co.,Ltd
 F0:08:F1	Samsung Electronics Co.,Ltd
+F0:0C:51	zte corporation
 F0:0F:EC	Huawei Technologies Co.,Ltd
 F0:18:98	Apple, Inc.
 F0:1B:24	zte corporation
@@ -6273,6 +6627,7 @@ F0:33:E5	Huawei Technologies Co.,Ltd
 F0:37:CF	Huawei Device Co., Ltd.
 F0:39:65	Samsung Electronics Co.,Ltd
 F0:3F:95	Huawei Technologies Co.,Ltd
+F0:40:D9	Apple, Inc.
 F0:42:F5	Huawei Device Co., Ltd.
 F0:43:47	Huawei Technologies Co.,Ltd
 F0:55:01	Huawei Device Co., Ltd.
@@ -6285,6 +6640,7 @@ F0:62:5A	Realme Chongqing Mobile Telecommunications Corp.,Ltd.
 F0:63:F9	Huawei Technologies Co.,Ltd
 F0:65:AE	Samsung Electronics Co.,Ltd
 F0:67:28	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
+F0:67:B1	Samsung Electronics Co.,Ltd
 F0:6B:CA	Samsung Electronics Co.,Ltd
 F0:6C:5D	Xiaomi Communications Co Ltd
 F0:6C:73	Nokia
@@ -6308,6 +6664,7 @@ F0:9B:B8	Huawei Technologies Co.,Ltd
 F0:9F:FC	SHARP Corporation
 F0:A0:B1	Huawei Technologies Co.,Ltd
 F0:A3:5A	Apple, Inc.
+F0:A4:EA	Huawei Device Co., Ltd.
 F0:A9:51	Huawei Technologies Co.,Ltd
 F0:AB:1F	zte corporation
 F0:B0:E7	Apple, Inc.
@@ -6346,10 +6703,13 @@ F0:F5:64	Samsung Electronics Co.,Ltd
 F0:F6:1C	Apple, Inc.
 F0:F7:E7	Huawei Technologies Co.,Ltd
 F0:F7:FC	Huawei Technologies Co.,Ltd
+F0:F8:32	Google, Inc.
 F0:FA:C7	Huawei Device Co., Ltd.
 F0:FE:E7	Huawei Device Co., Ltd.
+F4:00:A2	Samsung Electronics Co.,Ltd
 F4:03:04	Google, Inc.
 F4:06:16	Apple, Inc.
+F4:06:A3	Huawei Device Co., Ltd.
 F4:0B:93	BlackBerry RTS
 F4:0E:01	Apple, Inc.
 F4:0E:22	Samsung Electronics Co.,Ltd
@@ -6357,11 +6717,13 @@ F4:0F:24	Apple, Inc.
 F4:12:DA	zte corporation
 F4:14:BF	LG Innotek
 F4:1A:9C	Xiaomi Communications Co Ltd
+F4:1A:F7	zte corporation
 F4:1B:A1	Apple, Inc.
 F4:1D:6B	Huawei Technologies Co.,Ltd
 F4:1F:88	zte corporation
 F4:21:CA	Apple, Inc.
 F4:24:8B	Huawei Technologies Co.,Ltd
+F4:25:FE	Huawei Technologies Co.,Ltd
 F4:29:81	vivo Mobile Communication Co., Ltd.
 F4:2B:8C	Samsung Electronics Co.,Ltd
 F4:2D:06	zte corporation
@@ -6379,6 +6741,7 @@ F4:42:8F	Samsung Electronics Co.,Ltd
 F4:45:88	Huawei Technologies Co.,Ltd
 F4:4C:7F	Huawei Technologies Co.,Ltd
 F4:52:93	Apple, Inc.
+F4:53:E4	Huawei Technologies Co.,Ltd
 F4:55:9C	Huawei Technologies Co.,Ltd
 F4:5B:29	Huawei Technologies Co.,Ltd
 F4:5C:42	Huawei Device Co., Ltd.
@@ -6407,10 +6770,13 @@ F4:8E:09	Nokia Corporation
 F4:8E:92	Huawei Technologies Co.,Ltd
 F4:9F:54	Samsung Electronics Co.,Ltd
 F4:9F:F3	Huawei Technologies Co.,Ltd
+F4:A1:57	Huawei Device Co., Ltd.
+F4:A1:A6	Apple, Inc.
 F4:A3:10	Apple, Inc.
 F4:A4:D6	Huawei Technologies Co.,Ltd
 F4:A5:9D	Huawei Device Co., Ltd.
 F4:AF:E7	Apple, Inc.
+F4:B2:4E	Huawei Device Co., Ltd.
 F4:B5:99	Apple, Inc.
 F4:B5:AA	zte corporation
 F4:B7:8D	Huawei Technologies Co.,Ltd
@@ -6457,12 +6823,14 @@ F8:01:13	Huawei Technologies Co.,Ltd
 F8:01:B4	LG Electronics
 F8:03:77	Apple, Inc.
 F8:07:5D	Huawei Device Co., Ltd.
+F8:0C:9A	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 F8:0C:F3	LG Electronics (Mobile Communications)
 F8:0D:F0	zte corporation
 F8:0F:F9	Google, Inc.
 F8:10:93	Apple, Inc.
 F8:13:08	Nokia
 F8:1A:2B	Google, Inc.
+F8:1E:49	Apple, Inc.
 F8:1E:DF	Apple, Inc.
 F8:1F:32	Motorola Mobility LLC, a Lenovo Company
 F8:20:A9	Huawei Device Co., Ltd.
@@ -6542,6 +6910,7 @@ F8:C3:9E	Huawei Technologies Co.,Ltd
 F8:C3:CC	Apple, Inc.
 F8:C4:AE	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
 F8:C4:FA	Guangdong Oppo Mobile Telecommunications Corp.,Ltd
+F8:CB:15	Apple, Inc.
 F8:CF:C5	Motorola Mobility LLC, a Lenovo Company
 F8:D0:AC	Sony Interactive Entertainment Inc.
 F8:D0:BD	Samsung Electronics Co.,Ltd
@@ -6582,6 +6951,7 @@ FC:1D:2A	vivo Mobile Communication Co., Ltd.
 FC:1D:3A	Huawei Technologies Co.,Ltd
 FC:1D:43	Apple, Inc.
 FC:25:3F	Apple, Inc.
+FC:26:40	Huawei Device Co., Ltd.
 FC:2A:46	Realme Chongqing Mobile Telecommunications Corp.,Ltd.
 FC:2A:9C	Apple, Inc.
 FC:2D:5E	zte corporation
@@ -6596,6 +6966,7 @@ FC:43:45	Xiaomi Communications Co Ltd
 FC:44:9F	zte corporation
 FC:47:D8	Apple, Inc.
 FC:48:EF	Huawei Technologies Co.,Ltd
+FC:4A:47	Nokia
 FC:4C:EF	Huawei Device Co., Ltd.
 FC:4D:A6	Huawei Technologies Co.,Ltd
 FC:4E:6D	Huawei Technologies Co.,Ltd
@@ -6608,6 +6979,7 @@ FC:64:3A	Samsung Electronics Co.,Ltd
 FC:64:BA	Xiaomi Communications Co Ltd
 FC:65:B3	Huawei Device Co., Ltd.
 FC:66:CF	Apple, Inc.
+FC:6E:83	Samsung Electronics Co.,Ltd
 FC:73:FB	Huawei Technologies Co.,Ltd
 FC:79:DD	Huawei Device Co., Ltd.
 FC:84:17	Honor Device Co., Ltd.
@@ -6624,6 +6996,7 @@ FC:93:6B	Samsung Electronics Co.,Ltd
 FC:94:35	Huawei Technologies Co.,Ltd
 FC:94:CE	zte corporation
 FC:9C:A7	Apple, Inc.
+FC:9D:D2	Apple, Inc.
 FC:A0:F3	Huawei Technologies Co.,Ltd
 FC:A1:3E	Samsung Electronics Co.,Ltd
 FC:A2:7E	Huawei Technologies Co.,Ltd
@@ -6654,7 +7027,10 @@ FC:E1:A6	Huawei Technologies Co.,Ltd
 FC:E2:6C	Apple, Inc.
 FC:E3:3C	Huawei Technologies Co.,Ltd
 FC:E5:57	Nokia Corporation
+FC:E5:F0	Samsung Electronics Co.,Ltd
 FC:E9:98	Apple, Inc.
+FC:EB:7B	Huawei Technologies Co.,Ltd
+FC:EF:D7	Huawei Technologies Co.,Ltd
 FC:F1:36	Samsung Electronics Co.,Ltd
 FC:F1:52	Sony Corporation
 FC:F7:38	Huawei Technologies Co.,Ltd

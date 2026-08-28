@@ -207,10 +207,23 @@ class RAK3172:
         return None
 
     def join_network(self, join=1, auto_join=0, reattempt_interval=8, join_attempts=8):
+        # Desliga auto-join permanentemente para evitar spam de fundo e pára pedidos antigos
+        self.send_command("AT+JOIN=0:0\r\n")
+        time.sleep(0.5)
+        self.set_network_mode(True)      # LoRaWAN
+        time.sleep(0.5) 
+        
         command = f"AT+JOIN={join}:{auto_join}:{reattempt_interval}:{join_attempts}\r\n"
-        self.send_command(command)
+        print(f"Sending: {command.strip()}")
+        # Limpar o buffer antes de enviar o Join
+        self.serial_connection.reset_input_buffer()
+        self.serial_connection.write(command.encode())
         start_time = time.time()
-        while time.time() - start_time < 20 :  # wait up to 10 seconds
+        
+        # Max wait in seconds for result. join_attempts * reattempt_interval + buffer
+        max_wait = (join_attempts * reattempt_interval) + 15
+        
+        while time.time() - start_time < max_wait:
             if self.serial_connection.in_waiting:
                 line = self.serial_connection.readline().decode(errors="ignore").strip()
                 print("→", line)
@@ -219,11 +232,17 @@ class RAK3172:
                     with open("/tmp/rak_njs", "w") as f:  # write plain text: '1' or '0'
                         f.write("1")
                     return True
-                elif "+EVT:JOIN FAILED" in line or "+EVT:JOIN_FAILED_RX_TIMEOUT" in line:
-                    print("Join failed.")
-                    return False
-            time.sleep(0.5)
-        print("Timeout à espera do Join.")
+                elif "+EVT:JOIN FAILED" in line or "JOIN_FAILED_RX_TIMEOUT" in line:
+                    print("Join attempt failed from network side.")
+                    # Continua à espera porque as tentativas (join_attempts) ainda podem estar a decorrer
+                    pass
+                elif "AT_BUSY_ERROR" in line:
+                    print("Module busy, joining in background.")
+                    time.sleep(2)
+            else:
+                time.sleep(0.5)
+                
+        print("Timeout à espera do Join total.")
         return False
 
 

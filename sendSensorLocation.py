@@ -4,19 +4,86 @@ import pytz
 import matplotlib.pyplot as plt; plt.rcdefaults()
 import os
 import json
-
+import sys
+import time
+import struct
 from sensorFunctions import *
+from uart_lock import acquire_uart_lock, release_uart_lock, get_uart_lock_info
+from event_logger import log_event
+
+
+COMM_CHECK_LOCK_FILE = "/tmp/sensor_communication_check.lock"
+COMM_CHECK_LOCK_MAX_AGE_SEC = 180
+
+def wait_for_comm_check_lock(max_wait_sec=120, poll_sec=2):
+    waited = 0
+
+    while os.path.exists(COMM_CHECK_LOCK_FILE) and waited <= max_wait_sec:
+        try:
+            lock_age = time.time() - os.path.getmtime(COMM_CHECK_LOCK_FILE)
+
+            if lock_age > COMM_CHECK_LOCK_MAX_AGE_SEC:
+                print("[LOCATION] Removing stale sensorCommunicationCheck.py lock.")
+                os.remove(COMM_CHECK_LOCK_FILE)
+                break
+
+        except Exception:
+            pass
+
+        print(f"[LOCATION] Waiting for sensorCommunicationCheck.py to finish... waited={waited}s")
+        time.sleep(poll_sec)
+        waited += poll_sec
+
+    return not os.path.exists(COMM_CHECK_LOCK_FILE), waited
+
+def wait_for_lora_uart_lock(caller, max_wait_sec=60, poll_sec=3):
+    waited = 0
+
+    while waited <= max_wait_sec:
+        if acquire_uart_lock(caller):
+            return True
+
+        info = get_uart_lock_info()
+        print(f"[LOCATION] Waiting for LoRa UART lock... waited={waited}s info={info}")
+
+        time.sleep(poll_sec)
+        waited += poll_sec
+
+    return False
+
+
+if not os.path.exists(BOOT_COMPLETE_FILE):
+    print("[LOCATION] Boot initialization not complete yet. Exiting.")
+    sys.exit(0)
+
+check_released, waited_for_check = wait_for_comm_check_lock(
+    max_wait_sec=90,
+    poll_sec=2
+)
+
+if not check_released:
+    print("[LOCATION] sensorCommunicationCheck.py still running after timeout. Exiting to avoid stale DB state.")
+    sys.exit(0)
+
+
+_, available_released = wait_for_script_lock(
+    COMM_AVAILABLE_LOCK_FILE,
+    max_wait_sec=20,
+    poll_sec=2,
+    log_prefix="[LOCATION]"
+)
+
+if not available_released:
+    print("[LOCATION] sensorCommunicationAvailable.py still running. Proceeding carefully.")
 
 
 # Read sensor configuration from database
-
 try:
-    connwifi= sqlite3.connect('/home/kali/Desktop/DB/SensorConfiguration.db' , timeout=30)
+    connwifi = sqlite3.connect('/home/kali/Desktop/DB/SensorConfiguration.db', timeout=30)
     cwifi = connwifi.cursor()
 
     sensor_configuration = cwifi.execute("""SELECT * FROM SensorConfiguration""").fetchall()
 
-    #Sensor configuration
     if len(sensor_configuration) != 0:
         sensor_UUID = sensor_configuration[0][0]
         sensor_name = sensor_configuration[0][1]
@@ -27,18 +94,32 @@ try:
         influx_bucket = sensor_configuration[0][8]
         influx_token = sensor_configuration[0][9]
         uploadTechnology = sensor_configuration[0][12]
+        status = sensor_configuration[0][4]
 
-        if uploadTechnology.lower() == "wifi":
-            ip_address = cwifi.execute("""SELECT IP_Address FROM SensorCommunication""").fetchone()[0]
+        locationSendMode = "boot"
 
+        try:
+            row = cwifi.execute(
+                """SELECT COALESCE(Location_Send_Mode, 'boot') FROM SensorConfiguration"""
+            ).fetchone()
+
+            if row and row[0]:
+                locationSendMode = row[0]
+
+        except sqlite3.Error:
+            locationSendMode = "boot"
 
     else:
-        print("Failed to read sensor configuration from local database. Please make sure to \nconfigure a sensor configuration by running the 'sensorConfiguration.py' script first.")
-        exit(0)
+        print(
+            "Failed to read sensor configuration from local database. "
+            "Please make sure to configure a sensor configuration by running "
+            "the 'sensorConfiguration.py' script first."
+        )
+        sys.exit(0)
 
-except sqlite3.Error as error:
+except sqlite3.Error:
     print("Failed to read sensor configuration from local database.")
-    exit(0)
+    sys.exit(0)
 
 finally:
     if connwifi:
@@ -46,44 +127,173 @@ finally:
         connwifi.close()
 
 
-dataAtual=dt.datetime.now(pytz.utc).replace(tzinfo=None)
+if status != "Active":
+    print("[LOCATION] Sensor is disabled. Skipping location upload.")
+    sys.exit(0)
+
+
+called_from_boot = "--boot" in sys.argv
+uploadTechnology = (uploadTechnology or "").lower()
+locationSendMode = (locationSendMode or "boot").strip()
+
+
+uart_locked = False
+
+
+# If periodic location mode is active and the active upload technology is LoRa,
+# reserve the UART before trying to refresh GPS.
+# Otherwise sendCrowdingData.py may acquire the UART while this script is waiting for GPS.
+if uploadTechnology == "lora" and locationSendMode in ("periodic_5min", "periodic_upload_window") and not called_from_boot:
+    uart_locked = wait_for_lora_uart_lock(
+        caller="sendSensorLocation_lora_pre_gps",
+        max_wait_sec=15,
+        poll_sec=2
+    )
+
+    if not uart_locked:
+        print("[LOCATION] LoRa UART busy before GPS refresh. Location upload skipped.")
+        sys.exit(0)
+
+
+# Refresh GPS only when periodic location mode is configured and this is not the boot call.
+# During boot, sensorCommunicationAvailable.py already tries to get GPS and updates the DB.
+if locationSendMode in ("periodic_5min", "periodic_upload_window") and not called_from_boot:
+    print("[LOCATION] Periodic location mode active. Trying to refresh GPS position...")
+
+    try:
+        enable_gps()
+
+        gps_position = try_get_boot_gps_position(
+            max_wait_sec=10,
+            warmup_sec=2,
+            min_good_samples=3,
+            eph_max=12.0
+        )
+
+        if gps_position is not None:
+            gps_lat, gps_lon, gps_quality = gps_position
+
+            latitude = gps_lat
+            longitude = gps_lon
+
+            try:
+                conn_update = sqlite3.connect('/home/kali/Desktop/DB/SensorConfiguration.db', timeout=30)
+                cur_update = conn_update.cursor()
+
+                cur_update.execute(
+                    """UPDATE SensorConfiguration 
+                       SET Latitude=?, Longitude=?, Last_Update=CURRENT_TIMESTAMP""",
+                    (latitude, longitude)
+                )
+
+                conn_update.commit()
+                cur_update.close()
+                conn_update.close()
+
+                print(f"[LOCATION][GPS] Updated position from GPS ({gps_quality}): {latitude}, {longitude}")
+
+            except sqlite3.Error as error:
+                print(f"[LOCATION][GPS] Failed to update GPS position in DB: {error}")
+
+        else:
+            print("[LOCATION][GPS] No valid GPS fix. Using last known DB position.")
+
+    except Exception as e:
+        print(f"[LOCATION][GPS] Error while refreshing GPS position: {e}")
+
+    finally:
+        disable_gps()
+
+else:
+    print("[LOCATION] Using stored DB location.")
+
+
+dataAtual = dt.datetime.now(pytz.utc).replace(tzinfo=None)
 
 print(latitude, longitude)
+
 location = {
-"latitude": latitude,
-"longitude": longitude
+    "latitude": latitude,
+    "longitude": longitude
 }
 
 json_location = json.dumps(location)
 
-# Send sensor location to InfluxDB
-if uploadTechnology.lower() == "wifi":
-   
-    publish_location_mqtt_message(json_location, f"sttoolkit-test/mqtt/wifi/sensorLocation/{influx_bucket}/{ip_address}/{sensor_name}/{sensor_UUID}")
+
+# Send sensor location to InfluxDB / MQTT
+if uploadTechnology == "wifi":
+
+    
+    publish_location_mqtt_message(
+        json_location,
+        f"sttoolkit-test/mqtt/wifi/v2/sensorLocation/{sensor_UUID}"
+    )
+
     print(f"Location '({latitude},{longitude})' was sent to the cloud server for sensor '{sensor_name}'.")
 
-elif uploadTechnology.lower() == "lora":
+
+elif uploadTechnology == "lora":
+
+    # If the lock was not acquired before GPS refresh, acquire it now.
+    # This happens during boot calls or when Location_Send_Mode is "boot".
+    if not uart_locked:
+        uart_locked = wait_for_lora_uart_lock(
+            caller="sendSensorLocation_lora",
+            max_wait_sec=10,
+            poll_sec=2
+        )
+
+        if not uart_locked:
+            print("[LOCATION] LoRa UART busy. Location upload skipped.")
+            sys.exit(0)
 
     rak = RAK3172("/dev/ttyAMA0", 115200)
-    rak.connect()
 
     try:
+        rak.connect()
+
         time.sleep(0.5)
-        # CSV Format  "L,<lat>,<lon>,<uuid>"
-        payload = f"L,{float(latitude):.5f},{float(longitude):.5f}"
-    
-        print(f"A enviar via LoRa: {payload}")
-        payload_hex = payload.encode().hex()
+
+        
+
+        lat_int = int(round(float(latitude)  * 100000))
+        lon_int = int(round(float(longitude) * 100000))
+
+        payload_bytes = struct.pack(">ii", lat_int, lon_int)
+        payload_hex   = payload_bytes.hex()
+
+        print(f"[LOCATION] Enviando: ({latitude}, {longitude}) → hex: {payload_hex}")
+
+        log_event(
+            "sending_location",
+            link="lora",
+            latitude=latitude,
+            longitude=longitude
+        )
         sent = rak.send_lorawan_data(2, payload_hex)
+
         if sent:
             print("Localização enviada com sucesso via LoRa.")
+
+            # Keep the UART locked briefly after the uplink so another script
+            # does not immediately consume messages related to this LoRa exchange.
+            time.sleep(8)
+
         else:
             print("Falha ao enviar localização via LoRa.")
-        
+
     except Exception as e:
         print(f"Erro durante envio via LoRa: {e}")
+
     finally:
         try:
             rak.disconnect()
-        except:
+        except Exception:
             pass
+
+        if uart_locked:
+            release_uart_lock()
+
+
+else:
+    print(f"[LOCATION] Unknown upload technology '{uploadTechnology}'. Location not sent.")

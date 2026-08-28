@@ -1,0 +1,7 @@
+2026-05-17 20:00:23,430 - INFO - === Starting sensorStartup.py ===
+2026-05-17 20:00:23,526 - INFO - Successfully set wlan1 to channel 1.
+2026-05-17 20:00:23,527 - INFO - Database table checked/created successfully.
+2026-05-17 20:00:23,533 - INFO - Permissions updated for MemoryDB.
+2026-05-17 20:00:23,538 - INFO - Read/write access updated for MemoryDB.
+2026-05-17 20:00:23,538 - INFO - Starting crowdingSniffer.py...
+2026-05-17 20:00:23,539 - INFO - Sniffer started successfully with PID: 2929
