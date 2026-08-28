@@ -9,11 +9,11 @@ import random
 import logging
 from swARM_at_custom.swARM_at.RAK3172 import RAK3172
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 import ssl
 from event_logger import log_event
 import threading
-
+import struct
 
 
 
@@ -848,7 +848,7 @@ def publish_mqtt_message(msg_payload, topic):
         print("\nFailed to publish mqtt message.")
         return False
 
-import json
+
 import paho.mqtt.client as mqtt
 
 from timeline_logger import log_timeline
@@ -2787,26 +2787,260 @@ def try_wifi_failover(cursor=None, skip_current=False):
 
     return False, None
     
-def downlink_cb(mType, port, length, msgHex):
-    logger.info(f"[DOWNLINK RAW] type={mType} port={port} len={length} hex={msgHex}")
-    try:
-        payload = bytes.fromhex(msgHex).decode("utf-8")
-    except Exception as e:
-        logger.error(f"Erro a decodificar downlink: {e}")
-        return
 
-    logger.info(f"[DOWNLINK TEXT] '{payload}'")
-    if payload == "r":
+
+
+
+
+ 
+OTA_CMD_LOG_LORA = "/home/kali/Desktop/Sniffer/ota_cmd_timeline_lora.jsonl"
+ 
+ 
+# =====================================================================
+#  _apply_status 
+# =====================================================================
+ 
+def _apply_status(new_status):
+    """Altera sensor.Status no TOML e aplica a configuração."""
+    TOML_PATH = "/home/kali/Desktop/sensor-config-site/data/sensor_config.toml"
+ 
+    try:
+        import tomllib
+    except ImportError:
+        import toml as tomllib
+    try:
+        import tomli_w
+    except ImportError:
+        tomli_w = None
+ 
+    with open(TOML_PATH, "rb") as f:
+        cfg = tomllib.load(f)
+ 
+    cfg.setdefault("sensor", {})
+    cfg["sensor"]["Status"] = new_status
+ 
+    tmp = TOML_PATH + ".tmp"
+    if tomli_w is not None:
+        with open(tmp, "w", encoding="utf-8") as f:
+            f.write(tomli_w.dumps(cfg))
+            f.flush()
+            os.fsync(f.fileno())
+    else:
+        import toml
+        with open(tmp, "w", encoding="utf-8") as f:
+            toml.dump(cfg, f)
+            f.flush()
+            os.fsync(f.fileno())
+    os.replace(tmp, TOML_PATH)
+ 
+    import sensorConfigurationRemotely
+    if hasattr(sensorConfigurationRemotely, "apply_config_from_toml"):
+        sensorConfigurationRemotely.apply_config_from_toml(TOML_PATH)
+    elif hasattr(sensorConfigurationRemotely, "main"):
+        sensorConfigurationRemotely.main()
+ 
+    logger.info(f"[OTA-LORA] Status alterado para '{new_status}'")
+ 
+ 
+# =====================================================================
+#  _apply_sensitivity  
+# =====================================================================
+ 
+def _apply_sensitivity(new_value):
+    """Altera o campo de sensibilidade no TOML e aplica a configuração.
+ 
+    NOTA: ajustar o nome da secção e campo conforme o teu sensor_config.toml.
+    Exemplo: cfg["sensor"]["Sensitivity"] ou cfg["sensor"]["Power Filtration"]
+    """
+    TOML_PATH = "/home/kali/Desktop/sensor-config-site/data/sensor_config.toml"
+ 
+    try:
+        import tomllib
+    except ImportError:
+        import toml as tomllib
+    try:
+        import tomli_w
+    except ImportError:
+        tomli_w = None
+ 
+    with open(TOML_PATH, "rb") as f:
+        cfg = tomllib.load(f)
+ 
+    # ↓↓↓ AJUSTA AQUI o nome do campo ↓↓↓
+    cfg.setdefault("sensor", {})
+    cfg["sensor"]["Power Filtration"] = new_value
+    # ↑↑↑ AJUSTA AQUI o nome do campo ↑↑↑
+ 
+    tmp = TOML_PATH + ".tmp"
+    if tomli_w is not None:
+        with open(tmp, "w", encoding="utf-8") as f:
+            f.write(tomli_w.dumps(cfg))
+            f.flush()
+            os.fsync(f.fileno())
+    else:
+        import toml
+        with open(tmp, "w", encoding="utf-8") as f:
+            toml.dump(cfg, f)
+            f.flush()
+            os.fsync(f.fileno())
+    os.replace(tmp, TOML_PATH)
+ 
+    import sensorConfigurationRemotely
+    if hasattr(sensorConfigurationRemotely, "apply_config_from_toml"):
+        sensorConfigurationRemotely.apply_config_from_toml(TOML_PATH)
+    elif hasattr(sensorConfigurationRemotely, "main"):
+        sensorConfigurationRemotely.main()
+ 
+    logger.info(f"[OTA-LORA] Sensitivity alterada para {new_value}")
+ 
+ 
+# =====================================================================
+#  _log_ota_lora  
+# =====================================================================
+ 
+def _log_ota_lora(job_id, cmd, ts_received, ts_applied, ts_ack_sent, error=None):
+    """Regista timestamps do ciclo OTA LoRaWAN no JSONL local."""
+    def _iso(ts):
+        return ts.isoformat(timespec="milliseconds") if ts else None
+    def _ms(ts):
+        return int(ts.timestamp() * 1000) if ts else None
+ 
+    entry = {
+        "job_id":          job_id,
+        "cmd":             cmd,
+        "transport":       "lorawan",
+        "ts_received_iso": _iso(ts_received),
+        "ts_received_ms":  _ms(ts_received),
+        "ts_applied_iso":  _iso(ts_applied),
+        "ts_applied_ms":   _ms(ts_applied),
+        "ts_ack_sent_iso": _iso(ts_ack_sent),
+        "ts_ack_sent_ms":  _ms(ts_ack_sent),
+    }
+    if error:
+        entry["error"] = error
+    line = json.dumps(entry)
+    try:
+        with open(OTA_CMD_LOG_LORA, "a") as f:
+            f.write(line + "\n")
+    except Exception as exc:
+        logger.warning(f"[OTA-LOG] {exc}")
+    logger.info(f"[OTA-CMD-LORA] {line}")
+ 
+ 
+# =====================================================================
+#  downlink listener callback (RAK3172) 
+# =====================================================================
+ 
+def downlink_cb(mType, port, length, msgHex, rak=None):
+    """Callback de downlink do RAK3172 — protocolo binário no FPort 20."""
+    logger.info(f"[DOWNLINK RAW] type={mType} port={port} len={length} hex={msgHex}")
+ 
+    raw = bytes.fromhex(msgHex)
+ 
+    # ── Filtrar por FPort ───────────────────────────────────
+    if int(port) != 20:
+        logger.info(f"[DOWNLINK] FPort {port} ignorado (não é OTA)")
+        return
+ 
+    if len(raw) < 3:
+        logger.warning(f"[DOWNLINK] Payload demasiado curto: {len(raw)} bytes")
+        return
+ 
+    ts_received = datetime.now(timezone.utc)
+ 
+    # ── Parsear header: [cmd_code 1B][job_id 2B] ───────────
+    cmd_code, job_id_int = struct.unpack(">BH", raw[:3])
+    job_id = f"{job_id_int:04d}"
+ 
+    # ── Parsear value (para comandos com parâmetro) ─────────
+    value = None
+    if cmd_code == 0x03:    # sensitivity
+        if len(raw) < 4:
+            logger.warning("[DOWNLINK] Sensitivity sem byte de valor")
+            return
+        value = struct.unpack(">b", raw[3:4])[0]   # int8 signed (-128..+127)
+ 
+    logger.info(f"[DOWNLINK BIN] cmd=0x{cmd_code:02X} job_id={job_id} value={value}")
+ 
+    # ── Reboot (sem ACK) ────────────────────────────────────
+    if cmd_code == 0xFF:
         logger.info("=> reboot sensor")
         os.system("sudo reboot")
-    elif payload == "a":
+        return
+ 
+    ts_applied  = None
+    ts_ack_sent = None
+    error_msg   = None
+    result_byte = 0x00          # 0x00 = ok
+ 
+    # ── Activate (0x01) ─────────────────────────────────────
+    if cmd_code == 0x01:
         logger.info("=> activate detection")
-        #receive_active()
-    elif payload == "dis":
+        try:
+            _apply_status("Active")
+            ts_applied = datetime.now(timezone.utc)
+        except Exception as e:
+            error_msg = str(e)
+            result_byte = 0x01
+            ts_applied = datetime.now(timezone.utc)
+            logger.error(f"[OTA-LORA] Falha activate: {e}")
+ 
+    # ── Disable (0x02) ──────────────────────────────────────
+    elif cmd_code == 0x02:
         logger.info("=> disable detection")
-        #receive_disable()
+        try:
+            _apply_status("Disabled")
+            ts_applied = datetime.now(timezone.utc)
+        except Exception as e:
+            error_msg = str(e)
+            result_byte = 0x01
+            ts_applied = datetime.now(timezone.utc)
+            logger.error(f"[OTA-LORA] Falha disable: {e}")
+ 
+    # ── Sensitivity (0x03) ──────────────────────────────────
+    elif cmd_code == 0x03:
+        logger.info(f"=> set sensitivity to {value}")
+        try:
+            _apply_sensitivity(value)
+            ts_applied = datetime.now(timezone.utc)
+        except Exception as e:
+            error_msg = str(e)
+            result_byte = 0x01
+            ts_applied = datetime.now(timezone.utc)
+            logger.error(f"[OTA-LORA] Falha sensitivity: {e}")
+ 
     else:
-        logger.info(f"=> comando desconhecido '{payload}'")
+        logger.info(f"=> cmd code desconhecido 0x{cmd_code:02X}")
+        return
+ 
+    # ── ACK binário: [job_id 2B][result 1B] no FPort 21 ────
+    if rak is not None:
+        try:
+            ack_bytes = struct.pack(">HB", job_id_int, result_byte)
+            ack_hex   = ack_bytes.hex()
+            ts_ack_sent = datetime.now(timezone.utc)
+            sent = rak.send_lorawan_data(21, ack_hex)
+            
+            if sent:
+                logger.info(
+                    f"[OTA-ACK] FPort 21 → {ack_hex} "
+                    f"(job={job_id} result={'ok' if result_byte == 0 else 'err'})"
+                )
+            else:
+                logger.warning("[OTA-ACK] send_lorawan_data retornou False")
+        except Exception as e:
+            logger.error(f"[OTA-ACK] Falha a enviar: {e}")
+            ts_ack_sent = datetime.now(timezone.utc)
+ 
+        # Label legível para o log
+        cmd_labels = {
+            0x01: "activate",
+            0x02: "disable",
+            0x03: f"sensitivity:{value}",
+        }
+        cmd_label = cmd_labels.get(cmd_code, f"0x{cmd_code:02X}")
+        _log_ota_lora(job_id, cmd_label, ts_received, ts_applied, ts_ack_sent, error_msg)
+
 
 def publish_location_mqtt_message(msg_payload, topic):
     client = connect_mqtt()

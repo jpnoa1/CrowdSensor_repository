@@ -22,6 +22,7 @@ from sensorFunctions import downlink_cb
 from communication_manager import CommunicationManager
 from event_logger import log_event
 from uart_lock import acquire_uart_lock, release_uart_lock, get_uart_lock_info
+from timeline_logger import log_timeline                        
 
 MODEL_PATH = '/home/kali/Desktop/Sniffer/wifi_lstm_regressor.keras'
 SCALER_PATH = '/home/kali/Desktop/Sniffer/wifi_lstm_scaler.pkl'
@@ -58,6 +59,7 @@ def wait_for_comm_check_lock(max_wait_sec=120, poll_sec=2):
 
 _t0_send_cycle = time.monotonic()
 log_event("send_cycle_start")
+_t0_wall = dt.datetime.now(dt.timezone.utc)                     
 
 # Debug switch: set to False to silence debug prints
 DEBUG_COMM = True
@@ -400,6 +402,11 @@ log_event(
     devices=int(detected_devices)
 )
 
+# ── Timeline: registar inicio do script e fim do preprocessing ──  
+log_timeline("script_start", lora_seq, upload_technology,           
+             ts_override=_t0_wall)                                  
+log_timeline("ready_to_send", lora_seq, upload_technology)          
+
 # Keep backward compatibility with legacy LoRa flow using selected network.
 if selected_lora_network:
     active_lora_network = selected_lora_network
@@ -411,6 +418,8 @@ if selected_lora_network:
 sent_over_wifi = False
 
 if upload_technology != "lora":
+                     
+
     if SEND_EXTENDED_FINGERPRINTS:
         sent_over_wifi = manager.send_current_measurement(
             dataAtual_unix, int(detected_devices),
@@ -425,6 +434,7 @@ if upload_technology != "lora":
         )
     
     if sent_over_wifi:
+                   
         log_event(
             "message_sent",
             link="wifi",
@@ -433,6 +443,7 @@ if upload_technology != "lora":
         )
 
     elif upload_technology == "wifi":
+        log_timeline("send_failed", lora_seq, "wifi")               
         log_event(
             "message_stored",
             unix_ts=dataAtual_unix,
@@ -599,9 +610,15 @@ if upload_technology == "lora":
 
                 payload_hex = payload_bytes.hex()
                 print(f"[UPLOAD] Sending payload: count={count} ({len(payload_bytes)} byte(s)) (hex: {payload_hex})")
+
+                log_timeline("send_start", lora_seq, "lora",        
+                             network=active_lora_network)           
+
                 sent = rak.send_lorawan_data(1, payload_hex)  # Port 1 = crowding
 
                 if not sent:
+                    log_timeline("send_failed", lora_seq, "lora",   
+                                 network=active_lora_network)       
                     print(
                         f"[UPLOAD] Failed to send via {active_lora_network} "
                         f"(duty cycle restriction — skipping until next success)"
@@ -620,6 +637,8 @@ if upload_technology == "lora":
                     )
 
                 else:
+                    log_timeline("ack_received", lora_seq, "lora",  
+                                 network=active_lora_network)       
                     print(f"[UPLOAD] Successfully sent via {active_lora_network}")
                     try:
                         if os.path.exists("/tmp/rak_duty_restricted"):
@@ -724,7 +743,7 @@ if upload_technology == "lora":
                                         rak, payload, lora_seq, active_lora_network
                                     )
                                 else:
-                                    downlink_cb("C", port, len(payload), payload)
+                                    downlink_cb("C", port, len(payload), payload, rak=rak)
 
                                 log_event(
                                     "downlink_received",
@@ -767,6 +786,8 @@ elif upload_technology == "none":
 
 cwifi.close()
 connwifi.close()
+
+log_timeline("script_end", lora_seq, upload_technology)             
 
 log_event(
     "send_cycle_complete",
